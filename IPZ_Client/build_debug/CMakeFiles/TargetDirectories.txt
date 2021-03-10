@@ -1,3 +1,0 @@
-C:/Users/user/Documents/GitHub/IPZ_Project/IPZ_Client/build_debug/CMakeFiles/edit_cache.dir
-C:/Users/user/Documents/GitHub/IPZ_Project/IPZ_Client/build_debug/CMakeFiles/IPZ_Client.dir
-C:/Users/user/Documents/GitHub/IPZ_Project/IPZ_Client/build_debug/CMakeFiles/rebuild_cache.dir
