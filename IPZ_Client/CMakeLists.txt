@@ -7,6 +7,9 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(IPZ_Client
-    src/main.cpp
     external/olcPixelGameEngine.h
+    external/olcPixelGameEngine.cpp
+    src/graphics.h
+    src/graphics.cpp
+    src/main.cpp
     )

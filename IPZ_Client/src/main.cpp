@@ -1,16 +1,15 @@
-#define OLC_IMAGE_STB
-#define OLC_PGE_APPLICATION
-#define PI 3.14159265358979323846
-#include "olcPixelGameEngine.h"
+#include "graphics.h"
 
-using namespace olc;
+
+
+using namespace IPZ;
 
 class Example : public olc::PixelGameEngine
 {
 public:
-    olc::Sprite test;
-    olc::Decal* testDecal;
-    vf2d pos = vf2d(0,50);
+    Sprite* sprite;
+    Camera camera;
+    olc::vf2d pos = olc::vf2d(0,50);
     Example()
     {
         sAppName = "Unnamed Game Client";
@@ -19,27 +18,50 @@ public:
 public:
     bool OnUserCreate() override
     {
-        test.LoadFromFile("../assets/img/test.png");
-        testDecal = new Decal(&test);
+        sprite = new Sprite("../assets/img/test.png");
         return true;
     }
 
     bool OnUserUpdate(float dt) override
     {
-        Clear(VERY_DARK_GREY);
-        auto screenW = ScreenWidth();
-        auto screenH = ScreenHeight();
-        float scale = 0.5;
-        float speed = 100;
-        auto startingPos = -test.width/2 * scale;
+        // WS keys to tilt camera
+        if (GetKey(olc::Key::W).bHeld) camera.pitch += 1.0f * dt;
+        if (GetKey(olc::Key::S).bHeld) camera.pitch -= 1.0f * dt;
 
-        pos.x += speed * dt;
-        pos.y = (screenH/2 - test.height*scale/2) * cos((pos.x-startingPos)*(2 * PI/(screenW-test.width*scale))) + screenH/2;
-        if(pos.x > screenW + test.width*scale/2)
-            pos.x = startingPos;
+        // DA Keys to manually rotate camera
+        if (GetKey(olc::Key::D).bHeld) camera.angle += 1.0f * dt;
+        if (GetKey(olc::Key::A).bHeld) camera.angle -= 1.0f * dt;
 
-        vf2d centered = vf2d(pos.x - test.width*scale/2, pos.y - test.height*scale/2);
-        DrawDecal(centered, testDecal, vf2d(scale, scale));
+        // QZ Keys to zoom in or out
+        if (GetKey(olc::Key::Q).bHeld) camera.zoom += 5.0f * dt;
+        if (GetKey(olc::Key::Z).bHeld) camera.zoom -= 5.0f * dt;
+
+        //pos
+        if (GetKey(olc::Key::LEFT).bHeld) camera.pos.x   -= 1000.0f * dt / camera.zoom;
+        if (GetKey(olc::Key::RIGHT).bHeld) camera.pos.x  += 1000.0f * dt / camera.zoom;
+        if (GetKey(olc::Key::UP).bHeld) camera.pos.y     -= 1000.0f * dt / camera.zoom;
+        if (GetKey(olc::Key::DOWN).bHeld) camera.pos.y   += 1000.0f * dt / camera.zoom;
+
+        Clear(olc::VERY_DARK_GREY);
+//        auto screenW = ScreenWidth();
+//        auto screenH = ScreenHeight();
+//        float scale = 0.2;
+//        float speed = 100;
+//        auto startingPos = -sprite->width()/2 * scale;
+
+//        pos.x += speed * dt;
+//        pos.y = (screenH/2 - sprite->height()*scale/2) * cos((pos.x-startingPos)*(2 * PI/(screenW-sprite->width()*scale))) + screenH/2;
+//        if(pos.x > screenW + sprite->width()*scale/2)
+//            pos.x = startingPos;
+//        olc::vf2d centered = olc::vf2d(pos.x - sprite->width()*scale/2, pos.y - sprite->height()*scale/2);
+//        sprite->pos = centered;
+        sprite->translate3d(camera, {ScreenWidth(), ScreenHeight()});
+//        DrawDecal(sprite->pos, sprite->decal, olc::vf2d(scale, scale));
+        auto points = sprite->getWarpedPoints();
+        DrawWarpedDecal(sprite->decal, points);
+        DrawStringDecal({0,0}, "Zoom: " + std::to_string(camera.zoom));
+        for(int i=0; i<4; i++)
+            std::cout<<"Point"<<i<<"x:"<<points[i].x<<"    "<<"y:"<<points[i].y<<"\n";
         return true;
     }
 };
@@ -48,7 +70,7 @@ public:
 int main()
 {
     Example demo;
-    if (demo.Construct(640, 360, 2, 2, false, true))
+    if (demo.Construct(680, 340, 2, 2, false, true))
         demo.Start();
 
     return 0;
