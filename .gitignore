@@ -15,3 +15,13 @@
 #All
 *.user
 *.autosave
+.vs
+/Debug/olcPixelGameEngine.obj
+/IPZ_Client/out/build/x64-Debug
+/Debug
+/NetworkHandler.cpp
+/tests.cpp
+/Project.vcxproj.filters
+/Project.vcxproj
+/Project.sln
+/IPZ_Shared/Debug
