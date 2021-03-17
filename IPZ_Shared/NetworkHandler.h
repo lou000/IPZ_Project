@@ -266,20 +266,6 @@ public:
 			break;
 		}
 	}
-	void RemoveCallback(MsgType type)
-	{
-		switch (type)
-		{
-		case MsgType::Connect:
-			break;
-		case MsgType::Disconnect:
-			break;
-		case MsgType::Update:
-			break;
-		default:
-			break;
-		}
-	}
 	void Listen();
 	void StartContext();
 	typename Protocol::endpoint GetEndPoint() const { return remoteEndpoint; }
@@ -303,10 +289,6 @@ private:
 			break;
 		case MsgType::Update:
 			updateCallback();
-			break;
-		case MsgType::Ready:
-			break;
-		default:
 			break;
 		}
 
@@ -389,7 +371,6 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::Connect(std::string ad
 		socket.open(asio::ip::tcp::v4());
 	}
 		
-	
 	if (owner == Owner::Client)
 	{
 		asio::ip::tcp::resolver resolver(context);
@@ -400,7 +381,6 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::Connect(std::string ad
 				if (!ec)
 				{
 					std::cout << "Connected with tcp \n";
-					//connections.emplace_back(Connection<asio::ip::tcp>(std::move(asio::ip::tcp::socket(context,endpoint))));
 					connectionCallback();
 				}
 				else
@@ -438,7 +418,6 @@ inline void NetworkHandler<asio::ip::udp, UDPConnection>::Listen()
 template<> 
 inline void NetworkHandler<asio::ip::tcp, TCPConnection>::Listen()
 {
-	std::cout << "Listen: \n";
 	acceptor->async_accept(
 		[&](std::error_code error, asio::ip::tcp::socket soc)
 		{
@@ -454,7 +433,6 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::Listen()
 				connectionCallback();
 			}
 			Listen();
-			//running = true;
 		}
 	);
 
@@ -505,29 +483,9 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::ReadHeader()
 			[this](std::error_code error, std::size_t bytes)
 			{
 				ReadHeaderHandler(error, bytes);
-				//if (error)
-				//{
-				//	std::cout << "Receive failed: " << error.message() << "\n";
-				//}
-				//else
-				//{
-				//	std::cout << "Received header: '" << tempMsg << "' (" << error.message() << ")\n";
-				//	if (tempMsg.header.size > 0)
-				//	{
-				//		ReadBody();
-				//	}
-				//	else
-				//	{
-				//		Notify();
-				//	}
-				//}
-				////SetupListen();
-				//ReadHeader();
 			});
 	}
-	
 }
-
 
 template<>
 inline void NetworkHandler<asio::ip::tcp, TCPConnection>::ReadBody()
@@ -590,75 +548,43 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::SendHeader(Message msg
 		if (msg.header.dest == MsgDestination::Multicast)
 			for (auto& conn : connections)
 			{
-				auto* pointer = new Message(msg);
-				Header* str = new Header(msg.header);
-				asio::async_write(conn.elem, asio::buffer(str, sizeof(Header)),
-					[this,str, pointer]
+				asio::async_write(conn.elem, asio::buffer(&msg.header, sizeof(Header)),
+					[this]
 					(const asio::error_code& error, std::size_t bytes_transferred)
 					{
-						std::cout << "Wrote header " << bytes_transferred << " bytes with " <<
-							error.message() << std::endl;
-						if (str->size > 0)
-							SendBody(*pointer);
-						delete str;
+						WriteHeaderHandler(error, bytes_transferred);
 					});
 			}
 		if (msg.header.dest == MsgDestination::Client)
 		{
-			auto* pointer = new Message(msg);
-			Header* str = new Header(msg.header);
-			asio::async_write(connections.at(msg.header.dest_id).elem, asio::buffer(str, sizeof(Header)),
-				[this, str, pointer]
+			asio::async_write(connections.at(msg.header.dest_id).elem, asio::buffer(&msg.header, sizeof(Header)),
+				[this]
 				(const asio::error_code& error, std::size_t bytes_transferred)
 				{
-					std::cout << "Wrote header " << bytes_transferred << " bytes with " <<
-						error.message() << std::endl;
-					if (str->size > 0)
-						SendBody(*pointer);
-					delete str;
+					WriteHeaderHandler(error, bytes_transferred);
 				});
 		}
 	}
 	else
 	{
-		auto* pointer = new Message(msg);
-		Header* str = new Header(msg.header);
-		asio::async_write(socket, asio::buffer(str, sizeof(Header)),
-			[this, str, pointer]
+		asio::async_write(socket, asio::buffer(&msg.header, sizeof(Header)),
+			[this]
 			(const asio::error_code& error, std::size_t bytes_transferred)
 			{
-				std::cout << "Wrote header " << bytes_transferred << " bytes with " <<
-					error.message() << std::endl;
-				if (str->size > 0)
-					SendBody(*pointer);
-				delete str;
+				WriteHeaderHandler(error, bytes_transferred);
 			});
 	}
 }
 template<>
 inline void NetworkHandler<asio::ip::udp, UDPConnection>::SendHeader(Message msg)
 {
-	//auto* pointer = new Message(msg);
-	//Header* str = new Header(msg.header);
-	//socket.async_send_to(asio::buffer(str, sizeof(Header)), conn.elem,
-	//	[this, str, pointer]
-	//(const asio::error_code& error, std::size_t bytes_transferred)
-	//	{
-	//		std::cout << "wrote " << bytes_transferred << " bytes with " <<
-	//			error.message() << std::endl;
-	//		if (str->size > 0)
-	//			SendBody(*pointer);
-	//		delete str;
-	//	});
 	if (owner == Owner::Server)
 	{
 		if (msg.header.dest == MsgDestination::Multicast)
 			for (auto& conn : connections)
 			{
-				auto* pointer = new Message(msg);
-				Header* str = new Header(msg.header);
-				socket.async_send_to(asio::buffer(str, sizeof(Header)), conn.elem,
-				[this, str, pointer]
+				socket.async_send_to(asio::buffer(&msg.header, sizeof(Header)), conn.elem,
+				[this]
 				(const asio::error_code& error, std::size_t bytes_transferred)
 				{
 						WriteHeaderHandler(error, bytes_transferred);
@@ -666,10 +592,8 @@ inline void NetworkHandler<asio::ip::udp, UDPConnection>::SendHeader(Message msg
 			}
 		if (msg.header.dest == MsgDestination::Client)
 		{
-			auto* pointer = new Message(msg);
-			Header* str = new Header(msg.header);
-			socket.async_send_to(asio::buffer(str, sizeof(Header)), connections.at(msg.header.dest_id).elem,
-			[this,str, pointer]
+			socket.async_send_to(asio::buffer(&msg.header, sizeof(Header)), connections.at(msg.header.dest_id).elem,
+			[this]
 			(const asio::error_code& error, std::size_t bytes_transferred)
 			{
 				WriteHeaderHandler(error, bytes_transferred);
@@ -678,10 +602,8 @@ inline void NetworkHandler<asio::ip::udp, UDPConnection>::SendHeader(Message msg
 	}
 	else
 	{
-		auto* pointer = new Message(msg);
-		Header* str = new Header(msg.header);
-		socket.async_send_to(asio::buffer(str, sizeof(Header)), remoteEndpoint,
-		[this, str, pointer]
+		socket.async_send_to(asio::buffer(&msg.header, sizeof(Header)), remoteEndpoint,
+		[this]
 		(const asio::error_code& error, std::size_t bytes_transferred)
 		{
 			WriteHeaderHandler(error, bytes_transferred);
@@ -697,9 +619,8 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::SendBody(Message msg)
 		if (msg.header.dest == MsgDestination::Multicast)
 			for (auto& conn : connections)
 			{
-				auto* pointer = new Message(msg);
-				asio::async_write(conn.elem, asio::buffer(pointer->body.data(), msg.body.size()),
-				[this, pointer]
+				asio::async_write(conn.elem, asio::buffer(msg.body.data(), msg.body.size()),
+				[this]
 				(const asio::error_code& error, std::size_t bytes_transferred)
 				{
 					WriteBodyHandler(error, bytes_transferred);
@@ -707,9 +628,8 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::SendBody(Message msg)
 			}
 		if (msg.header.dest == MsgDestination::Client)
 		{
-			auto* pointer = new Message(msg);
-			asio::async_write(connections.at(msg.header.dest_id).elem, asio::buffer(pointer->body.data(), msg.body.size()),
-			[this, pointer]
+			asio::async_write(connections.at(msg.header.dest_id).elem, asio::buffer(msg.body.data(), msg.body.size()),
+			[this]
 			(const asio::error_code& error, std::size_t bytes_transferred)
 			{
 				WriteBodyHandler(error, bytes_transferred);
@@ -718,9 +638,8 @@ inline void NetworkHandler<asio::ip::tcp, TCPConnection>::SendBody(Message msg)
 	}
 	else
 	{
-		auto* pointer = new Message(msg);
-		asio::async_write(socket, asio::buffer(pointer->body.data(), msg.body.size()),
-		[this, pointer]
+		asio::async_write(socket, asio::buffer(msg.body.data(), msg.body.size()),
+		[this]
 		(const asio::error_code& error, std::size_t bytes_transferred)
 		{
 			WriteBodyHandler(error, bytes_transferred);
@@ -736,9 +655,8 @@ inline void NetworkHandler<asio::ip::udp, UDPConnection>::SendBody(Message msg)
 		if (msg.header.dest == MsgDestination::Multicast)
 			for (auto& conn : connections)
 			{
-				auto* pointer = new Message(msg);
-				socket.async_send_to(asio::buffer(pointer->body.data(), msg.body.size()), conn.elem,
-				[this, pointer]
+				socket.async_send_to(asio::buffer(msg.body.data(), msg.body.size()), conn.elem,
+				[this]
 				(const asio::error_code& error, std::size_t bytes_transferred)
 				{
 						WriteBodyHandler(error, bytes_transferred);
@@ -746,9 +664,8 @@ inline void NetworkHandler<asio::ip::udp, UDPConnection>::SendBody(Message msg)
 			}
 		if (msg.header.dest == MsgDestination::Client)
 		{
-			auto* pointer = new Message(msg);
-			socket.async_send_to(asio::buffer(pointer->body.data(), msg.body.size()), connections.at(msg.header.dest_id).elem,
-			[this, pointer]
+			socket.async_send_to(asio::buffer(msg.body.data(), msg.body.size()), connections.at(msg.header.dest_id).elem,
+			[this]
 			(const asio::error_code& error, std::size_t bytes_transferred)
 			{
 				WriteBodyHandler(error, bytes_transferred);
@@ -757,9 +674,8 @@ inline void NetworkHandler<asio::ip::udp, UDPConnection>::SendBody(Message msg)
 	}
 	else
 	{
-		auto* pointer = new Message(msg);
-		socket.async_send_to(asio::buffer(pointer->body.data(), msg.body.size()), remoteEndpoint,
-		[this, pointer]
+		socket.async_send_to(asio::buffer(msg.body.data(), msg.body.size()), remoteEndpoint,
+		[this]
 		(const asio::error_code& error,std::size_t bytes_transferred)
 		{
 			WriteBodyHandler(error, bytes_transferred);
