@@ -3,7 +3,7 @@
 project(IPZ_Client LANGUAGES CXX)
 include_directories(src external)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(IPZ_Client
@@ -12,5 +12,6 @@ add_executable(IPZ_Client
     external/olcPGEX_Graphics3D.h
     src/game.h
     src/graphics.h
+    src/asset_manager.cpp
     src/main.cpp
     )

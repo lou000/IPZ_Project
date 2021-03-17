@@ -16,7 +16,7 @@ std::ostream& operator<<(std::ostream& os, const vec3& vec)
 }
 
 struct Camera{
-    vec3 pos = {1,-0.5,-2};
+    vec3 pos = {0,0,-2};
     vec3 dir = {0,0,1};
     vec2 screenSize = {0,0};
     float fov = 90.0f;

@@ -85,8 +85,8 @@ public:
         if (GetKey(olc::Key::A).bHeld) camera.dir = olc::GFX3D::Math::Mat_MultiplyVector(rotYn, camera.dir);
 
         // QZ Keys to zoom in or out
-        if (GetKey(olc::Key::Q).bHeld) camera.pos.z += 2.0f * dt;
-        if (GetKey(olc::Key::Z).bHeld) camera.pos.z -= 2.0f * dt;
+        if (GetKey(olc::Key::Q).bHeld) camera.pos.y -= 2.0f * dt;
+        if (GetKey(olc::Key::Z).bHeld) camera.pos.y += 2.0f * dt;
 
         //pos
         if (GetKey(olc::Key::LEFT).bHeld) camera.pos.x   -= 2.0f * dt;
@@ -108,6 +108,8 @@ public:
         pipe.SetProjection(camera.fov, (float)ScreenHeight()/(float)ScreenWidth(), camera.clipNear,
                            camera.clipFar, 0, 0, (float)ScreenWidth(), (float)ScreenHeight());
         olc::GFX3D::mat4x4 matWorld = olc::GFX3D::Math::Mat_MakeRotationY(cubeRotY);
+
+
         pipe.SetTransform(matWorld);
         pipe.SetTexture(a);
         olc::GFX3D::vec3d lightdir = { 1.0f, 1.0f, -1.0f };
