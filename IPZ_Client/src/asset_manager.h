@@ -12,7 +12,7 @@ struct Dir{
     FILE_NOTIFY_INFORMATION buffer[2][512];
 
     std::filesystem::path path;
-    std::unordered_set<std::string> watchedFiles;
+    std::unordered_set<std::string> watchedFiles; //this should be in asset class
 
     int bufferIndex = 0;
 
@@ -23,15 +23,19 @@ struct Dir{
 };
 
 struct AssetManager{
+    // For now the hotloader functionality is run on the main thread, if it turns out to be
+    // too inefficiant we can always move it to separate thread
     std::unordered_set<Dir*> dirs;
     std::unordered_set<std::string> reloadList;
 
     void addFile(const std::string& filePath);
+    void removeFile(const std::string& filePath);
     void checkForChanges();
 };
 
 void AssetManager::addFile(const std::string& filePath)
 {
+    //TODO: error logging
     auto path = std::filesystem::path(filePath);
     Dir* dir =  new Dir();
     dir->path = path.remove_filename();
@@ -42,26 +46,27 @@ void AssetManager::addFile(const std::string& filePath)
         const WCHAR *dirPath = dir->path.c_str();
 
         dir->handle = CreateFileW(
-            dirPath, // dir
+            dirPath,
             FILE_LIST_DIRECTORY,
-            FILE_SHARE_READ/*|FILE_SHARE_DELETE*/|FILE_SHARE_WRITE,  // shouldnt allow deletions?
-            NULL, // security descriptor
-            OPEN_EXISTING, // how to create
-            FILE_FLAG_BACKUP_SEMANTICS  | FILE_FLAG_OVERLAPPED , // file attributes
-            NULL); // file with attributes to copy
+            FILE_SHARE_READ/*|FILE_SHARE_DELETE*/|FILE_SHARE_WRITE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS  | FILE_FLAG_OVERLAPPED ,
+            NULL);
+
         ZeroMemory(dir->buffer, sizeof(dir->buffer));
         ZeroMemory(&dir->overlapped, sizeof(dir->overlapped));
         dir->overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
         auto ret = ReadDirectoryChangesW(
-                 dir->handle, // handle to directory
-                 &dir->buffer[dir->bufferIndex], // read results buffer
-                 sizeof(dir->buffer[dir->bufferIndex]), // length of buffer
-                 FALSE, /* monitoring option */
-                 FILE_NOTIFY_CHANGE_LAST_WRITE, /* filter conditions */
-                 NULL, /* bytes returned */
-                 &dir->overlapped, /* overlapped buffer */
-                 NULL); /* completion routine */
+                 dir->handle,
+                 &dir->buffer[dir->bufferIndex],
+                 sizeof(dir->buffer[dir->bufferIndex]),
+                 FALSE,
+                 FILE_NOTIFY_CHANGE_LAST_WRITE,
+                 NULL,
+                 &dir->overlapped,
+                 NULL);
         if(!ret)
             wprintf(L"ReadDirectoryChangesW failed with 0x%x\n", GetLastError());
     }
@@ -69,6 +74,7 @@ void AssetManager::addFile(const std::string& filePath)
 
 void AssetManager::checkForChanges()
 {
+    // TODO: error logging
     for(auto dir : dirs)
     {
         if (!dir->overlapped.hEvent)
@@ -78,32 +84,27 @@ void AssetManager::checkForChanges()
         if (dwObj != WAIT_OBJECT_0)
             break;
 
-        // Read the asynchronous result of the previous call to ReadDirectory
         DWORD dwNumberbytes;
         GetOverlappedResult(dir->handle, &dir->overlapped, &dwNumberbytes, FALSE);
 
-        // Browse the list of FILE_NOTIFY_INFORMATION entries
         FILE_NOTIFY_INFORMATION *pFileNotify = dir->buffer[dir->bufferIndex];
         dir->bufferIndex = !dir->bufferIndex;
 
-        // start a new asynchronous call to ReadDirectory in the alternate buffer
         ReadDirectoryChangesW(
-            dir->handle, /* handle to directory */
-            &dir->buffer[dir->bufferIndex], /* read results buffer */
-            sizeof(dir->buffer[dir->bufferIndex]), /* length of buffer */
-            FALSE, /* monitoring option */
-            //FILE_NOTIFY_CHANGE_CREATION|
-            FILE_NOTIFY_CHANGE_LAST_WRITE, /* filter conditions */
-            NULL, /* bytes returned */
-            &dir->overlapped, /* overlapped buffer */
-            NULL); /* completion routine */
+            dir->handle,
+            &dir->buffer[dir->bufferIndex],
+            sizeof(dir->buffer[dir->bufferIndex]),
+            FALSE,
+            FILE_NOTIFY_CHANGE_LAST_WRITE,
+            NULL,
+            &dir->overlapped,
+            NULL);
 
         while(true) {
+            //this is the part where we need to see if file is an asset and add path+filename to reloadList
             std::wstring filename(pFileNotify->FileName, pFileNotify->FileNameLength / sizeof(WCHAR));
             std::wcout<<filename<<" changed\n";
 
-
-            // step to the next entry if there is one
             if (!pFileNotify->NextEntryOffset)
                 break;
             pFileNotify = (FILE_NOTIFY_INFORMATION *)((PBYTE)pFileNotify + pFileNotify->NextEntryOffset);
