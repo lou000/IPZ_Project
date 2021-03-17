@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "graphics.h"
+#include "asset_manager.h"
 
 using namespace IPZ;
 class Game : public olc::PixelGameEngine
@@ -19,6 +20,7 @@ public:
     olc::GFX3D::PipeLine pipe;
     Sprite* test;
     Camera camera;
+    AssetManager assets;
     float cubeRotY = 0;
 
 public:
@@ -65,12 +67,15 @@ public:
 
         };
 
+        assets.addFile("../assets/config/test.txt");
+
+
         return true;
     }
 
     bool OnUserUpdate(float dt) override
     {
-
+        assets.checkForChanges();
         olc::GFX3D::mat4x4 rotX = olc::GFX3D::Math::Mat_MakeRotationX(1.0f * dt);
         olc::GFX3D::mat4x4 rotXn = olc::GFX3D::Math::Mat_MakeRotationX(-1.0f * dt);
         // WS keys to tilt camera

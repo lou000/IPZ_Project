@@ -12,6 +12,6 @@ add_executable(IPZ_Client
     external/olcPGEX_Graphics3D.h
     src/game.h
     src/graphics.h
-    src/asset_manager.cpp
+    src/asset_manager.h
     src/main.cpp
     )
