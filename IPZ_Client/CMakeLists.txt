@@ -13,5 +13,6 @@ add_executable(IPZ_Client
     src/game.h
     src/graphics.h
     src/asset_manager.h
+    src/assets.h
     src/main.cpp
     )

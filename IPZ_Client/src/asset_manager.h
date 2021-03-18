@@ -1,9 +1,11 @@
-﻿#include "windows.h"
-#include "unordered_set"
-#include "stb_image.h"
-#include "stb_image_resize.h"
+﻿#pragma once
+#include "windows.h"
+#include "assets.h"
+#include <unordered_set>
 #include <filesystem>
 #include <iostream>
+#include <memory>
+#include <map>
 #define UNUSED(x) (void)(x)
 
 struct Dir{
@@ -12,7 +14,7 @@ struct Dir{
     FILE_NOTIFY_INFORMATION buffer[2][512];
 
     std::filesystem::path path;
-    std::unordered_set<std::string> watchedFiles; //this should be in asset class
+    std::map<std::filesystem::path, std::shared_ptr<Asset>> assets;
 
     int bufferIndex = 0;
 
@@ -22,24 +24,27 @@ struct Dir{
     }
 };
 
-struct AssetManager{
+struct AssetManager{ // this right here should be a singleton
     // For now the hotloader functionality is run on the main thread, if it turns out to be
     // too inefficiant we can always move it to separate thread
-    std::unordered_set<Dir*> dirs;
-    std::unordered_set<std::string> reloadList;
+    std::map<std::filesystem::path, std::shared_ptr<Asset>> assets;
 
-    void addFile(const std::string& filePath);
-    void removeFile(const std::string& filePath);
-    void checkForChanges();
+private:
+    std::unordered_set<std::unique_ptr<Dir>> dirs;
+    void addFileWatch(const std::wstring& filePath);
+    void removeFileWatch(const std::wstring& filePath);
+
+public:
+    void checkForChanges(); // run this as often as convieniant
+    void tryReloadAssets(); // files may still be locked by application making changes
 };
 
-void AssetManager::addFile(const std::string& filePath)
+void AssetManager::addFileWatch(const std::wstring& filePath)
 {
     //TODO: error logging
     auto path = std::filesystem::path(filePath);
-    Dir* dir =  new Dir();
+    auto dir =  std::make_unique<Dir>();
     dir->path = path.remove_filename();
-    dir->watchedFiles.insert(path.string());
     auto r = dirs.insert(dir);
     if(r.second) //If the dir was succesfully added to the set then setup the watch
     {
@@ -54,6 +59,7 @@ void AssetManager::addFile(const std::string& filePath)
             FILE_FLAG_BACKUP_SEMANTICS  | FILE_FLAG_OVERLAPPED ,
             NULL);
 
+        //the buffer may overflow we should handle this, windows is providing us with info about this
         ZeroMemory(dir->buffer, sizeof(dir->buffer));
         ZeroMemory(&dir->overlapped, sizeof(dir->overlapped));
         dir->overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -75,7 +81,7 @@ void AssetManager::addFile(const std::string& filePath)
 void AssetManager::checkForChanges()
 {
     // TODO: error logging
-    for(auto dir : dirs)
+    for(auto& dir : dirs)
     {
         if (!dir->overlapped.hEvent)
             break;
@@ -101,9 +107,18 @@ void AssetManager::checkForChanges()
             NULL);
 
         while(true) {
-            //this is the part where we need to see if file is an asset and add path+filename to reloadList
             std::wstring filename(pFileNotify->FileName, pFileNotify->FileNameLength / sizeof(WCHAR));
-            std::wcout<<filename<<" changed\n";
+            auto fullPath = dir->path.replace_filename(filename);
+            if(dir->assets.count(fullPath)>0)
+            {
+                dir->assets[fullPath]->reload();
+                std::cout<<"Asset '"<<fullPath<<"' found and marked for reload";
+            }
+            else
+            {
+                std::cout<<"There is no asset '"<<fullPath<<"'";
+            }
+            std::cout<<fullPath<<" changed\n";
 
             if (!pFileNotify->NextEntryOffset)
                 break;
