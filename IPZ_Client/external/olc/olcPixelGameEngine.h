@@ -661,7 +661,7 @@ namespace olc
         enum Flip { NONE = 0, HORIZ = 1, VERT = 2 };
 
     public:
-        void SetSampleMode(olc::Sprite::Mode mode = olc::Sprite::Mode::NORMAL);
+        void SetSa  mpleMode(olc::Sprite::Mode mode = olc::Sprite::Mode::NORMAL);
         Pixel GetPixel(int32_t x, int32_t y) const;
         bool  SetPixel(int32_t x, int32_t y, Pixel p);
         Pixel GetPixel(const olc::vi2d& a) const;
@@ -1107,7 +1107,7 @@ namespace olc
 // O------------------------------------------------------------------------------O
 // | START OF OLC_PGE_APPLICATION                                                 |
 // O------------------------------------------------------------------------------O
-#ifdef OLC_PGE_APPLICATION
+//#ifdef OLC_PGE_APPLICATION
 #undef OLC_PGE_APPLICATION
 
 // O------------------------------------------------------------------------------O
@@ -4253,7 +4253,7 @@ namespace olc
 // #define OLC_PGE_APPLICATION
 // #include "olcPixelGameEngine.h"
 
-#if defined(OLC_IMAGE_STB)
+//#if defined(OLC_IMAGE_STB)
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 namespace olc
