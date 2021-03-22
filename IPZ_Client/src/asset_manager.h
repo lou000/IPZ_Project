@@ -29,26 +29,36 @@ struct AssetManager{ // this right here should be a singleton
     // too inefficiant we can always move it to separate thread
     std::map<std::filesystem::path, std::shared_ptr<Asset>> assets;
 
-private:
-    std::unordered_set<std::unique_ptr<Dir>> dirs;
-    void addFileWatch(const std::wstring& filePath);
-    void removeFileWatch(const std::wstring& filePath);
-
 public:
+    void addAsset(std::shared_ptr<Asset> asset);
     void checkForChanges(); // run this as often as convieniant
     void tryReloadAssets(); // files may still be locked by application making changes
+
+private:
+    std::unordered_set<std::shared_ptr<Dir>> dirs;
+    void addFileWatch(const std::filesystem::path& filePath);
+    void removeFileWatch(const std::filesystem::path& filePath);
+
 };
 
-void AssetManager::addFileWatch(const std::wstring& filePath)
+void AssetManager::addAsset(std::shared_ptr<Asset> asset)
+{
+    assets.insert({asset->path, asset});
+    addFileWatch(asset->path);
+}
+
+void AssetManager::addFileWatch(const std::filesystem::path& filePath)
 {
     //TODO: error logging
-    auto path = std::filesystem::path(filePath);
-    auto dir =  std::make_unique<Dir>();
-    dir->path = path.remove_filename();
+    auto dir =  std::make_shared<Dir>();
+    dir->path = filePath;
+    dir->path = dir->path.remove_filename();
+
     auto r = dirs.insert(dir);
+
     if(r.second) //If the dir was succesfully added to the set then setup the watch
     {
-        const WCHAR *dirPath = dir->path.c_str();
+        const WCHAR* dirPath = dir->path.wstring().c_str();
 
         dir->handle = CreateFileW(
             dirPath,
@@ -125,5 +135,11 @@ void AssetManager::checkForChanges()
             pFileNotify = (FILE_NOTIFY_INFORMATION *)((PBYTE)pFileNotify + pFileNotify->NextEntryOffset);
         }
     }
+}
+
+void AssetManager::tryReloadAssets()
+{
+    for(auto asset : assets)
+        asset.second->reload();
 }
 

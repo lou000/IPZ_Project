@@ -1,36 +1,70 @@
 #pragma once
 #include <filesystem>
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_resize.h"
 #include "glm.hpp"
 
+using namespace glm;
+
 class Asset{
-    std::filesystem::path path;
     bool rld = false;
 public:
+    std::filesystem::path path;
     void reload(){rld = true;}
     virtual void doReload() = 0;
 };
 
 class Sprite : public Asset
 {
-    uint16_t width      = 0;
-    uint16_t height     = 0;
-    uint16_t channels   = 0;
-    glm::uvec4* data = nullptr;
+public:
+    Sprite() = default;
+    Sprite(const std::filesystem::path& path);
+    ~Sprite();
+    uint16 width  = 0;
+    uint16 height = 0;
+    u8vec4* data  = nullptr;
 
 public:
-    bool loadFromFile(char* file);
+    bool loadFromFile(const std::filesystem::path& path);
     virtual void doReload() override;
 };
 
-bool Sprite::loadFromFile(char* file){
+Sprite::Sprite(const std::filesystem::path& path)
+{
+    loadFromFile(path);
+    this->path = path;
+}
+
+Sprite::~Sprite()
+{
+    if(data)
+        delete[] data;
+}
+
+void Sprite::doReload()
+{
+    loadFromFile(path);
+}
+
+bool Sprite::loadFromFile(const std::filesystem::path& path){
+
+    //TODO: add error logging
     int w = 0, h = 0, ch = 0;
-    if(!std::filesystem::exists(file))
+
+    if(data)
+        delete[] data;
+
+    if(!std::filesystem::exists(path))
         return false;
-    data = (glm::uvec4*) stbi_load(file, &w, &h, &ch, 4);
+
+    auto temp = stbi_load(path.string().c_str(), &w, &h, &ch, 4);
+    if(!temp)
+        return false;
     width = w;
     height = h;
-    channels = ch;
+
+    data = new u8vec4[w * h];
+    std::memcpy(data, temp, w * h * 4);
     return true;
 }
