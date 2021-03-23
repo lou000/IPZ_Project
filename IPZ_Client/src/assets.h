@@ -69,7 +69,7 @@ bool Sprite::loadFromFile(const std::filesystem::path& path){
 
     //Delete old data
     if(data != nullptr)
-        delete[] data;
+        delete[] data; data = nullptr;
 
     width = w;
     height = h;

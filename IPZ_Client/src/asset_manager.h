@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "windows.h"
 #include "assets.h"
-#include <unordered_set>
 #include <filesystem>
 #include <iostream>
 #include <memory>
