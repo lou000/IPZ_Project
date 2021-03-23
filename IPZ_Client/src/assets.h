@@ -1,18 +1,19 @@
-#pragma once
-#include <filesystem>
+﻿#pragma once
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include "stb_image_resize.h"
 #include "glm.hpp"
+#include <filesystem>
+#include <iostream>
 
 using namespace glm;
 
 class Asset{
-    bool rld = false;
 public:
     std::filesystem::path path;
-    void reload(){rld = true;}
     virtual void doReload() = 0;
+    bool rld = false;
+
 };
 
 class Sprite : public Asset
@@ -44,7 +45,11 @@ Sprite::~Sprite()
 
 void Sprite::doReload()
 {
-    loadFromFile(path);
+    if(loadFromFile(path))
+    {
+        std::cout<<"Sprite "<<path<<" reloaded.\n";
+        rld = false;
+    }
 }
 
 bool Sprite::loadFromFile(const std::filesystem::path& path){
@@ -52,7 +57,7 @@ bool Sprite::loadFromFile(const std::filesystem::path& path){
     //TODO: add error logging
     int w = 0, h = 0, ch = 0;
 
-    if(data)
+    if(data != nullptr)
         delete[] data;
 
     if(!std::filesystem::exists(path))

@@ -35,70 +35,78 @@ public:
     void tryReloadAssets(); // files may still be locked by application making changes
 
 private:
-    std::unordered_set<std::shared_ptr<Dir>> dirs;
-    void addFileWatch(const std::filesystem::path& filePath);
-    void removeFileWatch(const std::filesystem::path& filePath);
+    void addDirWatch(std::shared_ptr<Dir> dir);
+    std::map<std::filesystem::path, std::shared_ptr<Dir>> dirs;
+    void removeDirWatch(std::shared_ptr<Dir> dir);
 
 };
 
 void AssetManager::addAsset(std::shared_ptr<Asset> asset)
 {
     assets.insert({asset->path, asset});
-    addFileWatch(asset->path);
+    auto dir =  std::make_shared<Dir>();
+    auto p = asset->path;
+    dir->path = p.remove_filename();
+    auto r = dirs.insert({dir->path, dir});
+
+    //If directory doesnt exist add it to map
+    if(r.second)
+    {
+        dir->assets.insert({asset->path, asset});
+        addDirWatch(dir);
+    }
+    else // if it does add asset to existing one
+    {
+        auto eDir = dirs[dir->path];
+        eDir->assets.insert({asset->path, asset});
+    }
 }
 
-void AssetManager::addFileWatch(const std::filesystem::path& filePath)
+void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
 {
-    //TODO: error logging
-    auto dir =  std::make_shared<Dir>();
-    dir->path = filePath;
-    dir->path = dir->path.remove_filename();
 
-    auto r = dirs.insert(dir);
+    auto pathStr = dir->path.native();
+    const WCHAR* dirPath = pathStr.c_str();
 
-    if(r.second) //If the dir was succesfully added to the set then setup the watch
-    {
-        const WCHAR* dirPath = dir->path.wstring().c_str();
+    dir->handle = CreateFileW(
+        dirPath,
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_READ/*|FILE_SHARE_DELETE|*/|FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED ,
+        NULL);
 
-        dir->handle = CreateFileW(
-            dirPath,
-            FILE_LIST_DIRECTORY,
-            FILE_SHARE_READ/*|FILE_SHARE_DELETE*/|FILE_SHARE_WRITE,
-            NULL,
-            OPEN_EXISTING,
-            FILE_FLAG_BACKUP_SEMANTICS  | FILE_FLAG_OVERLAPPED ,
-            NULL);
+    //the buffer may overflow we should handle this, windows is providing us with info about this
+    ZeroMemory(dir->buffer, sizeof(dir->buffer));
+    ZeroMemory(&dir->overlapped, sizeof(dir->overlapped));
+    dir->overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
-        //the buffer may overflow we should handle this, windows is providing us with info about this
-        ZeroMemory(dir->buffer, sizeof(dir->buffer));
-        ZeroMemory(&dir->overlapped, sizeof(dir->overlapped));
-        dir->overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    auto ret = ReadDirectoryChangesW(
+             dir->handle,
+             &dir->buffer[dir->bufferIndex],
+             sizeof(dir->buffer[dir->bufferIndex]),
+             FALSE,
+             FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
+             NULL,
+             &dir->overlapped,
+             NULL);
+    if(!ret)
+        std::cout<<L"ReadDirectoryChangesW failed with"<<GetLastError()<<"\n";
 
-        auto ret = ReadDirectoryChangesW(
-                 dir->handle,
-                 &dir->buffer[dir->bufferIndex],
-                 sizeof(dir->buffer[dir->bufferIndex]),
-                 FALSE,
-                 FILE_NOTIFY_CHANGE_LAST_WRITE,
-                 NULL,
-                 &dir->overlapped,
-                 NULL);
-        if(!ret)
-            wprintf(L"ReadDirectoryChangesW failed with 0x%x\n", GetLastError());
-    }
 }
 
 void AssetManager::checkForChanges()
 {
     // TODO: error logging
-    for(auto& dir : dirs)
+    for(auto& [path, dir] : dirs)
     {
         if (!dir->overlapped.hEvent)
-            break;
+            continue;
 
         DWORD dwObj = WaitForSingleObject(dir->overlapped.hEvent, 0);
         if (dwObj != WAIT_OBJECT_0)
-            break;
+            continue;
 
         DWORD dwNumberbytes;
         GetOverlappedResult(dir->handle, &dir->overlapped, &dwNumberbytes, FALSE);
@@ -111,24 +119,20 @@ void AssetManager::checkForChanges()
             &dir->buffer[dir->bufferIndex],
             sizeof(dir->buffer[dir->bufferIndex]),
             FALSE,
-            FILE_NOTIFY_CHANGE_LAST_WRITE,
+            FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
             NULL,
             &dir->overlapped,
             NULL);
 
         while(true) {
             std::wstring filename(pFileNotify->FileName, pFileNotify->FileNameLength / sizeof(WCHAR));
-            auto fullPath = dir->path.replace_filename(filename);
+            auto fullPath = dir->path;
+            fullPath.replace_filename(filename);
             if(dir->assets.count(fullPath)>0)
             {
-                dir->assets[fullPath]->reload();
-                std::cout<<"Asset '"<<fullPath<<"' found and marked for reload";
+                dir->assets[fullPath]->rld = true;
+                std::cout<<"Asset '"<<fullPath<<"' found and marked for reload\n";
             }
-            else
-            {
-                std::cout<<"There is no asset '"<<fullPath<<"'";
-            }
-            std::cout<<fullPath<<" changed\n";
 
             if (!pFileNotify->NextEntryOffset)
                 break;
@@ -139,7 +143,10 @@ void AssetManager::checkForChanges()
 
 void AssetManager::tryReloadAssets()
 {
-    for(auto asset : assets)
-        asset.second->reload();
+    for(auto& asset : assets)
+    {
+        if(asset.second->rld)
+            asset.second->doReload();
+    }
 }
 
