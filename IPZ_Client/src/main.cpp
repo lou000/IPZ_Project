@@ -3,23 +3,21 @@
 
 int main()
 {
-    using namespace std::literals;
     AssetManager* assetManager = new AssetManager();
-    std::shared_ptr<Sprite> spr = std::make_shared<Sprite>("../assets/img/test.png");
+    auto spr = std::make_shared<Sprite>("../assets/img/test.png");
     assetManager->addAsset(spr);
-    std::chrono::steady_clock clock;
-    auto prevTime = clock.now();
 
     while(true){
 
-        auto now = clock.now();
-        std::chrono::duration<double> diff = now-prevTime;
-        assetManager->checkForChanges(); //this should happen often
-        if(diff > 2000ms)
-        {
-            assetManager->tryReloadAssets(); //this shouldnt
-            prevTime = now;
-        }
+        assetManager->checkForChanges();
+        assetManager->tryReloadAssets();
+
+        // Maybe we should add a timer that reloads an asset only after we are
+        // sure that the other application is done with it
+
+        // There is a timing issue right now some applications want to delete
+        // and recreate a file eg. discarding changes in github,
+        // if we try to reload file at a bad moment we will fail
     }
 
     return 0;

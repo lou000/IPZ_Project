@@ -57,15 +57,20 @@ bool Sprite::loadFromFile(const std::filesystem::path& path){
     //TODO: add error logging
     int w = 0, h = 0, ch = 0;
 
-    if(data != nullptr)
-        delete[] data;
-
+    //Check if the file is still there
     if(!std::filesystem::exists(path))
         return false;
 
+    //Try to load file
+    // we should log this? it might happen often
     auto temp = stbi_load(path.string().c_str(), &w, &h, &ch, 4);
     if(!temp)
         return false;
+
+    //Delete old data
+    if(data != nullptr)
+        delete[] data;
+
     width = w;
     height = h;
 
