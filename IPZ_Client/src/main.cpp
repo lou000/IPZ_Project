@@ -70,7 +70,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    window = glfwCreateWindow(640, 480, "Simple example", NULL, NULL);
+    window = glfwCreateWindow(640, 480, "Test", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -81,7 +81,7 @@ int main(void)
 
     glfwMakeContextCurrent(window);
     gladLoadGL(glfwGetProcAddress);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     // NOTE: OpenGL error checks have been omitted for brevity
 
@@ -113,25 +113,37 @@ int main(void)
     glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
                           sizeof(vertices[0]), (void*) (sizeof(float) * 2));
 
+
+    double lastTime = glfwGetTime();
+    int nbFrames = 0;
+
     while (!glfwWindowShouldClose(window))
     {
+        double currentTime = glfwGetTime();
+        nbFrames++;
+        if ( currentTime - lastTime >= 1.0 ){
+            char title[50];
+            double ms = 1000.0/double(nbFrames);
+            sprintf_s(title, "Test - FPS: %.1f (%.2fms)", 1/ms*1000, ms);
+            glfwSetWindowTitle(window, title);
+            nbFrames = 0;
+            lastTime += 1.0;
+        }
 
         assetManager->checkForChanges();
         assetManager->tryReloadAssets();
 
-        float ratio;
         int width, height;
         mat4x4 m, p, mvp;
 
         glfwGetFramebufferSize(window, &width, &height);
-        ratio = width / (float) height;
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
         m = mat4x4(1.0f);
-        m = glm::rotate(m, (float) glfwGetTime(), vec3(0, 1, 0));
-        p = glm::ortho(-10.0f,10.0f,-10.0f,10.0f,0.0f,100.0f);
+        m = glm::rotate(m, (float) glfwGetTime(), vec3(0, 0, 1));
+        p = glm::ortho(-1.0f,1.0f,-1.0f,1.0f,0.0f,100.0f);
         mvp = p * m;
 
         glUseProgram(program);
