@@ -1,10 +1,10 @@
-﻿#include "asset_manager.h"
-#include <chrono>
+﻿#include <chrono>
 #include <gl.h>
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#include "asset_manager.h"
 
 static const struct
 {
@@ -39,8 +39,7 @@ static const char* fragment_shader_text =
 
 static void error_callback(int error, const char* description)
 {
-    UNUSED(error);
-    fprintf(stderr, "Error: %s\n", description);
+    ASSERT_WARNING(0, "GLFW ERROR: %d\n%s", error, description);
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -54,8 +53,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 int main(void)
 {
     AssetManager* assetManager = new AssetManager();
-    auto spr = std::make_shared<Sprite>("../assets/img/test.png");
-    assetManager->addAsset(spr);
+    assetManager->addAsset(std::make_shared<Sprite>("../assets/img/test.png"));
 
 
     GLFWwindow* window;
