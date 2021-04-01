@@ -2,33 +2,46 @@
 #include <filesystem>
 #include <iostream>
 #include "utilities.h"
-#include "stb_image_resize.h"
 #include "glm.hpp"
+#include "gl.h"
 
 
 using namespace glm;
 
 class Asset{
+    friend struct AssetManager;
 public:
-    std::filesystem::path path;
     virtual void doReload() = 0;
-    bool rld = false;
+protected:
+    bool reloadScheduled = false;
+    std::filesystem::path path;
 
 };
 
-class Sprite : public Asset
+class Texture : public Asset
 {
 public:
-    Sprite() = default;
-    Sprite(const std::filesystem::path& path);
-    ~Sprite();
-    uint16 width  = 0;
-    uint16 height = 0;
-    u8vec4* data  = nullptr;
+    Texture(GLenum format, GLenum formatInternal, uint32 width, uint32 height);
+    Texture(const std::filesystem::path& path);
+    ~Texture();
+
+private:
+    uint32 m_width  = 0;
+    uint32 m_height = 0;
+    uint32 m_id     = 0;
+    GLenum m_format = 0;
+    GLenum m_formatInternal = 0;
+
+    void* data  = nullptr;
 
 public:
-    bool loadFromFile(const std::filesystem::path& path);
     virtual void doReload() override;
+    void setTextureData(void* data);
+
+private:
+    void initTexture();
+    bool loadFromFile(const std::filesystem::path& path);
+    void loadDebugTexture(GLenum format, GLenum formatInternal, uint32 width, uint32 height);
 };
 
 

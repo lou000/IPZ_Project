@@ -89,7 +89,7 @@ void AssetManager::checkForChanges()
             fullPath.replace_filename(filename);
             if(dir->assets.count(fullPath)>0)
             {
-                dir->assets[fullPath]->rld = true;
+                dir->assets[fullPath]->reloadScheduled = true;
                 std::cout<<"Asset '"<<fullPath<<"' found and marked for reload\n";
             }
 
@@ -104,7 +104,7 @@ void AssetManager::tryReloadAssets()
 {
     for(auto& asset : assets)
     {
-        if(asset.second->rld)
+        if(asset.second->reloadScheduled)
             asset.second->doReload();
     }
 }

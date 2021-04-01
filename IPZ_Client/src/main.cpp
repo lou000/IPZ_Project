@@ -53,7 +53,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 int main(void)
 {
     AssetManager* assetManager = new AssetManager();
-    assetManager->addAsset(std::make_shared<Sprite>("../assets/img/test.png"));
+    assetManager->addAsset(std::make_shared<Texture>("../assets/img/test.png"));
 
 
     GLFWwindow* window;
