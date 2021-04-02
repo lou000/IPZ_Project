@@ -5,6 +5,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 #include "asset_manager.h"
+#include "shader.h"
 
 static const struct
 {
@@ -52,9 +53,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void)
 {
-    AssetManager* assetManager = new AssetManager();
-    assetManager->addAsset(std::make_shared<Texture>("../assets/img/test.png"));
-
 
     GLFWwindow* window;
     GLuint vertex_buffer, vertex_shader, fragment_shader, program;
@@ -80,6 +78,13 @@ int main(void)
     glfwMakeContextCurrent(window);
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(0);
+
+    AssetManager::addAsset(std::make_shared<Texture>("../assets/img/test.png"));
+    std::vector<std::filesystem::path> shaderSrcs = {
+        "../assets/shaders/test.glsl",
+        "../assets/shaders/test2.glsl"
+    };
+    Shader* shaderTest = new Shader("test", shaderSrcs);
 
     // NOTE: OpenGL error checks have been omitted for brevity
 
@@ -128,8 +133,8 @@ int main(void)
             lastTime += 1.0;
         }
 
-        assetManager->checkForChanges();
-        assetManager->tryReloadAssets();
+        AssetManager::checkForChanges();
+        AssetManager::tryReloadAssets();
 
         int width, height;
         mat4x4 m, p, mvp;

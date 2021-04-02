@@ -24,19 +24,32 @@ struct Dir{
     }
 };
 
-struct AssetManager{ // this right here should be a singleton
+class AssetManager{
     // For now the hotloader functionality is run on the main thread, if it turns out to be
     // too inefficiant we can always move it to separate thread
-    std::map<std::filesystem::path, std::shared_ptr<Asset>> assets;
+    AssetManager() = default;
+    static AssetManager& getInstance(){
+        static AssetManager instance;
+        return instance;
+    }
 
 public:
-    void addAsset(std::shared_ptr<Asset> asset);
-    void checkForChanges(); // run this as often as convieniant
-    void tryReloadAssets(); // files may still be locked by application making changes
+    AssetManager(AssetManager const&)    = delete;
+    void operator=(AssetManager const&)  = delete;
+
+    static void addAsset(std::shared_ptr<Asset> asset){getInstance()._addAsset(asset);}
+    static void tryReloadAssets() {getInstance()._tryReloadAssets();}
+    static void checkForChanges() {getInstance()._checkForChanges();}
 
 private:
-    void addDirWatch(std::shared_ptr<Dir> dir);
+    void _addAsset(std::shared_ptr<Asset> asset);
+    void _tryReloadAssets(); // files may still be locked by application making changes
+    void _checkForChanges(); // run this as often as convieniant
+
+
+    std::map<std::filesystem::path, std::shared_ptr<Asset>> assets;
     std::map<std::filesystem::path, std::shared_ptr<Dir>> dirs;
+    void addDirWatch(std::shared_ptr<Dir> dir);
     void removeDirWatch(std::shared_ptr<Dir> dir);
 
 };

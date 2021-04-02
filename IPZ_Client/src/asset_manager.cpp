@@ -1,6 +1,6 @@
 ﻿#include "asset_manager.h"
 
-void AssetManager::addAsset(std::shared_ptr<Asset> asset)
+void AssetManager::_addAsset(std::shared_ptr<Asset> asset)
 {
     assets.insert({asset->path, asset});
     auto dir =  std::make_shared<Dir>();
@@ -55,7 +55,7 @@ void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
 
 }
 
-void AssetManager::checkForChanges()
+void AssetManager::_checkForChanges()
 {
     // TODO: error logging
     for(auto& [path, dir] : dirs)
@@ -100,7 +100,7 @@ void AssetManager::checkForChanges()
     }
 }
 
-void AssetManager::tryReloadAssets()
+void AssetManager::_tryReloadAssets()
 {
     for(auto& asset : assets)
     {

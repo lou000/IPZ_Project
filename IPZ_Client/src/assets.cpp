@@ -68,7 +68,7 @@ void Texture::initTexture()
 
 void Texture::setTextureData(void *d)
 {
-    if(data)
+    if(data && d!=data)
         free(data);
     data = d;
     glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, m_format, GL_UNSIGNED_BYTE, data);
@@ -112,5 +112,105 @@ bool Texture::loadFromFile(const std::filesystem::path& path){
     m_width = w;
     m_height = h;
 
+    return true;
+}
+
+
+ShaderFile::ShaderFile(const std::filesystem::path &path)
+{
+    this->path = path;
+    if(!loadFile())
+        data = nullptr;
+    if(!getTypeFromFile())
+    {
+        if(data)
+            free(data);
+        data = nullptr;
+    }
+
+}
+
+ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type)
+    :type(type)
+{
+    this->path = path;
+    if(!loadFile())
+        data = nullptr;
+}
+
+void ShaderFile::doReload()
+{
+
+}
+
+bool ShaderFile::loadFile()
+{
+    if(!std::filesystem::exists(path))
+    {
+        ASSERT_WARNING(0, "Failed to load shader: File %s doesnt exist.", path.string().c_str());
+        return false;
+    }
+    FILE* file;
+    if(_wfopen_s(&file, path.c_str(), L"r"))
+    {
+        ASSERT_WARNING(0, "Failed to load shader: Couldnt open file %s for reading.", path.string().c_str());
+        return false;
+    }
+    fseek(file, 0, SEEK_END);
+    uint64 size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    char* str = (char*)malloc(size+1);
+    fread(str, 1, size, file);
+    fclose(file);
+    str[size] = 0;
+
+    data = str;
+    return true;
+}
+
+bool ShaderFile::getTypeFromFile()
+{
+    char* token = strstr (data,"//type");
+    if(!token)
+    {
+        ASSERT_WARNING(0, "Failed to load shader: Couldnt find type token in file %s.", path.string().c_str());
+        return false;
+    }
+    char shaderType[50];
+
+    int index = 0;
+    token+=6;
+    while(isspace(*token)) token++;
+    while(*token != '\n')
+    {
+        while(isspace(*token)) token++;
+        if(index >= 50)
+        {
+            ASSERT_WARNING(0, "Failed to load shader: Cant have spaces or other characters on the line with shader token");
+            return false;
+        }
+        shaderType[index] = *token;
+        token++;
+        index++;
+    }
+    shaderType[index] = 0;
+
+    if(strcmp(shaderType, "vertex") == 0)
+        type = vertex;
+    else if(strcmp(shaderType, "tessControl") == 0)
+        type = tessControl;
+    else if(strcmp(shaderType, "tessEval") == 0)
+        type = tessEval;
+    else if(strcmp(shaderType, "geometry") == 0)
+        type = geometry;
+    else if(strcmp(shaderType, "fragment") == 0)
+        type = fragment;
+    else if(strcmp(shaderType, "compute") == 0)
+        type = compute;
+    else
+    {
+        ASSERT_WARNING(0, "Failed to load shader: Couldnt match token %s to shader type.", shaderType);
+        return false;
+    }
     return true;
 }

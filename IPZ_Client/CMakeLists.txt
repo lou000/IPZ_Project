@@ -9,19 +9,19 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 
-set(si_INCLUDE_DIRS
+set(client_INCLUDE_DIRS
     external/stb
     external/glad
     external/glfw/include/GLFW
     external/glm
     external/assert)
-include_directories(${si_INCLUDE_DIRS})
+include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
 
 file(GLOB_RECURSE client_SRC CONFIGURE_DEPENDS "src/*.h" "src/*.cpp")
 file(GLOB_RECURSE assert_SRC CONFIGURE_DEPENDS "external/assert/*.h" "external/assert/*.cpp")
 
-set(si_INCLUDE_SRCS
+set(client_INCLUDE_SRCS
     ${assert_SRC}
     )
 
