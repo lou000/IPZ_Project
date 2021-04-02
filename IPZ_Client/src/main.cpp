@@ -1,22 +1,27 @@
 ﻿#include <chrono>
 #include <gl.h>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 #include "asset_manager.h"
 #include "shader.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 static const struct
 {
     float x, y;
     float r, g, b;
-} vertices[3] =
+} vertices[4] =
     {
-        { -0.6f, -0.4f, 1.f, 0.f, 0.f },
-        {  0.6f, -0.4f, 0.f, 1.f, 0.f },
-        {   0.f,  0.6f, 0.f, 0.f, 1.f }
+        { -1.0f, -1.0f, 1.f, 0.f, 0.f },
+        { -1.0f,  1.0f, 0.f, 1.f, 0.f },
+        {  1.0f,  1.0f, 0.f, 0.f, 1.f },
+        {  1.0f, -1.0f, 1.f, 1.f, 0.f }
 };
+
+static const GLubyte
+    indices[] = {0,1,2,
+                 0,2,3};
 
 static const char* vertex_shader_text =
     "#version 110\n"
@@ -66,7 +71,7 @@ int main(void)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    window = glfwCreateWindow(640, 480, "Test", NULL, NULL);
+    window = glfwCreateWindow(800, 800, "Test", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -146,12 +151,12 @@ int main(void)
 
         m = mat4x4(1.0f);
         m = glm::rotate(m, (float) glfwGetTime(), vec3(0, 0, 1));
-        p = glm::ortho(-1.0f,1.0f,-1.0f,1.0f,0.0f,100.0f);
+        p = glm::ortho(-2.0f,2.0f,-2.0f,2.0f,0.0f,100.0f);
         mvp = p * m;
 
         glUseProgram(program);
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE,(const GLfloat*) glm::value_ptr(mvp));
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
