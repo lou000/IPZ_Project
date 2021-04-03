@@ -3,11 +3,18 @@
 #include <filesystem>
 #include <iostream>
 #include "utilities.h"
+#include "shader.h"
 #include "glm.hpp"
 #include "gl.h"
 
 
 using namespace glm;
+
+enum AssetType{
+    texture,
+    shaderFile
+};
+
 
 class Asset{
     friend class AssetManager;
@@ -15,10 +22,12 @@ public:
     virtual void doReload() = 0;
 
 protected:
+    AssetType assetType;
     bool reloadScheduled = false;
     std::filesystem::path path;
 
 };
+
 
 
 class Texture : public Asset
@@ -62,14 +71,17 @@ class ShaderFile : public Asset
     };
 
 public:
-    ShaderFile(const std::filesystem::path& path);
-    ShaderFile(const std::filesystem::path& path, ShaderType type);
+    ShaderFile(const std::filesystem::path& path, const std::string shaderName);
+    ShaderFile(const std::filesystem::path& path, ShaderType type, const std::string shaderName);
+
+    const std::string& shaderName(){return m_shaderName;}
     void doReload() override;
 
 private:
-    bool loadFile();
-    bool getTypeFromFile();
+    const std::string m_shaderName;
     ShaderType type;
+    char* loadFile();
+    bool getTypeFromFile();
     char* data;
 };
 

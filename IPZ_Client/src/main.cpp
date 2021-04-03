@@ -48,6 +48,11 @@ static void error_callback(int error, const char* description)
     ASSERT_WARNING(0, "GLFW ERROR: %d\n%s", error, description);
 }
 
+static void glErrorCallback(GLenum source​, GLenum type​, GLuint id​,
+                            GLenum severity​, GLsizei length​, const GLchar* message​, const void* userParam​){
+
+}
+
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     UNUSED(scancode);
@@ -83,15 +88,17 @@ int main(void)
     glfwMakeContextCurrent(window);
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(0);
+    glEnable(GL_DEBUG_OUTPUT);
 
     AssetManager::addAsset(std::make_shared<Texture>("../assets/img/test.png"));
     std::vector<std::filesystem::path> shaderSrcs = {
-        "../assets/shaders/test.glsl",
-        "../assets/shaders/test2.glsl"
+        "../assets/shaders/test_frag.glsl",
+        "../assets/shaders/test_vert.glsl"
     };
-    Shader* shaderTest = new Shader("test", shaderSrcs);
+    AssetManager::addShader(std::make_shared<Shader>("test", shaderSrcs));
 
     // NOTE: OpenGL error checks have been omitted for brevity
+
 
     glGenBuffers(1, &vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
@@ -135,7 +142,7 @@ int main(void)
             sprintf_s(title, "Test - FPS: %.1f (%.2fms)", 1/ms*1000, ms);
             glfwSetWindowTitle(window, title);
             nbFrames = 0;
-            lastTime += 1.0;
+            lastTime = currentTime;
         }
 
         AssetManager::checkForChanges();

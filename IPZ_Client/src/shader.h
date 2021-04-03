@@ -4,12 +4,14 @@
 #include <iostream>
 #include <glm.hpp>
 #include <memory>
-#include "asset_manager.h"
+#include "assets.h"
 #include "gl.h"
 
 using namespace glm;
 class Shader
 {
+    friend class ShaderFile;
+    friend class AssetManager;
     enum UniformType{
         _int,
         _float,
@@ -22,6 +24,10 @@ class Shader
 
 public:
     Shader(const std::string& name, std::vector<std::filesystem::path> filePaths);
+    ~Shader();
+
+    void bind();
+    void unbind();
 
 private:
     uint32 id;

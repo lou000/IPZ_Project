@@ -1,10 +1,12 @@
 ﻿#include "assets.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#include <cstdlib> //calloc
 
 Texture::Texture(GLenum format, GLenum formatInternal, uint32 width, uint32 height)
     : m_width(width), m_height(height), m_format(format), m_formatInternal(formatInternal)
 {
+    assetType = AssetType::texture;
     initTexture();
     loadDebugTexture(format, formatInternal, width, height);
     setTextureData(data);
@@ -12,6 +14,7 @@ Texture::Texture(GLenum format, GLenum formatInternal, uint32 width, uint32 heig
 
 Texture::Texture(const std::filesystem::path& path)
 {
+    assetType = AssetType::texture;
     this->path = path;
     if(!loadFromFile(path))
     {
@@ -34,9 +37,9 @@ void Texture::doReload()
     GLenum oldFormat = m_format;
     if(loadFromFile(path))
     {
-        if(oldFormat == m_format)
+        if(oldFormat != m_format)
         {
-            ASSERT_ERROR(oldFormat == m_format, "Error: You cant hot reload a texture with diffirent data format");
+            ASSERT_ERROR(0, "Error: You cant hot reload a texture using diffirent data format");
             return;
         }
         std::cout<<"Sprite "<<path<<" reloaded.\n";
@@ -116,56 +119,70 @@ bool Texture::loadFromFile(const std::filesystem::path& path){
 }
 
 
-ShaderFile::ShaderFile(const std::filesystem::path &path)
+ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName)
+    : m_shaderName(shaderName)
 {
+    assetType = AssetType::shaderFile;
     this->path = path;
-    if(!loadFile())
-        data = nullptr;
-    if(!getTypeFromFile())
-    {
-        if(data)
+    data = loadFile();
+
+    if(data)
+        if(!getTypeFromFile())
+        {
             free(data);
-        data = nullptr;
-    }
+            data = nullptr;
+        }
 
 }
 
-ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type)
-    :type(type)
+ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type, const std::string shaderName)
+    : m_shaderName(shaderName), type(type)
 {
+    assetType = AssetType::shaderFile;
     this->path = path;
-    if(!loadFile())
-        data = nullptr;
+    data = loadFile();
 }
 
 void ShaderFile::doReload()
 {
-
+    char* temp = loadFile();
+    if(temp)
+    {
+        if(data)
+            free(data);
+        data = temp;
+        reloadScheduled = false;
+        std::cout<<"Shader "<<path<<" reloaded.\n";
+    }
 }
 
-bool ShaderFile::loadFile()
+char* ShaderFile::loadFile()
 {
     if(!std::filesystem::exists(path))
     {
         ASSERT_WARNING(0, "Failed to load shader: File %s doesnt exist.", path.string().c_str());
-        return false;
+        return nullptr;
     }
     FILE* file;
     if(_wfopen_s(&file, path.c_str(), L"r"))
     {
         ASSERT_WARNING(0, "Failed to load shader: Couldnt open file %s for reading.", path.string().c_str());
-        return false;
+        return nullptr;
     }
     fseek(file, 0, SEEK_END);
     uint64 size = ftell(file);
     fseek(file, 0, SEEK_SET);
-    char* str = (char*)malloc(size+1);
+    uint64 offset = ftell(file);
+    size-=offset;
+    // size of the file will be bigger than number of chars becouse of the windows \r\n bullshit
+    // the solution is to just calloc the memory so we have zero termination in the right place anyway
+    char* str = (char*)calloc(size+1, sizeof (char));
     fread(str, 1, size, file);
     fclose(file);
     str[size] = 0;
-
-    data = str;
-    return true;
+    for(uint64 i=0; i<size+1; i++)
+        std::cout<<str[i];
+    return str;
 }
 
 bool ShaderFile::getTypeFromFile()
