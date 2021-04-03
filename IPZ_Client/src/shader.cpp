@@ -10,15 +10,15 @@ Shader::Shader(const std::string &name, std::vector<std::filesystem::path> fileP
 
 Shader::~Shader()
 {
-    if(id != 0)
-        glDeleteProgram(id);
+    if(m_id != 0)
+        glDeleteProgram(m_id);
 
 }
 
 void Shader::bind()
 {
-    if(id != 0)
-        glUseProgram(id);
+    if(m_id != 0)
+        glUseProgram(m_id);
     else
         ASSERT_WARNING(0, "Shader: Couldnt bind shader, the id is invalid");
 }
@@ -54,7 +54,8 @@ void Shader::compile()
         return;
     }
 
-    GLuint program = id == 0 ? glCreateProgram() : id;
+    GLuint program = m_id == 0 ? glCreateProgram() : m_id;
+    m_id = program;
     std::vector<uint> shaders;
 
     bool greatSuccess = true;
@@ -88,7 +89,7 @@ void Shader::compile()
         for(auto shader : shaders)
             glAttachShader(program, shader);
         glLinkProgram(program);
-        GLint success = 1;
+        GLint success = 0;
         glGetProgramiv(program, GL_LINK_STATUS, &success);
         if(success == 0)
         {

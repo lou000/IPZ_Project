@@ -23,34 +23,109 @@ static const GLubyte
     indices[] = {0,1,2,
                  0,2,3};
 
-static const char* vertex_shader_text =
-    "#version 110\n"
-    "uniform mat4 MVP;\n"
-    "attribute vec3 vCol;\n"
-    "attribute vec2 vPos;\n"
-    "varying vec3 color;\n"
-    "void main()\n"
-    "{\n"
-    "    gl_Position = MVP * vec4(vPos, 0.0, 1.0);\n"
-    "    color = vCol;\n"
-    "}\n";
-
-static const char* fragment_shader_text =
-    "#version 110\n"
-    "varying vec3 color;\n"
-    "void main()\n"
-    "{\n"
-    "    gl_FragColor = vec4(color, 1.0);\n"
-    "}\n";
 
 static void error_callback(int error, const char* description)
 {
     ASSERT_WARNING(0, "GLFW ERROR: %d\n%s", error, description);
 }
 
-static void glErrorCallback(GLenum source​, GLenum type​, GLuint id​,
-                            GLenum severity​, GLsizei length​, const GLchar* message​, const void* userParam​){
+static void glErrorCallback(GLenum source, GLenum type, GLuint id,
+                            GLenum severity, GLsizei length,
+                            const GLchar* message, const void* userParam)
+{
+    UNUSED(length);
+    UNUSED(userParam);
 
+    const char* _source;
+    const char* _type;
+
+    switch (source) {
+    case GL_DEBUG_SOURCE_API:
+        _source = "API";
+        break;
+
+    case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+        _source = "WINDOW SYSTEM";
+        break;
+
+    case GL_DEBUG_SOURCE_SHADER_COMPILER:
+        _source = "SHADER COMPILER";
+        break;
+
+    case GL_DEBUG_SOURCE_THIRD_PARTY:
+        _source = "THIRD PARTY";
+        break;
+
+    case GL_DEBUG_SOURCE_APPLICATION:
+        _source = "APPLICATION";
+        break;
+
+    case GL_DEBUG_SOURCE_OTHER:
+        _source = "UNKNOWN";
+        break;
+
+    default:
+        _source = "UNKNOWN";
+        break;
+    }
+    UNUSED(_source); //clang wouldnt shut up about this
+
+    switch (type) {
+    case GL_DEBUG_TYPE_ERROR:
+        _type = "ERROR";
+        break;
+
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        _type = "DEPRECATED BEHAVIOR";
+        break;
+
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        _type = "UDEFINED BEHAVIOR";
+        break;
+
+    case GL_DEBUG_TYPE_PORTABILITY:
+        _type = "PORTABILITY";
+        break;
+
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        _type = "PERFORMANCE";
+        break;
+
+    case GL_DEBUG_TYPE_OTHER:
+        _type = "OTHER";
+        break;
+
+    case GL_DEBUG_TYPE_MARKER:
+        _type = "MARKER";
+        break;
+
+    default:
+        _type = "UNKNOWN";
+        break;
+    }
+    UNUSED(_type); //clang woulnt shut up about whis
+
+    switch (severity) {
+    case GL_DEBUG_SEVERITY_HIGH:
+        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "HIGH", _source, message);
+        break;
+
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "MEDIUM", _source, message);
+        break;
+
+    case GL_DEBUG_SEVERITY_LOW:
+        ASSERT_DEBUG(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "LOW", _source, message);
+        break;
+
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        ASSERT_DEBUG(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "NOTIFY", _source, message);
+        break;
+
+    default:
+        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "UNKNOWN", _source, message);
+        break;
+    }
 }
 
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -65,7 +140,7 @@ int main(void)
 {
 
     GLFWwindow* window;
-    GLuint vertex_buffer, vertex_shader, fragment_shader, program;
+    GLuint vertex_buffer;
     GLint mvp_location, vpos_location, vcol_location;
 
     glfwSetErrorCallback(error_callback);
@@ -89,6 +164,7 @@ int main(void)
     gladLoadGL(glfwGetProcAddress);
     glfwSwapInterval(0);
     glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(glErrorCallback, 0);
 
     AssetManager::addAsset(std::make_shared<Texture>("../assets/img/test.png"));
     std::vector<std::filesystem::path> shaderSrcs = {
@@ -104,22 +180,11 @@ int main(void)
     glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-    vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_text, NULL);
-    glCompileShader(vertex_shader);
+    auto program = AssetManager::getShader("test");
 
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_shader_text, NULL);
-    glCompileShader(fragment_shader);
-
-    program = glCreateProgram();
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-
-    mvp_location = glGetUniformLocation(program, "MVP");
-    vpos_location = glGetAttribLocation(program, "vPos");
-    vcol_location = glGetAttribLocation(program, "vCol");
+    mvp_location = glGetUniformLocation(program->id(), "MVP");
+    vpos_location = glGetAttribLocation(program->id(), "vPos");
+    vcol_location = glGetAttribLocation(program->id(), "vCol");
 
     glEnableVertexAttribArray(vpos_location);
     glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
@@ -161,7 +226,7 @@ int main(void)
         p = glm::ortho(-2.0f,2.0f,-2.0f,2.0f,0.0f,100.0f);
         mvp = p * m;
 
-        glUseProgram(program);
+        program->bind();
         glUniformMatrix4fv(mvp_location, 1, GL_FALSE,(const GLfloat*) glm::value_ptr(mvp));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
 

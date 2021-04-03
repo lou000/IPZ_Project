@@ -40,8 +40,12 @@ public:
 
     static void addAsset(std::shared_ptr<Asset> asset){getInstance()._addAsset(asset);}
     static void removeAsset(const std::filesystem::path& assetPath){getInstance()._removeAsset(assetPath);}
+    static std::shared_ptr<Asset> getAsset(const std::filesystem::path& name) {return getInstance()._getAsset(name);}
+
     static void addShader(std::shared_ptr<Shader> shader){getInstance()._addShader(shader);}
     static void removeShader(int id){getInstance()._removeShader(id);}
+    static std::shared_ptr<Shader> getShader(const std::string& name) {return getInstance()._getShader(name);}
+
     static void tryReloadAssets() {getInstance()._tryReloadAssets();}
     static void checkForChanges() {getInstance()._checkForChanges();}
 
@@ -49,8 +53,12 @@ private:
     std::clock_t timeFirstChange = 0;
     void _addAsset(std::shared_ptr<Asset> asset);
     void _removeAsset(const std::filesystem::path& assetPath);
+    std::shared_ptr<Asset> _getAsset(const std::filesystem::path& path);
+
     void _addShader(std::shared_ptr<Shader> shader);
     void _removeShader(int id);
+    std::shared_ptr<Shader> _getShader(const std::string& name);
+
     void _tryReloadAssets(); // files may still be locked by application making changes
     void _checkForChanges(); // run this as often as convieniant
 

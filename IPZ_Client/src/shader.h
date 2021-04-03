@@ -28,9 +28,10 @@ public:
 
     void bind();
     void unbind();
+    uint32 id() {return m_id;}
 
 private:
-    uint32 id;
+    uint32 m_id = 0;
     std::string name;
     std::vector<std::shared_ptr<ShaderFile>> files;
 

@@ -22,6 +22,14 @@ void AssetManager::_addAsset(std::shared_ptr<Asset> asset)
     }
 }
 
+std::shared_ptr<Asset> AssetManager::_getAsset(const std::filesystem::path& path)
+{
+    if(fileAssets.find(path) == fileAssets.end())
+        return nullptr;
+    else
+        return fileAssets.at(path);
+}
+
 void AssetManager::_removeAsset(const std::filesystem::path &assetPath)
 {
     //TODO: DAAAAAAAWIDDD dla Ciebie.
@@ -41,6 +49,14 @@ void AssetManager::_removeShader(int id)
     //TODO: DAAAAAAAWIDDD dla Ciebie.
     // tutaj trzeba usunac shader, i zrobic _removeAsset na wszystkich
     // shaderFile z nim powiązanych
+}
+
+std::shared_ptr<Shader> AssetManager::_getShader(const std::string &name)
+{
+    if(shaders.find(name) == shaders.end())
+        return nullptr;
+    else
+        return shaders.at(name);
 }
 
 void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)

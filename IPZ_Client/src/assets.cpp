@@ -180,8 +180,8 @@ char* ShaderFile::loadFile()
     fread(str, 1, size, file);
     fclose(file);
     str[size] = 0;
-    for(uint64 i=0; i<size+1; i++)
-        std::cout<<str[i];
+//    for(uint64 i=0; i<size+1; i++)
+//        std::cout<<str[i];
     return str;
 }
 
