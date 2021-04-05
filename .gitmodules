@@ -1,0 +1,6 @@
+[submodule "IPZ_Client/external/glm"]
+	path = IPZ_Client/external/glm
+	url = https://github.com/g-truc/glm
+[submodule "IPZ_Client/external/glfw"]
+	path = IPZ_Client/external/glfw
+	url = https://github.com/glfw/glfw
