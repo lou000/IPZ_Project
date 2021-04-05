@@ -13,15 +13,15 @@ set(client_INCLUDE_DIRS
     external/stb
     external/glad
     external/glfw/include/GLFW
-    external/glm
-    external/assert
-    external/colorwin
+    external/glm/glm
+    external/ppk_assert/src
+    external/colorwin/src
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
 
 file(GLOB_RECURSE client_SRC CONFIGURE_DEPENDS "src/*.h" "src/*.cpp")
-file(GLOB_RECURSE assert_SRC CONFIGURE_DEPENDS "external/assert/*.h" "external/assert/*.cpp")
+file(GLOB_RECURSE assert_SRC CONFIGURE_DEPENDS "external/ppk_assert/src/*.h" "external/ppk_assert/src/*.cpp")
 
 set(client_INCLUDE_SRCS
     ${assert_SRC}
@@ -29,7 +29,7 @@ set(client_INCLUDE_SRCS
 
 
 add_subdirectory(external/glfw)
-add_library(glad "external/glad/src/gl.c")
+add_library(glad "external/glad/src/glad.c")
 
 add_executable(IPZ_Client ${client_SRC} ${client_INCLUDE_SRCS})
 target_link_libraries(IPZ_Client glfw glad opengl32)

@@ -1,13 +1,10 @@
 ﻿#pragma once
 #include <chrono>
-#include <gl.h>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
 #include "asset_manager.h"
 #include "shader.h"
 #include "renderer.h"
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 
 
 class App

@@ -1,5 +1,5 @@
-﻿#include "application.h"
-#include "utilities.h"
+﻿#include "utilities.h"
+#include "application.h"
 
 static void error_callback(int error, const char* description)
 {
@@ -144,7 +144,7 @@ void App::x_init(uint width, uint height)
     glfwSetKeyCallback(m_window, key_callback);
     glfwMakeContextCurrent(m_window);
 
-    gladLoadGL(glfwGetProcAddress);
+    gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
 
     //This below is for RGB formats, if we stop supporting we can remove this.

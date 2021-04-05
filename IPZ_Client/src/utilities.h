@@ -5,6 +5,10 @@
 #include "ppk_assert.h"
 #include <cstdint>
 #include <iostream>
+#include <glad.h>
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
+
 
 #define ASSERT                PPK_ASSERT
 #define ASSERT_WARNING        PPK_ASSERT_WARNING
