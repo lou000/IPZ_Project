@@ -7,7 +7,7 @@ int main(void)
 //    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2); ????
 //    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    App::init(800, 800);
+    App::init(700, 700);
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     AssetManager::addAsset(texture);
     std::vector<std::filesystem::path> shaderSrcs = {
@@ -43,6 +43,7 @@ int main(void)
         float x = w/2;
         vec4 colorStart = {0.7f,0.3f,0.7f,1.0f};
         vec4 colorEnd = {0.3f,0.2f,0.7f,1};
+        Renderer::DrawQuad({0,0,0}, {4, 4}, nullptr, 1, vec4(0.067, 0.078, 0.106, 1));
         while(x-w/2<4)
         {
             while(y-w/2<4)
