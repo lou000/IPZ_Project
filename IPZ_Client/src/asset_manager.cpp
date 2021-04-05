@@ -89,7 +89,7 @@ void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
              &dir->overlapped,
              NULL);
     if(!ret)
-        std::cout<<L"ReadDirectoryChangesW failed with"<<GetLastError()<<"\n";
+        WARN("ReadDirectoryChangesW failed with %ld\n", GetLastError());
 
 }
 
@@ -134,7 +134,7 @@ void AssetManager::_checkForChanges()
                     if(timeFirstChange == 0)
                         timeFirstChange = std::clock();
                     asset->reloadScheduled = true;
-                    std::cout<<"Asset '"<<fullPath<<"' found and marked for reload\n";
+                    LOG("Asset '%s' found and marked for reload\n", fullPath.string().c_str());
                 }
             }
 
@@ -167,7 +167,7 @@ void AssetManager::_tryReloadAssets()
                 auto sF = std::dynamic_pointer_cast<ShaderFile>(asset.second);
                 // You can add a shaderFile to assets without compiling it to a shader. But why would you?
                 if(shaders.find(sF->shaderName()) == shaders.end())
-                    ASSERT_WARNING(0, "AssetManager: Reloaded shader file that is not bound to a shader. This will have no effect.");
+                    WARN("AssetManager: Reloaded shader file that is not bound to a shader. This will have no effect.");
                 else
                     shadersToReload.insert(shaders[sF->shaderName()]);
             }

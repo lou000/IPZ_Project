@@ -14,7 +14,9 @@ set(client_INCLUDE_DIRS
     external/glad
     external/glfw/include/GLFW
     external/glm
-    external/assert)
+    external/assert
+    external/colorwin
+    )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
 

@@ -1,20 +1,45 @@
 ﻿#pragma once
+#include "colorwin.hpp"
 #define PPK_ASSERT_DISABLE_STL
+#define PPK_ASSERT_DEFAULT_LEVEL Error
 #include "ppk_assert.h"
 #include <cstdint>
+#include <iostream>
 
 #define ASSERT                PPK_ASSERT
 #define ASSERT_WARNING        PPK_ASSERT_WARNING
 #define ASSERT_DEBUG          PPK_ASSERT_DEBUG
 #define ASSERT_ERROR          PPK_ASSERT_ERROR
 #define ASSERT_FATAL          PPK_ASSERT_FATAL
-#define ASSERT_CUSTOM         PPK_ASSERT_CUSTOM
-#define ASSERT_USED           PPK_ASSERT_USED
-#define ASSERT_USED_WARNING   PPK_ASSERT_USED_WARNING
-#define ASSERT_USED_DEBUG     PPK_ASSERT_USED_DEBUG
-#define ASSERT_USED_ERROR     PPK_ASSERT_USED_ERROR
-#define ASSERT_USED_FATAL     PPK_ASSERT_USED_FATAL
-#define ASSERT_USED_CUSTOM    PPK_ASSERT_USED_CUSTOM
+#define LOG(message, ...)     PPK_ASSERT_CUSTOM(0, 0, message, __VA_ARGS__)
+#define WARN(message, ...)     PPK_ASSERT_CUSTOM(1, 0, message, __VA_ARGS__)
+#define OPENGL_LOG(message, ...)     PPK_ASSERT_CUSTOM(2, 0, message, __VA_ARGS__)
+#define OPENGL_THROW(message, ...)   PPK_ASSERT_CUSTOM(3, 0, message, __VA_ARGS__)
+
+static ppk::assert::implementation::AssertAction::AssertAction assertHandler(const char* file, int line, const char* function,
+                                                                              const char* expression, int level, const char* message)
+{
+    //TODO: DAAAAAAWID zrób to ładne i zrób do tego timestamp
+    const char* errCol = "\x1B[31m";
+    const char* resetCol = "\033[0m";
+    using namespace ppk::assert::implementation;
+    using namespace colorwin;
+    switch(level)
+    {
+    case 0: std::cout<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
+    case 1: std::cout<<errCol<<file<<" : "<<line<<"\n"<<message<<"\n\n"<<resetCol; return AssertAction::None;
+    case 2: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
+    case 3: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
+    case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;
+    case AssertLevel::Debug:
+    case AssertLevel::Error:
+    case AssertLevel::Fatal:
+        std::cout<<file<<line<<message;
+        return AssertAction::Throw;
+    }
+    std::cout<<file<<" "<<line<<"Invalid Assert level:"<<level<<"\n\n"<<message;
+    return AssertAction::Throw;
+}
 
 #define UNUSED(x) (void)(x)
 

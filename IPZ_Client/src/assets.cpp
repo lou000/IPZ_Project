@@ -40,7 +40,7 @@ void Texture::doReload()
     {
         if(oldFormat != m_format)
         {
-            ASSERT_WARNING(0, "AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
+            WARN("AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
             glDeleteTextures(1, &m_id);
             initTexture();
         }
@@ -126,7 +126,7 @@ bool Texture::loadFromFile(const std::filesystem::path& path){
         m_format = GL_RGBA;
         break;
     default:
-        ASSERT_ERROR(0, "Error: Image format not supported!");
+        ASSERT(0, "Error: Image format not supported!");
         return false;
     }
     m_width = w;
@@ -177,13 +177,13 @@ char* ShaderFile::loadFile()
 {
     if(!std::filesystem::exists(path))
     {
-        ASSERT_WARNING(0, "Failed to load shader: File %s doesnt exist.", path.string().c_str());
+        WARN("Failed to load shader: File %s doesnt exist.", path.string().c_str());
         return nullptr;
     }
     FILE* file;
     if(_wfopen_s(&file, path.c_str(), L"r"))
     {
-        ASSERT_WARNING(0, "Failed to load shader: Couldnt open file %s for reading.", path.string().c_str());
+        WARN("Failed to load shader: Couldnt open file %s for reading.", path.string().c_str());
         return nullptr;
     }
     fseek(file, 0, SEEK_END);
@@ -207,7 +207,7 @@ bool ShaderFile::getTypeFromFile()
     char* token = strstr (data,"//type");
     if(!token)
     {
-        ASSERT_WARNING(0, "Failed to load shader: Couldnt find type token in file %s.", path.string().c_str());
+        WARN("Failed to load shader: Couldnt find type token in file %s.", path.string().c_str());
         return false;
     }
     char shaderType[50];
@@ -220,7 +220,7 @@ bool ShaderFile::getTypeFromFile()
         while(isspace(*token)) token++;
         if(index >= 50)
         {
-            ASSERT_WARNING(0, "Failed to load shader: Cant have spaces or other characters on the line with shader token");
+            WARN("Failed to load shader: Cant have spaces or other characters on the line with shader token");
             return false;
         }
         shaderType[index] = *token;
@@ -243,7 +243,7 @@ bool ShaderFile::getTypeFromFile()
         type = compute;
     else
     {
-        ASSERT_WARNING(0, "Failed to load shader: Couldnt match token %s to shader type.", shaderType);
+        WARN("Failed to load shader: Couldnt match token %s to shader type.", shaderType);
         return false;
     }
     return true;

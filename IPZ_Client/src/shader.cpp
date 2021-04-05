@@ -17,10 +17,8 @@ Shader::~Shader()
 
 void Shader::bind()
 {
-    if(m_id != 0)
-        glUseProgram(m_id);
-    else
-        ASSERT_WARNING(0, "Shader: Couldnt bind shader, the id is invalid");
+    ASSERT_ERROR(m_id, "Shader: Couldnt bind shader, the id is invalid");
+    glUseProgram(m_id);
 }
 
 void Shader::unbind()
@@ -85,7 +83,7 @@ void Shader::loadFiles(std::vector<std::filesystem::path> filePaths)
             AssetManager::addAsset(shaderFile);
         }
         else
-            ASSERT_WARNING(0, "Shader: Failed to load shader file %s.", path.string().c_str());
+            WARN("Shader: Failed to load shader file %s.", path.string().c_str());
     }
 }
 
@@ -96,7 +94,7 @@ void Shader::compile()
 
     if(files.size() == 0)
     {
-        ASSERT_WARNING(0, "Shader: There are no files to compile.");
+        WARN("Shader: There are no files to compile.");
         return;
     }
 
@@ -123,7 +121,7 @@ void Shader::compile()
             std::vector<GLchar> errorLog(logSize);
             glGetShaderInfoLog(shader, logSize, &logSize, &errorLog[0]);
             glDeleteShader(shader);
-            ASSERT_WARNING(0, "Shader: Shader %s compilation failed with error %s", file->path.string().c_str(), errorLog.data());
+            WARN("Shader: Shader %s compilation failed with error %s", file->path.string().c_str(), errorLog.data());
             greatSuccess = false;
         }
         else
@@ -143,7 +141,7 @@ void Shader::compile()
             glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logSize);
             std::vector<GLchar> errorLog(logSize);
             glGetProgramInfoLog(program, logSize, &logSize, &errorLog[0]);
-            ASSERT_WARNING(0, "Shader: Program %s linking failed with error %s", name.c_str(), errorLog.data());
+            WARN("Shader: Program %s linking failed with error %s", name.c_str(), errorLog.data());
         }
         for(auto shader : shaders)
         {

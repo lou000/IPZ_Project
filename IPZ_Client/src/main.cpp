@@ -9,9 +9,10 @@
 #include <GLFW/glfw3.h>
 
 
+
 static void error_callback(int error, const char* description)
 {
-    ASSERT_WARNING(0, "GLFW ERROR: %d\n%s", error, description);
+    WARN("GLFW ERROR: %d\n%s", error, description);
 }
 
 static void glErrorCallback(GLenum source, GLenum type, GLuint id,
@@ -20,6 +21,9 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
 {
     UNUSED(length);
     UNUSED(userParam);
+
+    if(id == 131185)
+        return;
 
     const char* _source;
     const char* _type;
@@ -88,27 +92,30 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
         _type = "UNKNOWN";
         break;
     }
-    UNUSED(_type); //clang woulnt shut up about whis
+    UNUSED(_type); //clang woulnt shut up about this
+
+    //TODO: see if we can pass file and line from the opengl error callsite
 
     switch (severity) {
     case GL_DEBUG_SEVERITY_HIGH:
-        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "HIGH", _source, message);
+        OPENGL_THROW("%s: %d   SEVERITY: HIGH   FROM: %s\n%s", _type, id, _source, message);
         break;
 
     case GL_DEBUG_SEVERITY_MEDIUM:
-        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "MEDIUM", _source, message);
+        OPENGL_THROW("%s: %d   SEVERITY: MEDIUM   FROM: %s\n%s", _type, id, _source, message);
         break;
 
     case GL_DEBUG_SEVERITY_LOW:
-        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "LOW", _source, message);
+        OPENGL_LOG("%s: %d   SEVERITY: LOW   FROM: %s\n%s", _type, id, _source, message);
         break;
 
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "NOTIFY", _source, message);
+        //Just log here dont assert
+        OPENGL_LOG("%s: %d   SEVERITY: NOTIFICATION   FROM: %s\n%s", _type, id, _source, message);
         break;
 
     default:
-        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "UNKNOWN", _source, message);
+        OPENGL_THROW("%s: %d   SEVERITY: UNKNOWN   FROM: %s\n%s", _type, id, _source, message);
         break;
     }
 }
@@ -125,6 +132,8 @@ int main(void)
 {
 
     GLFWwindow* window;
+
+    ppk::assert::implementation::setAssertHandler(assertHandler);
 
     glfwSetErrorCallback(error_callback);
 
@@ -195,6 +204,22 @@ int main(void)
 
         Renderer::begin();
 
+        float w = 0.09f;
+        float y = w/2;
+        float x = w/2;
+        vec4 colorStart = {0.7f,0.3f,0.7f,1.0f};
+        vec4 colorEnd = {0.3f,0.2f,0.7f,1};
+        while(x-w/2<4)
+        {
+            while(y-w/2<4)
+            {
+                float mixA = (float)(8-(y+x))/8;
+                Renderer::DrawQuad({x-2,y-2,0}, {w, w}, nullptr, 1, mix(colorStart, colorEnd, mixA));
+                y+=w+0.01f;
+            }
+            y = w/2;
+            x+=w+0.01f;
+        }
         Renderer::DrawQuad({0,0,0}, {2, 2}, texture);
 
         Renderer::end();
