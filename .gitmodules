@@ -10,3 +10,6 @@
 [submodule "IPZ_Client/external/ppk_assert"]
 	path = IPZ_Client/external/ppk_assert
 	url = https://github.com/gpakosz/PPK_ASSERT
+[submodule "IPZ_Shared/external/asio"]
+	path = IPZ_Shared/external/asio
+	url = https://github.com/barrbrain/asio
