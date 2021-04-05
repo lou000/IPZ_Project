@@ -32,15 +32,17 @@ public:
     Renderer(Renderer const&)       = delete;
     void operator=(Renderer const&) = delete;
 
-    static void init(){getInstance()._init();}
-    static void begin(){getInstance()._begin();}
-    static void end(){getInstance()._end();}
+    static void init(){getInstance().x_init();}
+    static void begin(){getInstance().x_begin();}
+    static void end(){getInstance().x_end();}
     static void DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
-    {getInstance()._DrawQuad(transform, texture, tilingFactor, tintColor);}
+    {getInstance().x_DrawQuad(transform, texture, tilingFactor, tintColor);}
     static void DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture = nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
-    {getInstance()._DrawQuad(pos, size, texture, tilingFactor, tintColor);}
+    {getInstance().x_DrawQuad(pos, size, texture, tilingFactor, tintColor);}
+    static void setViewPort(uvec2 pos, uvec2 size){getInstance().x_setViewPort(pos, size);}
+    static void setClearColor(vec4 color){getInstance().x_setClearColor(color);}
 
 
 private:
@@ -64,17 +66,19 @@ private:
 
     int texSamplers[maxTexturesPerBuffer];
 
-    void _init();
-    void _begin();
-    void _end();
-    void _DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
+    void x_init();
+    void x_begin();
+    void x_end();
+    void x_DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
-    void _DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
+    void x_DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
+    void x_setViewPort(uvec2 pos, uvec2 size);
+    void x_setClearColor(vec4 color);
+
     void startBatch();
     void nextBatch();
     void flush();
-
 
 };
 

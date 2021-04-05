@@ -1,7 +1,7 @@
 ﻿#include "asset_manager.h"
 #include "ctime"
 
-void AssetManager::_addAsset(std::shared_ptr<Asset> asset)
+void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
 {
     fileAssets.insert({asset->path, asset});
     auto dir =  std::make_shared<Dir>();
@@ -22,7 +22,7 @@ void AssetManager::_addAsset(std::shared_ptr<Asset> asset)
     }
 }
 
-std::shared_ptr<Asset> AssetManager::_getAsset(const std::filesystem::path& path)
+std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path& path)
 {
     if(fileAssets.find(path) == fileAssets.end())
         return nullptr;
@@ -30,28 +30,28 @@ std::shared_ptr<Asset> AssetManager::_getAsset(const std::filesystem::path& path
         return fileAssets.at(path);
 }
 
-void AssetManager::_removeAsset(const std::filesystem::path &assetPath)
+void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
 {
     //TODO: DAAAAAAAWIDDD dla Ciebie.
     // usunąć asset z listy "fileAssets" i z listy "assets" w dir
     // jezeli to byl jedyny asset w dir->assets to usunac dir
 }
 
-void AssetManager::_addShader(std::shared_ptr<Shader> shader)
+void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
 {
     shaders.insert({shader->name, shader});
     for(auto& file : shader->files)
-        _addAsset(file);
+        x_addAsset(file);
 }
 
-void AssetManager::_removeShader(int id)
+void AssetManager::x_removeShader(int id)
 {
     //TODO: DAAAAAAAWIDDD dla Ciebie.
     // tutaj trzeba usunac shader, i zrobic _removeAsset na wszystkich
     // shaderFile z nim powiązanych
 }
 
-std::shared_ptr<Shader> AssetManager::_getShader(const std::string &name)
+std::shared_ptr<Shader> AssetManager::x_getShader(const std::string &name)
 {
     if(shaders.find(name) == shaders.end())
         return nullptr;
@@ -93,7 +93,7 @@ void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
 
 }
 
-void AssetManager::_checkForChanges()
+void AssetManager::x_checkForChanges()
 {
     // TODO: error logging
     for(auto& [path, dir] : dirs)
@@ -145,7 +145,7 @@ void AssetManager::_checkForChanges()
     }
 }
 
-void AssetManager::_tryReloadAssets()
+void AssetManager::x_tryReloadAssets()
 {
     // Let the app thats making changes some time to process the file
     double msPassed = (std::clock() - timeFirstChange)/(double)(CLOCKS_PER_SEC / 1000);

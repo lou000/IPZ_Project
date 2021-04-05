@@ -1,8 +1,11 @@
 ﻿#include "renderer.h"
 #include "asset_manager.h"
 
-void Renderer::_init()
+void Renderer::x_init()
 {
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     intermBuffer = new QuadVertex[maxVertices];
     vertexArray = std::make_shared<VertexArray>();
     BufferLayout layout = {
@@ -47,8 +50,9 @@ void Renderer::_init()
     shader->bind();
 }
 
-void Renderer::_begin()
+void Renderer::x_begin()
 {
+    glClear(GL_COLOR_BUFFER_BIT);
     //Need camera class
 //    UNUSED(camera);
 //    UNUSED(transform);
@@ -61,7 +65,7 @@ void Renderer::_begin()
     startBatch();
 }
 
-void Renderer::_end()
+void Renderer::x_end()
 {
     flush();
 }
@@ -94,16 +98,26 @@ void Renderer::flush()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Renderer::_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
+void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
 
     mat4 transform = translate(mat4(1.0f), pos)
                      * scale(mat4(1.0f), {size.x, size.y, 1.0f});
-    _DrawQuad(transform, texture, tilingFactor, tintColor);
+    x_DrawQuad(transform, texture, tilingFactor, tintColor);
 }
 
-void Renderer::_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
+void Renderer::x_setViewPort(uvec2 pos, uvec2 size)
+{
+    glViewport(pos.x, pos.y, size.x, size.y);
+}
+
+void Renderer::x_setClearColor(vec4 color)
+{
+    glClearColor(color.r, color.g, color.b, color.a);
+}
+
+void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
     constexpr vec2 textureCoords[] = {
