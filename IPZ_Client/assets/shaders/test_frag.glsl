@@ -1,27 +1,53 @@
 //type fragment
-#version 110
-varying vec3 color;
-varying vec2 v_uv;
+#version 450
+
+layout(location = 0) out vec4 color;
+
+in vec4 v_Color;
+in vec2 v_TexCoord;
+in flat float v_TexIndex;
+in float v_TilingFactor;
+
+uniform sampler2D u_Textures[32];
+
 void main()
 {
-
-vec2 uv = v_uv;
-// Zooms out by a factor of 2.0
-uv *= 2.0;
-// Shifts every axis by -1.0
-uv -= 1.0;
-
-// specify size of border. 0.0 - no border, 1.0 - border occupies the entire space
-vec2 borderSize = vec2(1);
-
-// size of rectangle in terms of uv
-vec2 rectangleSize = vec2(2.0) - borderSize;
-
-// distance field, 0.0 - point is inside rectangle, 1.0 point is on the far edge of the border.
-float distanceField = length(max(abs(uv)-rectangleSize,0.0) / borderSize);
-
-// calculate alpha accordingly to the value of the distance field
-float alpha = 1.0 - distanceField;
-
-gl_FragColor = vec4(color, alpha);
-};
+	vec4 texColor = v_Color;
+    // texColor = vec4(0.7,0.4,0.6, 1);
+	switch(int(v_TexIndex))
+	{
+		case 0:  texColor *= texture(u_Textures[0],  v_TexCoord * v_TilingFactor); break;
+		case 1:  texColor *= texture(u_Textures[1],  v_TexCoord * v_TilingFactor); break;
+		case 2:  texColor *= texture(u_Textures[2],  v_TexCoord * v_TilingFactor); break;
+		case 3:  texColor *= texture(u_Textures[3],  v_TexCoord * v_TilingFactor); break;
+		case 4:  texColor *= texture(u_Textures[4],  v_TexCoord * v_TilingFactor); break;
+		case 5:  texColor *= texture(u_Textures[5],  v_TexCoord * v_TilingFactor); break;
+		case 6:  texColor *= texture(u_Textures[6],  v_TexCoord * v_TilingFactor); break;
+		case 7:  texColor *= texture(u_Textures[7],  v_TexCoord * v_TilingFactor); break;
+		case 8:  texColor *= texture(u_Textures[8],  v_TexCoord * v_TilingFactor); break;
+		case 9:  texColor *= texture(u_Textures[9],  v_TexCoord * v_TilingFactor); break;
+		case 10: texColor *= texture(u_Textures[10], v_TexCoord * v_TilingFactor); break;
+		case 11: texColor *= texture(u_Textures[11], v_TexCoord * v_TilingFactor); break;
+		case 12: texColor *= texture(u_Textures[12], v_TexCoord * v_TilingFactor); break;
+		case 13: texColor *= texture(u_Textures[13], v_TexCoord * v_TilingFactor); break;
+		case 14: texColor *= texture(u_Textures[14], v_TexCoord * v_TilingFactor); break;
+		case 15: texColor *= texture(u_Textures[15], v_TexCoord * v_TilingFactor); break;
+		case 16: texColor *= texture(u_Textures[16], v_TexCoord * v_TilingFactor); break;
+		case 17: texColor *= texture(u_Textures[17], v_TexCoord * v_TilingFactor); break;
+		case 18: texColor *= texture(u_Textures[18], v_TexCoord * v_TilingFactor); break;
+		case 19: texColor *= texture(u_Textures[19], v_TexCoord * v_TilingFactor); break;
+		case 20: texColor *= texture(u_Textures[20], v_TexCoord * v_TilingFactor); break;
+		case 21: texColor *= texture(u_Textures[21], v_TexCoord * v_TilingFactor); break;
+		case 22: texColor *= texture(u_Textures[22], v_TexCoord * v_TilingFactor); break;
+		case 23: texColor *= texture(u_Textures[23], v_TexCoord * v_TilingFactor); break;
+		case 24: texColor *= texture(u_Textures[24], v_TexCoord * v_TilingFactor); break;
+		case 25: texColor *= texture(u_Textures[25], v_TexCoord * v_TilingFactor); break;
+		case 26: texColor *= texture(u_Textures[26], v_TexCoord * v_TilingFactor); break;
+		case 27: texColor *= texture(u_Textures[27], v_TexCoord * v_TilingFactor); break;
+		case 28: texColor *= texture(u_Textures[28], v_TexCoord * v_TilingFactor); break;
+		case 29: texColor *= texture(u_Textures[29], v_TexCoord * v_TilingFactor); break;
+		case 30: texColor *= texture(u_Textures[30], v_TexCoord * v_TilingFactor); break;
+		case 31: texColor *= texture(u_Textures[31], v_TexCoord * v_TilingFactor); break;
+	}
+	color = texColor;
+}

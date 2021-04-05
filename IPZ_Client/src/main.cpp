@@ -4,24 +4,9 @@
 #include <gtc/type_ptr.hpp>
 #include "asset_manager.h"
 #include "shader.h"
+#include "renderer.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-
-static const struct
-{
-    float x, y;
-    float r, g, b;
-} vertices[4] =
-    {
-        { -1.0f, -1.0f, 1.f, 0.f, 0.f },
-        { -1.0f,  1.0f, 0.f, 1.f, 0.f },
-        {  1.0f,  1.0f, 0.f, 0.f, 1.f },
-        {  1.0f, -1.0f, 1.f, 1.f, 0.f }
-};
-
-static const GLubyte
-    indices[] = {0,1,2,
-                 0,2,3};
 
 
 static void error_callback(int error, const char* description)
@@ -115,11 +100,11 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
         break;
 
     case GL_DEBUG_SEVERITY_LOW:
-        ASSERT_DEBUG(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "LOW", _source, message);
+        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "LOW", _source, message);
         break;
 
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-        ASSERT_DEBUG(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "NOTIFY", _source, message);
+        ASSERT_WARNING(0, "[OpenGL] %d: %s    SEVERITY: %s    FROM: %s\n%s", id, _type, "NOTIFY", _source, message);
         break;
 
     default:
@@ -140,8 +125,6 @@ int main(void)
 {
 
     GLFWwindow* window;
-    GLuint vertex_buffer;
-    GLint mvp_location, vpos_location, vcol_location;
 
     glfwSetErrorCallback(error_callback);
 
@@ -168,7 +151,8 @@ int main(void)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(glErrorCallback, 0);
 
-    AssetManager::addAsset(std::make_shared<Texture>("../assets/img/test.png"));
+    auto texture = std::make_shared<Texture>("../assets/img/test.png");
+    AssetManager::addAsset(texture);
     std::vector<std::filesystem::path> shaderSrcs = {
         "../assets/shaders/test_frag.glsl",
         "../assets/shaders/test_vert.glsl"
@@ -177,24 +161,7 @@ int main(void)
 
     // NOTE: OpenGL error checks have been omitted for brevity
 
-
-    glGenBuffers(1, &vertex_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    auto program = AssetManager::getShader("test");
-
-    mvp_location = glGetUniformLocation(program->id(), "MVP");
-    vpos_location = glGetAttribLocation(program->id(), "vPos");
-    vcol_location = glGetAttribLocation(program->id(), "vCol");
-
-    glEnableVertexAttribArray(vpos_location);
-    glVertexAttribPointer(vpos_location, 2, GL_FLOAT, GL_FALSE,
-                          sizeof(vertices[0]), (void*) 0);
-    glEnableVertexAttribArray(vcol_location);
-    glVertexAttribPointer(vcol_location, 3, GL_FLOAT, GL_FALSE,
-                          sizeof(vertices[0]), (void*) (sizeof(float) * 2));
-
+    Renderer::init();
 
     double lastTime = glfwGetTime();
     int nbFrames = 0;
@@ -216,21 +183,17 @@ int main(void)
         AssetManager::tryReloadAssets();
 
         int width, height;
-        mat4x4 m, p, mvp;
 
         glfwGetFramebufferSize(window, &width, &height);
 
         glViewport(0, 0, width, height);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        m = mat4x4(1.0f);
-        m = glm::rotate(m, (float) glfwGetTime(), vec3(0, 0, 1));
-        p = glm::ortho(-2.0f,2.0f,-2.0f,2.0f,0.0f,100.0f);
-        mvp = p * m;
+        Renderer::begin();
 
-        program->bind();
-        glUniformMatrix4fv(mvp_location, 1, GL_FALSE,(const GLfloat*) glm::value_ptr(mvp));
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, indices);
+        Renderer::DrawQuad({0,0,0}, {2, 2}, texture);
+
+        Renderer::end();
 
         glfwSwapBuffers(window);
         glfwPollEvents();

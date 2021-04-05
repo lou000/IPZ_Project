@@ -125,14 +125,17 @@ void AssetManager::_checkForChanges()
             std::wstring filename(pFileNotify->FileName, pFileNotify->FileNameLength / sizeof(WCHAR));
             auto fullPath = dir->path;
             fullPath.replace_filename(filename);
-            auto asset = dir->assets[fullPath];
 
-            if(dir->assets.count(fullPath)>0 && asset->reloadScheduled != true)
+            if(dir->assets.count(fullPath) != 0)
             {
-                if(timeFirstChange == 0)
-                    timeFirstChange = std::clock();
-                asset->reloadScheduled = true;
-                std::cout<<"Asset '"<<fullPath<<"' found and marked for reload\n";
+                auto asset = dir->assets[fullPath];
+                if(asset->reloadScheduled != true)
+                {
+                    if(timeFirstChange == 0)
+                        timeFirstChange = std::clock();
+                    asset->reloadScheduled = true;
+                    std::cout<<"Asset '"<<fullPath<<"' found and marked for reload\n";
+                }
             }
 
             if (!pFileNotify->NextEntryOffset)

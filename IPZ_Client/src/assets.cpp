@@ -3,13 +3,13 @@
 #include "stb_image.h"
 #include <cstdlib> //calloc
 
-Texture::Texture(GLenum format, GLenum formatInternal, uint32 width, uint32 height)
+Texture::Texture(uint width, uint height, GLenum format, GLenum formatInternal)
     : m_width(width), m_height(height), m_format(format), m_formatInternal(formatInternal)
 {
     assetType = AssetType::texture;
     initTexture();
     loadDebugTexture(format, formatInternal, width, height);
-    setTextureData(data);
+    setTextureData(data, getSize());
 }
 
 Texture::Texture(const std::filesystem::path& path)
@@ -23,7 +23,7 @@ Texture::Texture(const std::filesystem::path& path)
         loadDebugTexture(GL_RGBA, GL_RGBA8, 1, 1);
     }
     initTexture();
-    setTextureData(data);
+    setTextureData(data, getSize());
 }
 
 Texture::~Texture()
@@ -43,18 +43,18 @@ void Texture::doReload()
             return;
         }
         std::cout<<"Sprite "<<path<<" reloaded.\n";
-        setTextureData(data);
+        setTextureData(data, getSize());
         reloadScheduled = false;
     }
 }
 
-void Texture::loadDebugTexture(GLenum format, GLenum formatInternal, uint32 width, uint32 height)
+void Texture::loadDebugTexture(GLenum format, GLenum formatInternal, uint width, uint height)
 {
     m_format = format;
     m_formatInternal = formatInternal;
-    data = malloc(sizeof(uvec3)*width*height);
-    for(uint32 i=0; i<m_width*m_height; i++)
-        ((uvec3*)data)[i] = {247, 90, 148};
+    data = malloc(sizeof(uvec4)*width*height);
+    for(uint i=0; i<m_width*m_height; i++)
+        ((uvec4*)data)[i] = {247, 90, 148, 255};
 }
 
 void Texture::initTexture()
@@ -69,12 +69,27 @@ void Texture::initTexture()
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
-void Texture::setTextureData(void *d)
+void Texture::setTextureData(void *d, size_t size)
 {
-    if(data && d!=data)
-        free(data);
-    data = d;
+    if(data != d || data == nullptr)
+    {
+        if(data)
+            free(data);
+        data = malloc(size); //allocate our own memory becouse someone could have given us a pointer thats about to expire
+        memcpy_s(data, size, d, size);
+    }
     glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, m_format, GL_UNSIGNED_BYTE, data);
+}
+
+size_t Texture::getSize()
+{
+    size_t dataSize = m_format == GL_RGB ? sizeof(stbi_uc)*3 : sizeof(stbi_uc)*4;
+    return dataSize*m_width*m_height;
+}
+
+void Texture::bind(uint slot)
+{
+    glBindTextureUnit(slot, m_id);
 }
 
 bool Texture::loadFromFile(const std::filesystem::path& path){

@@ -28,6 +28,52 @@ void Shader::unbind()
     glUseProgram(0);
 }
 
+void Shader::setUniform(const char* name, DataType type, const std::any& value, bool transpose)
+{
+    int loc = glGetUniformLocation(m_id, name);
+    switch (type)
+    {
+    case Int:   glUniform1i(loc, std::any_cast<int>(value)); return;
+    case Float: glUniform1f(loc, std::any_cast<float>(value)); return;
+    case Float2:
+    {
+        auto val = std::any_cast<vec2>(value);
+        glUniform2f(loc, val.x, val.y);
+        return;
+    }
+    case Float3:
+    {
+        auto val = std::any_cast<vec3>(value);
+        glUniform3f(loc, val.x, val.y, val.z);
+        return;
+    }
+    case Float4:
+    {
+        auto val = std::any_cast<vec4>(value);
+        glUniform4f(loc, val.x, val.y, val.z, val.w);
+        return;
+    }
+    case Mat3: glUniformMatrix3fv(loc, 1, transpose, value_ptr(std::any_cast<mat3>(value))); return;
+    case Mat4: glUniformMatrix4fv(loc, 1, transpose, value_ptr(std::any_cast<mat4>(value))); return;
+    }
+}
+
+void Shader::setUniformArray(const char *name, Shader::DataType type, const std::any& values, uint count, bool transpose)
+{
+    int loc = glGetUniformLocation(m_id, name);
+    switch (type)
+    {
+    case Int:    glUniform1iv(loc, count, std::any_cast<int*>(values)); return;
+    case Float:  glUniform1fv(loc, count, std::any_cast<float*>(values)); return;
+        //everything below is untested, i have no clue if this works
+    case Float2: glUniform2fv(loc, count, value_ptr(*std::any_cast<vec2*>(values))); return;
+    case Float3: glUniform3fv(loc, count, value_ptr(*std::any_cast<vec3*>(values))); return;
+    case Float4: glUniform4fv(loc, count, value_ptr(*std::any_cast<vec4*>(values))); return;
+    case Mat3:   glUniformMatrix3fv(loc, count, transpose, value_ptr(*std::any_cast<mat3*>(values))); return;
+    case Mat4:   glUniformMatrix4fv(loc, count, transpose, value_ptr(*std::any_cast<mat4*>(values))); return;
+    }
+}
+
 void Shader::loadFiles(std::vector<std::filesystem::path> filePaths)
 {
     for(auto& path : filePaths)

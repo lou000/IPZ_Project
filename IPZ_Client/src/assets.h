@@ -16,6 +16,7 @@ enum AssetType{
 };
 
 
+// TODO: make utility functions toTexture() etc to quickly cast
 class Asset{
     friend class AssetManager;
 public:
@@ -25,7 +26,6 @@ protected:
     AssetType assetType;
     bool reloadScheduled = false;
     std::filesystem::path path;
-
 };
 
 
@@ -33,27 +33,28 @@ protected:
 class Texture : public Asset
 {
 public:
-    Texture(GLenum format, GLenum formatInternal, uint32 width, uint32 height);
+    Texture(uint width, uint height, GLenum format = GL_RGBA, GLenum formatInternal = GL_RGBA8);
     Texture(const std::filesystem::path& path);
     ~Texture();
 
+public:
+    virtual void doReload() override;
+    void setTextureData(void* data, size_t size);
+    size_t getSize();
+    void bind(uint slot);
+    uint id() {return m_id;}
+
 private:
-    uint32 m_width  = 0;
-    uint32 m_height = 0;
-    uint32 m_id     = 0;
+    uint m_width  = 0;
+    uint m_height = 0;
+    uint m_id     = 0;
     GLenum m_format = 0;
     GLenum m_formatInternal = 0;
 
     void* data  = nullptr;
-
-public:
-    virtual void doReload() override;
-    void setTextureData(void* data);
-
-private:
     void initTexture();
     bool loadFromFile(const std::filesystem::path& path);
-    void loadDebugTexture(GLenum format, GLenum formatInternal, uint32 width, uint32 height);
+    void loadDebugTexture(GLenum format, GLenum formatInternal, uint width, uint height);
 };
 
 
