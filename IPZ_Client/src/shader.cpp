@@ -121,7 +121,7 @@ void Shader::compile()
             std::vector<GLchar> errorLog(logSize);
             glGetShaderInfoLog(shader, logSize, &logSize, &errorLog[0]);
             glDeleteShader(shader);
-            WARN("Shader: Shader %s compilation failed with error %s", file->path.string().c_str(), errorLog.data());
+            WARN("Shader: Shader %s compilation failed with error:\n%s", file->path.string().c_str(), errorLog.data());
             greatSuccess = false;
         }
         else

@@ -20,14 +20,12 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
                                                                               const char* expression, int level, const char* message)
 {
     //TODO: DAAAAAAWID zrób to ładne i zrób do tego timestamp
-    const char* errCol = "\x1B[31m";
-    const char* resetCol = "\033[0m";
     using namespace ppk::assert::implementation;
     using namespace colorwin;
     switch(level)
     {
     case 0: std::cout<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
-    case 1: std::cout<<errCol<<file<<" : "<<line<<"\n"<<message<<"\n\n"<<resetCol; return AssertAction::None;
+    case 1: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
     case 2: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
     case 3: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
     case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;

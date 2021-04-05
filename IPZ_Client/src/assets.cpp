@@ -36,6 +36,8 @@ Texture::~Texture()
 void Texture::doReload()
 {
     GLenum oldFormat = m_format;
+    uint oldWidth  = m_width;
+    uint oldHeight = m_height;
     if(loadFromFile(path))
     {
         if(oldFormat != m_format)
@@ -43,8 +45,14 @@ void Texture::doReload()
             WARN("AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
             glDeleteTextures(1, &m_id);
             initTexture();
+        }else if(oldWidth != m_width || oldHeight != m_height)
+        {
+            WARN("AssetManager: Reloading texture with a diffirent size, texture storage will be recreated");
+            glDeleteTextures(1, &m_id);
+            initTexture();
         }
-        std::cout<<"Sprite "<<path<<" reloaded.\n";
+
+        LOG("Sprite %s reloaded.", path.string().c_str());
         setTextureData(data, getSize());
         reloadScheduled = false;
     }
@@ -169,7 +177,7 @@ void ShaderFile::doReload()
             free(data);
         data = temp;
         reloadScheduled = false;
-        std::cout<<"Shader "<<path<<" reloaded.\n";
+        LOG("ShaderFile %s reloaded.", path.string().c_str());
     }
 }
 
