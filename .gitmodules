@@ -7,3 +7,6 @@
 [submodule "IPZ_Client/external/colorwin"]
 	path = IPZ_Client/external/colorwin
 	url = https://github.com/jrebacz/colorwin
+[submodule "IPZ_Client/external/ppk_assert"]
+	path = IPZ_Client/external/ppk_assert
+	url = https://github.com/gpakosz/PPK_ASSERT
