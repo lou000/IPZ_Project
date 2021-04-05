@@ -151,6 +151,10 @@ int main(void)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(glErrorCallback, 0);
 
+    //This below is for RGB formats, if we stop supporting we can remove this.
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     AssetManager::addAsset(texture);
     std::vector<std::filesystem::path> shaderSrcs = {

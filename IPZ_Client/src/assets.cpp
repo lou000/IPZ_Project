@@ -30,6 +30,7 @@ Texture::~Texture()
 {
     if(data)
         free(data);
+    glDeleteTextures(1, &m_id);
 }
 
 void Texture::doReload()
@@ -39,8 +40,9 @@ void Texture::doReload()
     {
         if(oldFormat != m_format)
         {
-            ASSERT_ERROR(0, "Error: You cant hot reload a texture using diffirent data format");
-            return;
+            ASSERT_WARNING(0, "AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
+            glDeleteTextures(1, &m_id);
+            initTexture();
         }
         std::cout<<"Sprite "<<path<<" reloaded.\n";
         setTextureData(data, getSize());
@@ -60,7 +62,7 @@ void Texture::loadDebugTexture(GLenum format, GLenum formatInternal, uint width,
 void Texture::initTexture()
 {
     glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
-    glTextureStorage2D(m_id, 1, m_formatInternal, m_width, m_height);
+    glTextureStorage2D(m_id, 1, GL_RGB8, m_width, m_height);
 
     glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
