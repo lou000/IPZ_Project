@@ -4,3 +4,6 @@
 [submodule "IPZ_Client/external/glfw"]
 	path = IPZ_Client/external/glfw
 	url = https://github.com/glfw/glfw
+[submodule "IPZ_Client/external/colorwin"]
+	path = IPZ_Client/external/colorwin
+	url = https://github.com/jrebacz/colorwin
