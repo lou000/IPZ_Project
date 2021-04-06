@@ -41,13 +41,15 @@ public:
     static void DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture = nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
     {getInstance().x_DrawQuad(pos, size, texture, tilingFactor, tintColor);}
+    static void DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
+    {getInstance().x_DrawQuad(pos, size, tintColor);}
     static void setViewPort(uvec2 pos, uvec2 size){getInstance().x_setViewPort(pos, size);}
     static void setClearColor(vec4 color){getInstance().x_setClearColor(color);}
 
 
 private:
-    static const uint maxVertices = 200;  // hmm lets see how this goes
-    static const uint maxIndices  = 200;
+    static const uint maxVertices = 0xFFFFF;  // hmm lets see how this goes
+    static const uint maxIndices  = 0xFFFFF;
 
     static const uint maxTexturesPerBuffer = 32; // idk about that
 //    const uint maxTexturesTotal = 32*5; for now we make it single buffer
@@ -73,6 +75,7 @@ private:
                    float tilingFactor, const vec4 &tintColor);
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
+    void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
     void x_setViewPort(uvec2 pos, uvec2 size);
     void x_setClearColor(vec4 color);
 

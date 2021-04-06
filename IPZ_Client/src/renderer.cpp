@@ -3,8 +3,11 @@
 
 void Renderer::x_init()
 {
-    glEnable(GL_BLEND);
+    // For now this class is specific to rendering quads with one shader,
+    // if we require multiple shaders, or multiple batches for geometry
+    // we should use framebuffers
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
 
     intermBuffer = new QuadVertex[maxVertices];
     vertexArray = std::make_shared<VertexArray>();
@@ -105,6 +108,14 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_p
     mat4 transform = translate(mat4(1.0f), pos)
                      * scale(mat4(1.0f), {size.x, size.y, 1.0f});
     x_DrawQuad(transform, texture, tilingFactor, tintColor);
+}
+
+void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintColor)
+{
+
+    mat4 transform = translate(mat4(1.0f), pos)
+                     * scale(mat4(1.0f), {size.x, size.y, 1.0f});
+    x_DrawQuad(transform, nullptr, 1, tintColor);
 }
 
 void Renderer::x_setViewPort(uvec2 pos, uvec2 size)

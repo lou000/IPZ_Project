@@ -1,0 +1,30 @@
+x_removeAsset
+x_removeShader
+glErrorCallback
+key_callback // glfw input
+assertHandler
+
+camera //editor camer full 3d, rotate around mouse hold point, pan, zoom
+rotatingRectangles
+simple editor functions (move object with mouse, rotate, scale) maybe imGuizmo https://github.com/CedricGuillemet/ImGuizmo
+input
+entitySystem // player, door, dog
+configLanguageParser // hotReload! moze byc biblioteka albo wlasny wymysl
+network integration
+
+
+
+
+
+
+struct attribute{
+    enum type,
+    attName,
+    attValue
+}
+map<string, vector<attribute>>>
+
+ogorek{
+    nazwa: "zielony"
+    liczbapestek: 200
+}

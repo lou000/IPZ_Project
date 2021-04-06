@@ -4,8 +4,6 @@
 #include <iostream>
 #include "utilities.h"
 #include "shader.h"
-#include "glm.hpp"
-#include "glad.h"
 
 
 using namespace glm;

@@ -35,6 +35,8 @@ void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
     //TODO: DAAAAAAAWIDDD dla Ciebie.
     // usunąć asset z listy "fileAssets" i z listy "assets" w dir
     // jezeli to byl jedyny asset w dir->assets to usunac dir
+    // jezeli to byl shaderFile to odmowic,
+    // usuwamy shaderFile usuwając shader nie osobno
 }
 
 void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
