@@ -1,6 +1,11 @@
 ﻿#include "renderer.h"
 #include "asset_manager.h"
 
+extern "C" {    // this should help select dedicated gpu?
+_declspec(dllexport) DWORD NvOptimusEnablement = 1;
+_declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
+}
+
 void Renderer::x_init()
 {
     // For now this class is specific to rendering quads with one shader,
