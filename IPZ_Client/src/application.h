@@ -1,7 +1,5 @@
 ﻿#pragma once
 #include <chrono>
-#include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
 #include "asset_manager.h"
 #include "shader.h"
 #include "renderer.h"

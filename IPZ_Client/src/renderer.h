@@ -62,6 +62,7 @@ private:
 
     std::shared_ptr<VertexArray>  vertexArray;
     std::shared_ptr<VertexBuffer> currentBuffer;
+    std::shared_ptr<Camera> camera = nullptr;
 
     std::shared_ptr<Texture> whiteTex;
     std::array<std::shared_ptr<Texture>, maxTexturesPerBuffer> textureSlots;
@@ -78,6 +79,8 @@ private:
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
     void x_setViewPort(uvec2 pos, uvec2 size);
     void x_setClearColor(vec4 color);
+    void x_setCamera(std::shared_ptr<Camera> camera);
+    void x_getCamera(std::shared_ptr<Camera> camera);
 
     void startBatch();
     void nextBatch();

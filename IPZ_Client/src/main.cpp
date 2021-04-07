@@ -3,7 +3,7 @@
 int main(void)
 {
 
-    App::init(1000, 1000);
+    App::init(800, 800);
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
