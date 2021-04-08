@@ -28,7 +28,25 @@ void Camera::setRotationZ(float degree)
 
 void Camera::pointAt(vec3 pos)
 {
-    m_rotation = quatLookAt(normalize(pos), {0,1,0});
+    //Borrowed from https://stackoverflow.com/questions/18172388/glm-quaternion-lookat-function
+    glm::vec3 direction = pos-getPos();
+    float directionLength = glm::length(direction);
+
+    // Check if the direction is valid; Also deals with NaN
+    if(!(directionLength > 0.0001))
+        m_rotation = glm::quat(1, 0, 0, 0); // Just return identity
+
+    // Normalize direction
+    direction /= directionLength;
+
+    // Is the normal up (nearly) parallel to direction?
+    if(glm::abs(glm::dot(direction, up())) > .9999f) {
+        // Use alternative up
+        m_rotation = glm::quatLookAt(direction, {0,1,0});
+    }
+    else {
+        m_rotation = glm::quatLookAt(direction, up());
+    }
 }
 
 float Camera::getRotationX()
