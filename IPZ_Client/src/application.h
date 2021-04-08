@@ -25,11 +25,13 @@ public:
     static uvec2 getWindowSize(){return getInstance().x_getWindowSize();}
     static bool shouldClose(){return getInstance().x_shouldClose();}
     static GLFWwindow* getWindowHandle(){return getInstance().x_getWindowHandle();}
+    static float getTimeStep(){return getInstance().x_getTimeStep();}
 
 private:
     GLFWwindow* m_window;
     uint m_windowHeight = 0;
     uint m_windowWidth = 0;
+    float m_lastFrame = 0;
 
     void x_init(uint width, uint height);
     void x_setVsync(uint interval);
@@ -40,5 +42,6 @@ private:
     uvec2 x_getWindowSize();
     bool x_shouldClose();
     GLFWwindow* x_getWindowHandle();
+    float x_getTimeStep();
 };
 

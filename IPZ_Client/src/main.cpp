@@ -28,6 +28,7 @@ int main(void)
 
     while (!App::shouldClose())
     {
+        float dt = App::getTimeStep();
         double currentTime = App::getTime();
         nbFrames++;
         if ( currentTime - lastTime >= 1.0 ){
@@ -39,7 +40,7 @@ int main(void)
             lastTime = currentTime;
         }
 
-        camera->onUpdate(); //this will go in entity manager
+        camera->onUpdate(dt); //this will go in entity manager
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
 

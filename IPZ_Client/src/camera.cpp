@@ -17,39 +17,11 @@ void Camera::move(vec3 vec)
 
 void Camera::pointAt(vec3 pos)
 {
-    //Borrowed from https://stackoverflow.com/questions/18172388/glm-quaternion-lookat-function
-    glm::vec3 direction = pos-getPos();
-    float directionLength = length(direction);
-    quat rotation = quat(1, 0, 0, 0);
-
-    // Check if the direction is valid; Also deals with NaN
-    if(!(directionLength > 0.0001))
-    {
-        auto euler = eulerAngles(rotation);
-        m_rotationX = euler.x;
-        m_rotationY = euler.y;
-//        m_rotationZ = euler.z;
-        return;
-    }
-
-    // Normalize direction
-    direction /= directionLength;
-
-    // Is the normal up (nearly) parallel to direction?
-    if(glm::abs(glm::dot(direction, up())) > .9999f) {
-        rotation = glm::quatLookAt(direction, up());
-        auto euler = eulerAngles(rotation);
-        m_rotationX = euler.x;
-        m_rotationY = euler.y;
-        m_rotationZ = euler.z;
-    }
-    else {
-        rotation = glm::quatLookAt(direction, up());
-        auto euler = eulerAngles(rotation);
-        m_rotationX = euler.x;
-        m_rotationY = euler.y;
-        m_rotationZ = euler.z;
-    }
+    auto lookAt = quatLookAt(normalize(pos - getPos()), {0,1,0});
+    auto euler = eulerAngles(lookAt);
+    m_rotationX = degrees(euler.x);
+    m_rotationY = degrees(euler.y);
+    m_rotationZ = degrees(euler.z);
 }
 
 quat Camera::getRotation()
@@ -92,33 +64,35 @@ vec3 Camera::forward()
     return glm::rotate(getRotation(), vec3(0, 0, -1));
 }
 
-void Camera::onUpdate()
+void Camera::onUpdate(float dt)
 {
+    float rotationSpeed = 100.f;
+    float xSign = forward().z < 0 ? 1.f : -1.f;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
-        addRotationX(1.5f);
+        addRotationX(rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
-        addRotationX(-1.5f);
+        addRotationX(-rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_A))
-        addRotationY(1.5f);
+        addRotationY(xSign*rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_D))
-        addRotationY(-1.5f);
+        addRotationY(-xSign*rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
         pointAt({0,0,0});
 
-    float speed = 0.2f;
+    float speed = 3.f;
     vec3 moveVec = {0, 0 ,0};
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_UP))
-        moveVec += speed * forward();
+        moveVec +=  forward() * speed * dt;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_DOWN))
-        moveVec += -speed * forward();
+        moveVec += -forward() * speed * dt;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_RIGHT))
-        moveVec +=  speed * right();
+        moveVec +=  right() * speed * dt;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_LEFT))
-        moveVec += -speed * right();
+        moveVec += -right() * speed * dt;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_Q))
-        moveVec +=  speed * up();
+        moveVec +=  up() * speed * dt;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_Z))
-        moveVec += -speed * up();
+        moveVec += -up() * speed * dt;
 
     move(moveVec);
 

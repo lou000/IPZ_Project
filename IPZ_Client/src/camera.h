@@ -37,7 +37,7 @@ public:
     vec3 right();
     vec3 forward();
 
-    void onUpdate(); // should be in entity
+    void onUpdate(float dt); // should be in entity
     void onCreate(); // should be in entity
 
 

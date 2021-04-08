@@ -3,6 +3,8 @@
 
 static void error_callback(int error, const char* description)
 {
+    UNUSED(error); //clang cant see us using it clearly in a macro below...
+    UNUSED(description);
     WARN("GLFW ERROR: %d\n%s", error, description);
 }
 
@@ -12,6 +14,7 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
 {
     UNUSED(length);
     UNUSED(userParam);
+    UNUSED(message);
 
     if(id == 131185)
         return;
@@ -193,6 +196,14 @@ uvec2 App::x_getWindowSize()
 GLFWwindow* App::x_getWindowHandle()
 {
     return m_window;
+}
+
+float App::x_getTimeStep()
+{
+    float currentFrame = (float)glfwGetTime();
+    float dt = currentFrame - m_lastFrame;
+    m_lastFrame = currentFrame;
+    return dt;
 }
 
 bool App::x_shouldClose()
