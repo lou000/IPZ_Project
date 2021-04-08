@@ -13,21 +13,21 @@ public:
     void move(vec3 vec);
     void setFov(float fov)          {m_fov = fov;}
     void setAspectRatio(float ratio){m_aspectRatio = ratio;}
-    void setRotationX(float degree){m_rotationX = degree;}
-    void setRotationY(float degree){m_rotationY = degree;}
-    void setRotationZ(float degree){m_rotationZ = degree;}
-    void addRotationX(float degree){m_rotationX += degree;}
-    void addRotationY(float degree){m_rotationY += degree;}
-    void addRotationZ(float degree){m_rotationZ += degree;}
+    void setRotationX(float degree);
+    void setRotationY(float degree);
+    void setRotationZ(float degree);
+    void addRotationX(float degree);
+    void addRotationY(float degree);
+    void addRotationZ(float degree);
     void pointAt(vec3 pos);
 
     vec3 getPos()          {return m_pos;}
     float getFov()         {return m_fov;}
     float getAspectRatio(){return m_aspectRatio;}
-    float getRotationX()  {return m_rotationX;}
-    float getRotationY()  {return m_rotationY;}
-    float getRotationZ()  {return m_rotationZ;}
-    quat getRotation();
+    float getRotationX();
+    float getRotationY();
+    float getRotationZ();
+    quat getRotation(){return m_rotation;}
 
     mat4 getViewMatrix();
     mat4 getProjMatrix();
@@ -48,9 +48,7 @@ private:
     float m_nearClip    = 0.1f;
     float m_farClip     = 1000;
 
-    float m_rotationX = 0;
-    float m_rotationY = 0;
-    float m_rotationZ = 0;
+    quat m_rotation = {1,0,0,0};
     mat4 m_viewMat;
     mat4 m_projMat;
 

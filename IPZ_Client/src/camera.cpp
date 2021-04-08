@@ -15,18 +15,45 @@ void Camera::move(vec3 vec)
     m_pos += vec;
 }
 
-void Camera::pointAt(vec3 pos)
+void Camera::setRotationX(float degree)
 {
-    auto lookAt = quatLookAt(normalize(pos - getPos()), {0,1,0});
-    auto euler = eulerAngles(lookAt);
-    m_rotationX = degrees(euler.x);
-    m_rotationY = degrees(euler.y);
-    m_rotationZ = degrees(euler.z);
+    auto euler = eulerAngles(m_rotation);
+    m_rotation = quat({radians(degree), euler.y, euler.z});
 }
 
-quat Camera::getRotation()
+void Camera::setRotationY(float degree)
 {
-    return quat({radians(m_rotationX), radians(m_rotationY), radians(m_rotationZ)});
+    auto euler = eulerAngles(m_rotation);
+    m_rotation = quat({euler.x, radians(degree), euler.z});
+}
+
+void Camera::setRotationZ(float degree)
+{
+    auto euler = eulerAngles(m_rotation);
+    m_rotation = quat({euler.x, euler.y, radians(degree)});
+}
+
+void Camera::addRotationX(float degree)
+{
+    auto euler = eulerAngles(m_rotation);
+    m_rotation = quat({euler.x + radians(degree), euler.y, euler.z});
+}
+
+void Camera::addRotationY(float degree)
+{
+    auto euler = eulerAngles(m_rotation);
+    m_rotation = quat({euler.x, euler.y + radians(degree), euler.z});
+}
+
+void Camera::addRotationZ(float degree)
+{
+    auto euler = eulerAngles(m_rotation);
+    m_rotation = quat({euler.x, euler.y, euler.z + radians(degree)});
+}
+
+void Camera::pointAt(vec3 pos)
+{
+    m_rotation = quatLookAt(normalize(pos - getPos()), {0,1,0});
 }
 
 mat4 Camera::getViewMatrix()
@@ -66,18 +93,7 @@ vec3 Camera::forward()
 
 void Camera::onUpdate(float dt)
 {
-    auto u = up();
-    auto f = forward();
-    auto r = right();
-    LOG("u -  x:%f   y:%f   z:%f\n"
-        "f -  x:%f   y:%f   z:%f\n"
-        "r -  x:%f   y:%f   z:%f",
-        u.x, u.y, u.z,
-        f.x, f.y, f.z,
-        r.x, r.y, r.z);
     float rotationSpeed = 100.f;
-    float xSign = right().x < 0 ? 1.f : -1.f;
-    float zSign = right().z < 0 ? 1.f : -1.f;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
         addRotationX(rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
