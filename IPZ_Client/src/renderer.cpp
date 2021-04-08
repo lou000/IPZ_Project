@@ -58,13 +58,10 @@ void Renderer::x_init()
     shader->bind();
 }
 
-void Renderer::x_begin()
+void Renderer::x_begin(const std::shared_ptr<Camera>& camera)
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    //Need camera class
-//    UNUSED(camera);
-//    UNUSED(transform);
-    mat4 viewProj = ortho(-2.0f,2.0f,-2.0f,2.0f,0.0f,100.0f);
+    mat4 viewProj =  camera->getViewProjectionMatrix();
 
     currentBuffer->shader()->bind();
     currentBuffer->shader()->setUniform("u_ViewProjection", Shader::Mat4, viewProj);
@@ -106,6 +103,16 @@ void Renderer::flush()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void Renderer::x_setViewPort(uvec2 pos, uvec2 size)
+{
+    glViewport(pos.x, pos.y, size.x, size.y);
+}
+
+void Renderer::x_setClearColor(vec4 color)
+{
+    glClearColor(color.r, color.g, color.b, color.a);
+}
+
 void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
@@ -121,16 +128,6 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
     mat4 transform = translate(mat4(1.0f), pos)
                      * scale(mat4(1.0f), {size.x, size.y, 1.0f});
     x_DrawQuad(transform, nullptr, 1, tintColor);
-}
-
-void Renderer::x_setViewPort(uvec2 pos, uvec2 size)
-{
-    glViewport(pos.x, pos.y, size.x, size.y);
-}
-
-void Renderer::x_setClearColor(vec4 color)
-{
-    glClearColor(color.r, color.g, color.b, color.a);
 }
 
 void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,

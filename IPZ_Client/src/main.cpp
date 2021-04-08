@@ -23,6 +23,11 @@ int main(void)
     for(int i=0; i<1000; i++)
         randomPos.push_back({rndDouble(0, 6), rndDouble(0, 6)});
 
+    auto winSize = App::getWindowSize();
+    auto camera = std::make_shared<Camera>(90.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+    camera->setPosition(vec3(0,-1,1));
+//    camera->pointAt({0,-0.1,0});
+
     while (!App::shouldClose())
     {
         double currentTime = App::getTime();
@@ -37,11 +42,30 @@ int main(void)
         }
 
 
+        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
+        {
+            camera->setRotationX(camera->getRotationX()+1.5f);
+            auto rot = camera->getRotationX();
+            LOG("Camera rotX %f", rot);
+        }
+        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
+            camera->setRotationX(camera->getRotationX()-1.5f);
+        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_A))
+            camera->setRotationY(camera->getRotationY()+1.5f);
+        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_D))
+            camera->setRotationY(camera->getRotationY()-1.5f);
+        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
+        {
+            camera->pointAt({0,1.f,0});
+            auto rot = camera->getRotationX();
+            LOG("Camera rotX %f", rot);
+        }
+
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
 
 
-        Renderer::begin();
+        Renderer::begin(camera);
 
         float w = 0.09f;
         float y = w/2;
@@ -69,6 +93,8 @@ int main(void)
             Renderer::DrawQuad({pos.x-3,pos.y-3,0}, {0.3f, 0.3f}, texture2);
         }
         Renderer::DrawQuad({0,0,0}, {2, 2}, texture);
+
+        Renderer::DrawQuad({0,0,0}, {0.05f, 0.05f},{1,1,1,1});
 
         Renderer::end();
         App::submitFrame();

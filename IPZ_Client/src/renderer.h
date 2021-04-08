@@ -33,7 +33,7 @@ public:
     void operator=(Renderer const&) = delete;
 
     static void init(){getInstance().x_init();}
-    static void begin(){getInstance().x_begin();}
+    static void begin(const std::shared_ptr<Camera>& camera){getInstance().x_begin(camera);}
     static void end(){getInstance().x_end();}
     static void DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
@@ -70,7 +70,7 @@ private:
     int texSamplers[maxTexturesPerBuffer];
 
     void x_init();
-    void x_begin();
+    void x_begin(const std::shared_ptr<Camera>& camera);
     void x_end();
     void x_DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
