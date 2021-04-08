@@ -48,29 +48,29 @@ int main(void)
         Renderer::begin(camera);
 
         float w = 0.09f;
-        float y = w/2;
+        float z = w/2;
         float x = w/2;
         vec4 colorStart = {0.969, 0.588, 0.498,1.0f};
         vec4 colorEnd = {0.255, 0.263, 0.478,1};
         Renderer::DrawQuad({0,0,0}, {4, 4}, vec4(0.090, 0.059, 0.286, 1));
         while(x-w/2<4)
         {
-            while(y-w/2<4)
+            while(z-w/2<4)
             {
-                float mixA = clamp((float)(8-(y+x))/8+0.25f, 0.f, 1.0f);
-                Renderer::DrawQuad({x-2,y-2,0}, {w, w}, mix(colorStart, colorEnd, mixA));
-                y+=w+0.01f;
+                float mixA = clamp((float)(8-(z+x))/8+0.25f, 0.f, 1.0f);
+                Renderer::DrawQuad({x-2, 0,z-2}, {w, w}, mix(colorStart, colorEnd, mixA));
+                z+=w+0.01f;
             }
-            y = w/2;
+            z = w/2;
             x+=w+0.01f;
         }
 
         for(auto& pos : randomPos)
         {
-            pos.x += (float)rndInt(-1, 1)/200;;
-            pos.y += (float)rndInt(-1, 1)/200;
+            pos.x += (float)rndInt(-2, 1)/200;;
+            pos.y += (float)rndInt(-2, 1)/200;
             pos = mod(pos, {6,6});
-            Renderer::DrawQuad({pos.x-3,pos.y-3,0}, {0.3f, 0.3f}, texture2);
+            Renderer::DrawQuad({pos.x-3, 0, pos.y-3}, {0.3f, 0.3f}, texture2);
         }
         Renderer::DrawQuad({0,0,0}, {2, 2}, texture);
 

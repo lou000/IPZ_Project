@@ -66,16 +66,26 @@ vec3 Camera::forward()
 
 void Camera::onUpdate(float dt)
 {
+    auto u = up();
+    auto f = forward();
+    auto r = right();
+    LOG("u -  x:%f   y:%f   z:%f\n"
+        "f -  x:%f   y:%f   z:%f\n"
+        "r -  x:%f   y:%f   z:%f",
+        u.x, u.y, u.z,
+        f.x, f.y, f.z,
+        r.x, r.y, r.z);
     float rotationSpeed = 100.f;
-    float xSign = forward().z < 0 ? 1.f : -1.f;
+    float xSign = right().x < 0 ? 1.f : -1.f;
+    float zSign = right().z < 0 ? 1.f : -1.f;
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
         addRotationX(rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
         addRotationX(-rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_A))
-        addRotationY(xSign*rotationSpeed*dt);
+        addRotationY(rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_D))
-        addRotationY(-xSign*rotationSpeed*dt);
+        addRotationY(-rotationSpeed*dt);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
         pointAt({0,0,0});
 
@@ -103,7 +113,8 @@ void Camera::onUpdate(float dt)
 
 void Camera::onCreate()
 {
-    setPosition(vec3(0,0,1.2f));
+    setPosition(vec3(0,1.2f,0));
+    setRotationX(-90);
 }
 
 void Camera::updateViewMat()

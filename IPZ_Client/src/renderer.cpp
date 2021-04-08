@@ -118,7 +118,7 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_p
 {
 
     mat4 transform = translate(mat4(1.0f), pos)
-                     * scale(mat4(1.0f), {size.x, size.y, 1.0f});
+                     * scale(mat4(1.0f), {size.x, 0, size.y});
     x_DrawQuad(transform, texture, tilingFactor, tintColor);
 }
 
@@ -126,7 +126,7 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
 {
 
     mat4 transform = translate(mat4(1.0f), pos)
-                     * scale(mat4(1.0f), {size.x, size.y, 1.0f});
+                     * scale(mat4(1.0f), {size.x, 0, size.y});
     x_DrawQuad(transform, nullptr, 1, tintColor);
 }
 
