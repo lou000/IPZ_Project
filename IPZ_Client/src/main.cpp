@@ -25,8 +25,6 @@ int main(void)
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(90.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    camera->setPosition(vec3(0,-1,1));
-//    camera->pointAt({0,-0.1,0});
 
     while (!App::shouldClose())
     {
@@ -41,26 +39,7 @@ int main(void)
             lastTime = currentTime;
         }
 
-
-        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
-        {
-            camera->setRotationX(camera->getRotationX()+1.5f);
-            auto rot = camera->getRotationX();
-            LOG("Camera rotX %f", rot);
-        }
-        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
-            camera->setRotationX(camera->getRotationX()-1.5f);
-        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_A))
-            camera->setRotationY(camera->getRotationY()+1.5f);
-        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_D))
-            camera->setRotationY(camera->getRotationY()-1.5f);
-        if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
-        {
-            camera->pointAt({0,1.f,0});
-            auto rot = camera->getRotationX();
-            LOG("Camera rotX %f", rot);
-        }
-
+        camera->onUpdate(); //this will go in entity manager
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
 

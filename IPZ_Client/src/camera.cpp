@@ -1,4 +1,5 @@
 ﻿#include "camera.h"
+#include "application.h"
 #include "gtx/quaternion.hpp"
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
@@ -6,65 +7,50 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
 {
     updateProjMat();
     updateViewMat();
-}
-
-void Camera::setRotationX(float degree)
-{
-    auto euler = eulerAngles(m_rotation);
-    m_rotation = quat({radians(degree), euler.y, euler.z});
-}
-
-void Camera::setRotationY(float degree)
-{
-    auto euler = eulerAngles(m_rotation);
-    m_rotation = quat({euler.x, radians(degree), euler.z});
-}
-
-void Camera::setRotationZ(float degree)
-{
-    auto euler = eulerAngles(m_rotation);
-    m_rotation = quat({euler.x, euler.y, radians(degree)});
+    onCreate();
 }
 
 void Camera::pointAt(vec3 pos)
 {
     //Borrowed from https://stackoverflow.com/questions/18172388/glm-quaternion-lookat-function
     glm::vec3 direction = pos-getPos();
-    float directionLength = glm::length(direction);
+    float directionLength = length(direction);
+    quat rotation = quat(1, 0, 0, 0);
 
     // Check if the direction is valid; Also deals with NaN
     if(!(directionLength > 0.0001))
-        m_rotation = glm::quat(1, 0, 0, 0); // Just return identity
+    {
+        auto euler = eulerAngles(rotation);
+        m_rotationX = euler.x;
+        m_rotationY = euler.y;
+        m_rotationZ = euler.z;
+        return;
+    }
 
     // Normalize direction
     direction /= directionLength;
 
     // Is the normal up (nearly) parallel to direction?
     if(glm::abs(glm::dot(direction, up())) > .9999f) {
-        // Use alternative up
-        m_rotation = glm::quatLookAt(direction, {0,1,0});
+        rotation = glm::quatLookAt(direction, up());
+        auto euler = eulerAngles(rotation);
+        m_rotationX = euler.x;
+        m_rotationY = euler.y;
+        m_rotationZ = euler.z;
+        return;
     }
     else {
-        m_rotation = glm::quatLookAt(direction, up());
+        rotation = glm::quatLookAt(direction, {0,1,0});
+        auto euler = eulerAngles(rotation);
+        m_rotationX = euler.x;
+        m_rotationY = euler.y;
+        m_rotationZ = euler.z;
     }
 }
 
-float Camera::getRotationX()
+quat Camera::getRotation()
 {
-    auto euler = eulerAngles(m_rotation);
-    return degrees(euler.x);
-}
-
-float Camera::getRotationY()
-{
-    auto euler = eulerAngles(m_rotation);
-    return degrees(euler.y);
-}
-
-float Camera::getRotationZ()
-{
-    auto euler = eulerAngles(m_rotation);
-    return degrees(euler.z);
+    return quat({radians(m_rotationX), radians(m_rotationY), radians(m_rotationZ)});
 }
 
 mat4 Camera::getViewMatrix()
@@ -89,22 +75,43 @@ mat4 Camera::getViewProjectionMatrix()
 
 vec3 Camera::up()
 {
-    return m_rotation * vec3(0, 1, 0);
+    return glm::rotate(getRotation(), vec3(0, 1, 0));
 }
 
 vec3 Camera::right()
 {
-    return m_rotation * vec3(1, 0, 0);
+    return glm::rotate(getRotation(), vec3(1, 0, 0));
 }
 
 vec3 Camera::forward()
 {
-    return m_rotation * vec3(0, 0, -1);
+    return glm::rotate(getRotation(), vec3(0, 0, -1));
+}
+
+void Camera::onUpdate()
+{
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
+        addRotationX(1.5f);
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
+        addRotationX(-1.5f);
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_A))
+        addRotationY(1.5f);
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_D))
+        addRotationY(-1.5f);
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
+        pointAt({0,0,0});
+    auto angles = eulerAngles(getRotation());
+    LOG("Camerat rotation: x:%f  y:%f  z:%f", angles.x, angles.y, angles.z);
+}
+
+void Camera::onCreate()
+{
+    setPosition(vec3(0,0,1.2f));
 }
 
 void Camera::updateViewMat()
 {
-    m_viewMat = translate(mat4(1.0f), m_pos)* toMat4(m_rotation);
+    m_viewMat = translate(mat4(1.0f), m_pos)* toMat4(getRotation());
     m_viewMat = inverse(m_viewMat);
 }
 
