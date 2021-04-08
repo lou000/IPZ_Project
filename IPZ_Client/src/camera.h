@@ -10,6 +10,7 @@ public:
     // Most of this functionality should be moved to entity base class class
 
     void setPosition(vec3 pos)      {m_pos = pos;}
+    void move(vec3 vec);
     void setFov(float fov)          {m_fov = fov;}
     void setAspectRatio(float ratio){m_aspectRatio = ratio;}
     void setRotationX(float degree){m_rotationX = degree;}

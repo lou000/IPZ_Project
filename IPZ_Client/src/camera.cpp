@@ -10,6 +10,11 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     onCreate();
 }
 
+void Camera::move(vec3 vec)
+{
+    m_pos += vec;
+}
+
 void Camera::pointAt(vec3 pos)
 {
     //Borrowed from https://stackoverflow.com/questions/18172388/glm-quaternion-lookat-function
@@ -23,7 +28,7 @@ void Camera::pointAt(vec3 pos)
         auto euler = eulerAngles(rotation);
         m_rotationX = euler.x;
         m_rotationY = euler.y;
-        m_rotationZ = euler.z;
+//        m_rotationZ = euler.z;
         return;
     }
 
@@ -37,10 +42,9 @@ void Camera::pointAt(vec3 pos)
         m_rotationX = euler.x;
         m_rotationY = euler.y;
         m_rotationZ = euler.z;
-        return;
     }
     else {
-        rotation = glm::quatLookAt(direction, {0,1,0});
+        rotation = glm::quatLookAt(direction, up());
         auto euler = eulerAngles(rotation);
         m_rotationX = euler.x;
         m_rotationY = euler.y;
@@ -100,8 +104,27 @@ void Camera::onUpdate()
         addRotationY(-1.5f);
     if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
         pointAt({0,0,0});
-    auto angles = eulerAngles(getRotation());
-    LOG("Camerat rotation: x:%f  y:%f  z:%f", angles.x, angles.y, angles.z);
+
+    float speed = 0.2f;
+    vec3 moveVec = {0, 0 ,0};
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_UP))
+        moveVec += speed * forward();
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_DOWN))
+        moveVec += -speed * forward();
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_RIGHT))
+        moveVec +=  speed * right();
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_LEFT))
+        moveVec += -speed * right();
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_Q))
+        moveVec +=  speed * up();
+    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_Z))
+        moveVec += -speed * up();
+
+    move(moveVec);
+
+//    auto angles = eulerAngles(getRotation());
+//    LOG("Rotation: x:%f  y:%f  z:%f    Pos: x:%f  y:%f  z:%f",
+//        angles.x, angles.y, angles.z, m_pos.x, m_pos.y, m_pos.z);
 }
 
 void Camera::onCreate()
