@@ -45,9 +45,9 @@ int main(void)
         if(App::getKeyOnce(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
         if(glfwGetKey(hwnd, GLFW_KEY_KP_SUBTRACT))
-            animationSpeed -= 0.001f;
+            animationSpeed -= 0.002f;
         if(glfwGetKey(hwnd, GLFW_KEY_KP_ADD))
-            animationSpeed += 0.001f;
+            animationSpeed += 0.002f;
 
         float dt = App::getTimeStep();
         double currentTime = App::getTime();
@@ -73,8 +73,8 @@ int main(void)
             animProgress = 0.0f;
         }
         auto grid = ((SlidePuzzle*)*iter)->getData();
-        auto nextGrid = ((SlidePuzzle*)*std::prev(iter))->getData(); //this is peak c++ confusion
-
+        //this is peak c++ confusion
+        auto nextGrid = iter == solutionPath.begin() ? ((SlidePuzzle*)*iter)->getData() : ((SlidePuzzle*)*std::prev(iter))->getData();
 
         //Find changed indexes
         int movingFromIndx = -1;
@@ -93,19 +93,19 @@ int main(void)
         vec3 movDir = {0,0,0};
         int rowFrom = movingFromIndx / 4;
         int rowTo   = movingToIndx / 4;
-        if(movingFromIndx>movingToIndx)
+        if(rowFrom == rowTo)
         {
-            if(rowFrom>rowTo)
-                movDir.z = -1;
-            else
+            if(movingFromIndx>movingToIndx)
                 movDir.x = -1;
+            else
+                movDir.x = 1;
         }
         else
         {
-            if(rowFrom>rowTo)
-                movDir.z = 1;
+            if(movingFromIndx>movingToIndx)
+                movDir.z = -1;
             else
-                movDir.x = 1;
+                movDir.z = 1;
         }
 
 
