@@ -22,6 +22,7 @@ public:
     void addRotationX(float degree);
     void addRotationY(float degree);
     void addRotationZ(float degree);
+    void setFocusPoint(vec3 point){m_focusPoint = point;}
     void pointAt(vec3 pos);
 
     vec3 getPos()         {return m_pos;}
@@ -50,6 +51,7 @@ private:
     float m_aspectRatio = 1;
     float m_nearClip    = 0.1f;
     float m_farClip     = 1000;
+    vec3 m_focusPoint = {0,0,0};
 
     quat m_rotation = {1,0,0,0};
     mat4 m_viewMat;

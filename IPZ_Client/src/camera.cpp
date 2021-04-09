@@ -127,12 +127,11 @@ void Camera::onUpdate(float dt)
     float offset = (float)App::getMouseScrollChange();
     if(offset!=0)
     {
-        float speed = 0.5f;
+        float speed = 0.2f;
         LOG("offset: %f", offset);
         m_pos += offset * speed * forward();
     }
 
-    vec3 rotationPoint(0,0,0);
     if(glfwGetMouseButton(hwnd, GLFW_MOUSE_BUTTON_RIGHT))
     {
         // The problem is that first when we call this function mouseChange is huge.
@@ -140,15 +139,15 @@ void Camera::onUpdate(float dt)
         auto mChange = App::getMousePosChange();
         if(!firstMouseClick)
         {
-            float sens = 0.005f;
+            float sens = 0.15f;
             glfwSetInputMode(hwnd, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             glfwSetInputMode(hwnd, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-            auto rot = angleAxis(-mChange.y*sens, right());
-            auto rot2 = angleAxis(-mChange.x*sens, up());
-            m_pos = rotationPoint + (rot * (m_pos-rotationPoint));
-            m_pos = rotationPoint + (rot2 * (m_pos-rotationPoint));
-            pointAt(rotationPoint);
+            auto rot = angleAxis(-mChange.y*sens*dt, right());
+            auto rot2 = angleAxis(-mChange.x*sens*dt, up());
+            m_pos = m_focusPoint + (rot * (m_pos-m_focusPoint));
+            m_pos = m_focusPoint + (rot2 * (m_pos-m_focusPoint));
+            pointAt(m_focusPoint);
         }
         else
             firstMouseClick = false;
@@ -169,8 +168,8 @@ void Camera::onUpdate(float dt)
         addRotationY(rotationSpeed*dt);
     if(glfwGetKey(hwnd, GLFW_KEY_D))
         addRotationY(-rotationSpeed*dt);
-    if(glfwGetKey(hwnd, GLFW_KEY_SPACE))
-        pointAt({0,0,0});
+//    if(glfwGetKey(hwnd, GLFW_KEY_SPACE))
+//        pointAt({0,0,0});
 
     float speed = 3.f;
     vec3 moveVec = {0, 0 ,0};
