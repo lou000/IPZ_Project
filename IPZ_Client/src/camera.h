@@ -11,8 +11,11 @@ public:
 
     void setPosition(vec3 pos)      {m_pos = pos;}
     void move(vec3 vec);
+    void rotateAroundY(vec3 point, float degree);
+    void rotateAroundX(vec3 point, float degree);
     void setFov(float fov)          {m_fov = fov;}
     void setAspectRatio(float ratio){m_aspectRatio = ratio;}
+    void setRotation(quat rotation) {m_rotation = rotation;}
     void setRotationX(float degree);
     void setRotationY(float degree);
     void setRotationZ(float degree);
@@ -21,13 +24,13 @@ public:
     void addRotationZ(float degree);
     void pointAt(vec3 pos);
 
-    vec3 getPos()          {return m_pos;}
-    float getFov()         {return m_fov;}
+    vec3 getPos()         {return m_pos;}
+    float getFov()        {return m_fov;}
     float getAspectRatio(){return m_aspectRatio;}
+    quat getRotation()    {return m_rotation;}
     float getRotationX();
     float getRotationY();
     float getRotationZ();
-    quat getRotation(){return m_rotation;}
 
     mat4 getViewMatrix();
     mat4 getProjMatrix();
@@ -54,4 +57,6 @@ private:
 
     void updateViewMat();
     void updateProjMat();
+
+    bool firstMouseClick = true; //temporary
 };

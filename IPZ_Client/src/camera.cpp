@@ -1,6 +1,7 @@
 ﻿#include "camera.h"
 #include "application.h"
 #include "gtx/quaternion.hpp"
+#include "gtx/transform.hpp"
 
 Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
     :m_fov(fov), m_aspectRatio(aspectRatio), m_nearClip(nearClip), m_farClip(farClip)
@@ -13,6 +14,18 @@ Camera::Camera(float fov, float aspectRatio, float nearClip, float farClip)
 void Camera::move(vec3 vec)
 {
     m_pos += vec;
+}
+
+void Camera::rotateAroundY(vec3 point, float degree)
+{
+    m_pos.x = point.x + (m_pos.x - point.x)*cos(degree) - (m_pos.z-point.z)*sin(degree);
+    m_pos.z = point.x + (m_pos.x - point.x)*sin(degree) + (m_pos.z-point.z)*cos(degree);
+}
+
+void Camera::rotateAroundX(vec3 point, float degree)
+{
+    m_pos.x = point.x + (m_pos.x - point.x)*cos(degree) - (m_pos.y-point.y)*sin(degree);
+    m_pos.y = point.x + (m_pos.x - point.x)*sin(degree) + (m_pos.y-point.y)*cos(degree);
 }
 
 void Camera::setRotationX(float degree)
@@ -56,6 +69,21 @@ void Camera::pointAt(vec3 pos)
     m_rotation = quatLookAt(normalize(pos - getPos()), {0,1,0});
 }
 
+float Camera::getRotationX()
+{
+    return eulerAngles(m_rotation).x;
+}
+
+float Camera::getRotationY()
+{
+    return eulerAngles(m_rotation).y;
+}
+
+float Camera::getRotationZ()
+{
+    return eulerAngles(m_rotation).z;
+}
+
 mat4 Camera::getViewMatrix()
 {
     updateViewMat();
@@ -93,31 +121,73 @@ vec3 Camera::forward()
 
 void Camera::onUpdate(float dt)
 {
+    auto hwnd = App::getWindowHandle();
+
+    //MOUSE
+    float offset = (float)App::getMouseScrollChange();
+    if(offset!=0)
+    {
+        float speed = 0.5f;
+        LOG("offset: %f", offset);
+        m_pos += offset * speed * forward();
+    }
+
+    vec3 rotationPoint(0,0,0);
+    if(glfwGetMouseButton(hwnd, GLFW_MOUSE_BUTTON_RIGHT))
+    {
+        // The problem is that first when we call this function mouseChange is huge.
+        // This is a very ugly hack, later we will use glfwSetCursorPosCallback().
+        auto mChange = App::getMousePosChange();
+        if(!firstMouseClick)
+        {
+            float sens = 0.005f;
+            glfwSetInputMode(hwnd, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            glfwSetInputMode(hwnd, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+
+            auto rot = angleAxis(-mChange.y*sens, right());
+            auto rot2 = angleAxis(-mChange.x*sens, up());
+            m_pos = rotationPoint + (rot * (m_pos-rotationPoint));
+            m_pos = rotationPoint + (rot2 * (m_pos-rotationPoint));
+            pointAt(rotationPoint);
+        }
+        else
+            firstMouseClick = false;
+    }
+    else
+    {
+        firstMouseClick = true;
+        glfwSetInputMode(hwnd, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+
+    //KEYBOARD
     float rotationSpeed = 100.f;
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_W))
+    if(glfwGetKey(hwnd, GLFW_KEY_W))
         addRotationX(rotationSpeed*dt);
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_S))
+    if(glfwGetKey(hwnd, GLFW_KEY_S))
         addRotationX(-rotationSpeed*dt);
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_A))
+    if(glfwGetKey(hwnd, GLFW_KEY_A))
         addRotationY(rotationSpeed*dt);
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_D))
+    if(glfwGetKey(hwnd, GLFW_KEY_D))
         addRotationY(-rotationSpeed*dt);
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_SPACE))
+    if(glfwGetKey(hwnd, GLFW_KEY_SPACE))
         pointAt({0,0,0});
 
     float speed = 3.f;
     vec3 moveVec = {0, 0 ,0};
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_UP))
+    // right click + mouse move = rotate around center (later selection or mouse pos on xz plane)
+    if(glfwGetKey(hwnd, GLFW_KEY_UP))
         moveVec +=  forward() * speed * dt;
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_DOWN))
+    if(glfwGetKey(hwnd, GLFW_KEY_DOWN))
         moveVec += -forward() * speed * dt;
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_RIGHT))
+    if(glfwGetKey(hwnd, GLFW_KEY_RIGHT))
         moveVec +=  right() * speed * dt;
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_LEFT))
+    if(glfwGetKey(hwnd, GLFW_KEY_LEFT))
         moveVec += -right() * speed * dt;
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_Q))
+
+
+    if(glfwGetKey(hwnd, GLFW_KEY_Q))
         moveVec +=  up() * speed * dt;
-    if(glfwGetKey(App::getWindowHandle(), GLFW_KEY_Z))
+    if(glfwGetKey(hwnd, GLFW_KEY_Z))
         moveVec += -up() * speed * dt;
 
     move(moveVec);
@@ -129,8 +199,8 @@ void Camera::onUpdate(float dt)
 
 void Camera::onCreate()
 {
-    setPosition(vec3(0,1.2f,0));
-    setRotationX(-90);
+    setPosition(vec3(0,1.2f,0.01f));
+    pointAt({0,0,0});
 }
 
 void Camera::updateViewMat()

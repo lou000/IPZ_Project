@@ -122,7 +122,6 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-
 void App::x_init(uint width, uint height)
 {
 
@@ -146,7 +145,8 @@ void App::x_init(uint width, uint height)
     }
     glfwSetKeyCallback(m_window, key_callback);
     glfwMakeContextCurrent(m_window);
-
+    glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
 
@@ -204,6 +204,35 @@ float App::x_getTimeStep()
     float dt = currentFrame - m_lastFrame;
     m_lastFrame = currentFrame;
     return dt;
+}
+
+vec2 App::x_getMousePosChange()
+{
+    dvec2 currentMousePos;
+    glfwGetCursorPos(m_window, &currentMousePos.x, &currentMousePos.y);
+    vec2 mouseChange = (vec2)currentMousePos - m_prevMousePos;
+    m_prevMousePos = (vec2)currentMousePos;
+
+    //the problem is that first when we call this function mouseChange is huge
+    //this is a very ugly hack, later we will use glfwSetCursorPosCallback();
+//    if(length(mouseChange)>500)
+//        return {0,0};
+    return mouseChange;
+}
+
+double App::x_getMouseScrollChange()
+{
+    double offset = mouseScrollYOffset;
+    mouseScrollYOffset = 0;
+    return offset;
+}
+
+void App::x_mouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
+{
+    UNUSED(window);
+    UNUSED(xoffset);
+    LOG("bigOffset: %f", yoffset);
+    mouseScrollYOffset += yoffset;
 }
 
 bool App::x_shouldClose()

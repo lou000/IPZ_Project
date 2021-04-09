@@ -26,12 +26,19 @@ public:
     static bool shouldClose(){return getInstance().x_shouldClose();}
     static GLFWwindow* getWindowHandle(){return getInstance().x_getWindowHandle();}
     static float getTimeStep(){return getInstance().x_getTimeStep();}
+    static vec2 getMousePosChange(){return getInstance().x_getMousePosChange();}
+    static double getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
+
+    static void mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+    {return getInstance().x_mouseScrollCallback(window, xoffset, yoffset);}
 
 private:
     GLFWwindow* m_window;
     uint m_windowHeight = 0;
     uint m_windowWidth = 0;
     float m_lastFrame = 0;
+    vec2 m_prevMousePos = {0,0};
+    double mouseScrollYOffset = 0;
 
     void x_init(uint width, uint height);
     void x_setVsync(uint interval);
@@ -43,5 +50,8 @@ private:
     bool x_shouldClose();
     GLFWwindow* x_getWindowHandle();
     float x_getTimeStep();
+    vec2 x_getMousePosChange();
+    double x_getMouseScrollChange();
+    void x_mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 };
 
