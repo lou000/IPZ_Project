@@ -28,17 +28,17 @@ public:
     static float getTimeStep(){return getInstance().x_getTimeStep();}
     static vec2 getMousePosChange(){return getInstance().x_getMousePosChange();}
     static double getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
-
-    static void mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-    {return getInstance().x_mouseScrollCallback(window, xoffset, yoffset);}
+    static bool getKeyOnce(int key, int mods = 0, int action = GLFW_PRESS){return getInstance().x_getKeyOnce(key, mods, action);}
 
 private:
     GLFWwindow* m_window;
     uint m_windowHeight = 0;
     uint m_windowWidth = 0;
-    float m_lastFrame = 0;
+    float m_lastFrameTime = 0;
     vec2 m_prevMousePos = {0,0};
     double mouseScrollYOffset = 0;
+    // this is probably very wrong way of doing this its only temporary
+    std::vector<size_t> keyHashBuffer;
 
     void x_init(uint width, uint height);
     void x_setVsync(uint interval);
@@ -52,6 +52,15 @@ private:
     float x_getTimeStep();
     vec2 x_getMousePosChange();
     double x_getMouseScrollChange();
+    bool x_getKeyOnce(int key, int mods, int action);
+
+
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+    {return getInstance().x_keyCallback(window, key, scancode, action, mods);}
+    void x_keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+    static void mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+    {return getInstance().x_mouseScrollCallback(window, xoffset, yoffset);}
     void x_mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 };
 

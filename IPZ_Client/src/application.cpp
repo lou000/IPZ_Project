@@ -122,6 +122,32 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
+bool App::x_getKeyOnce(int key, int mods, int action)
+{
+    size_t hash = 0;
+    hash ^= key + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    hash ^= action + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    hash ^= mods + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+
+    for(auto h : keyHashBuffer)
+        if(h==hash)
+            return true;
+
+    return false;
+}
+
+void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    UNUSED(window);
+    UNUSED(scancode);
+    //just fucking hash them, whats the worst that can happen
+    size_t hash = 0;
+    hash ^= key + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    hash ^= action + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    hash ^= mods + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    keyHashBuffer.push_back(hash);
+}
+
 void App::x_init(uint width, uint height)
 {
 
@@ -147,6 +173,7 @@ void App::x_init(uint width, uint height)
     glfwMakeContextCurrent(m_window);
     glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
+    glfwSetKeyCallback(m_window, &App::keyCallback);
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
 
@@ -172,6 +199,7 @@ void App::x_setWindowTitle(const std::string &title)
 
 void App::x_submitFrame()
 {
+    keyHashBuffer.clear();
     glfwSwapBuffers(m_window);
     glfwPollEvents();
 }
@@ -201,8 +229,8 @@ GLFWwindow* App::x_getWindowHandle()
 float App::x_getTimeStep()
 {
     float currentFrame = (float)glfwGetTime();
-    float dt = currentFrame - m_lastFrame;
-    m_lastFrame = currentFrame;
+    float dt = currentFrame - m_lastFrameTime;
+    m_lastFrameTime = currentFrame;
     return dt;
 }
 
