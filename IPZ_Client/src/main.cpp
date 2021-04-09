@@ -1,4 +1,5 @@
 ﻿#include "application.h"
+#include "slidepuzzle.h"
 
 int main(void)
 {
@@ -8,6 +9,9 @@ int main(void)
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
     AssetManager::addAsset(texture2);
+    for(int i=1; i<=15; i++)
+        AssetManager::addAsset(std::make_shared<Texture>("../assets/img/numero"+std::to_string(i)+".png"));
+
     std::vector<std::filesystem::path> shaderSrcs = {
         "../assets/shaders/test_frag.glsl",
         "../assets/shaders/test_vert.glsl"
@@ -25,9 +29,26 @@ int main(void)
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(90.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-
+    camera->setPosition({2, 2, 4});
+    camera->pointAt({2,0,2});
+    camera->setFocusPoint({2,0,2});
+    auto puzzle = SlidePuzzle(4, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
+    auto searcher = informative_searcher(puzzle, &SlidePuzzle::compare);
+    auto solutionPath = searcher.get_solution_path(0);
+    auto iter = solutionPath.end();
+    iter--;
+    float animationSpeed = 0.01f;
+    float animProgress = 1.0f;
     while (!App::shouldClose())
     {
+        auto hwnd = App::getWindowHandle();
+        if(App::getKeyOnce(GLFW_KEY_SPACE))
+            animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
+        if(glfwGetKey(hwnd, GLFW_KEY_KP_SUBTRACT))
+            animationSpeed -= 0.001f;
+        if(glfwGetKey(hwnd, GLFW_KEY_KP_ADD))
+            animationSpeed += 0.001f;
+
         float dt = App::getTimeStep();
         double currentTime = App::getTime();
         nbFrames++;
@@ -46,7 +67,66 @@ int main(void)
 
 
         Renderer::begin(camera);
+        if(animProgress>=1.0f && iter != solutionPath.begin())
+        {
+            iter--;
+            animProgress = 0.0f;
+        }
+        auto grid = ((SlidePuzzle*)*iter)->getData();
+        auto nextGrid = ((SlidePuzzle*)*std::prev(iter))->getData(); //this is peak c++ confusion
 
+
+        //Find changed indexes
+        int movingFromIndx = -1;
+        int movingToIndx   = -1;
+        for(int i=0; i<16; i++)
+        {
+            if(grid[i] != nextGrid[i])
+            {
+                if(grid[i]!=0)
+                    movingFromIndx = i;
+                else
+                    movingToIndx = i;
+            }
+        }
+        //Find movement vector
+        vec3 movDir = {0,0,0};
+        int rowFrom = movingFromIndx / 4;
+        int rowTo   = movingToIndx / 4;
+        if(movingFromIndx>movingToIndx)
+        {
+            if(rowFrom>rowTo)
+                movDir.z = -1;
+            else
+                movDir.x = -1;
+        }
+        else
+        {
+            if(rowFrom>rowTo)
+                movDir.z = 1;
+            else
+                movDir.x = 1;
+        }
+
+
+        for(int i=0; i<16; i++)
+        {
+            float x = 0.4f+i%4;
+            float z = 0.4f+i/4;
+            vec3 pos = {x, 0, z};
+            auto tileText = std::dynamic_pointer_cast<Texture>(AssetManager::getAsset("../assets/img/numero"+std::to_string(grid[i])+".png"));
+
+            // Here be animation
+            if(i == movingFromIndx)
+            {
+                pos += movDir * animProgress;
+                Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
+                animProgress+=animationSpeed;
+            }
+            else if( grid[i]!= 0)
+                Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
+        }
+#if 0
         float w = 0.09f;
         float z = w/2;
         float x = w/2;
@@ -75,6 +155,7 @@ int main(void)
         Renderer::DrawQuad({0,0,0}, {2, 2}, texture);
 
         Renderer::DrawQuad({0,0,0}, {0.05f, 0.05f},{1,1,1,1});
+#endif
 
         Renderer::end();
         App::submitFrame();

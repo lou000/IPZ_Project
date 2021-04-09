@@ -63,7 +63,7 @@ void main()
 	}
     texColor*=v_Color;
 	color = texColor;
-    if(v_TexIndex == 2)
-        color = colorize(texColor, vec4(0.965, 0.827, 0.502, 0.95));
+    // if(v_TexIndex == 2)
+    //     color = colorize(texColor, vec4(0.965, 0.827, 0.502, 0.95));
     // color = vec4(0.5, 0.2, 0.2, 1);
 }
