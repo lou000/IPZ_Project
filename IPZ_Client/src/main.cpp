@@ -29,10 +29,13 @@ int main(void)
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(90.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    camera->setPosition({2, 2, 4});
-    camera->pointAt({2,0,2});
-    camera->setFocusPoint({2,0,2});
-    auto puzzle = SlidePuzzle(4, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
+    int n = 4;
+    int size = n*n;
+    float center = (float)n/2;
+    camera->setPosition({center, 2, 4});
+    camera->setFocusPoint({center,0,center});
+    camera->pointAt({center,0,center});
+    auto puzzle = SlidePuzzle(n, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
     auto searcher = informative_searcher(puzzle, &SlidePuzzle::compare);
     auto solutionPath = searcher.get_solution_path(0);
     auto iter = solutionPath.end();
@@ -79,7 +82,7 @@ int main(void)
         //Find changed indexes
         int movingFromIndx = -1;
         int movingToIndx   = -1;
-        for(int i=0; i<16; i++)
+        for(int i=0; i<size; i++)
         {
             if(grid[i] != nextGrid[i])
             {
@@ -91,8 +94,8 @@ int main(void)
         }
         //Find movement vector
         vec3 movDir = {0,0,0};
-        int rowFrom = movingFromIndx / 4;
-        int rowTo   = movingToIndx / 4;
+        int rowFrom = movingFromIndx / n;
+        int rowTo   = movingToIndx / n;
         if(rowFrom == rowTo)
         {
             if(movingFromIndx>movingToIndx)
@@ -108,11 +111,11 @@ int main(void)
                 movDir.z = 1;
         }
 
-        Renderer::DrawQuad({1.9f,0,1.9f}, {4, 4}, vec4(0.459, 0.349, 0.298, 1));
-        for(int i=0; i<16; i++)
+        Renderer::DrawQuad({center-0.1f,0,center-0.1f}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
+        for(int i=0; i<size; i++)
         {
-            float x = 0.4f+i%4;
-            float z = 0.4f+i/4;
+            float x = 0.4f+i%n;
+            float z = 0.4f+i/n;
             vec3 pos = {x, 0, z};
             auto tileText = std::dynamic_pointer_cast<Texture>(AssetManager::getAsset("../assets/img/numero"+std::to_string(grid[i])+".png"));
 
