@@ -30,13 +30,45 @@ std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path& pat
         return fileAssets.at(path);
 }
 
-void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
+void AssetManager::x_removeAsset(const std::filesystem::path& assetPath)
 {
-    //TODO: DAAAAAAAWIDDD dla Ciebie.
-    // usunąć asset z listy "fileAssets" i z listy "assets" w dir
-    // jezeli to byl jedyny asset w dir->assets to usunac dir
-    // jezeli to byl shaderFile to odmowic,
-    // usuwamy shaderFile usuwając shader nie osobno
+    auto assetIt = fileAssets.find(assetPath);
+    std::shared_ptr<Asset> asset = nullptr;
+
+    if (assetIt != fileAssets.end())
+    {
+        asset = assetIt->second;
+        if (asset->assetType == shaderFile)
+        {
+            std::cout << "Could not remove Asset:ShaderFile. Remove Shader first\n";
+            return;
+        }
+        else
+            fileAssets.erase(assetIt);
+    }
+    else
+        std::cout << "Asset not found.\n";
+
+    auto dirPath = asset->path.remove_filename();
+
+    auto dirIt = dirs.find(dirPath);
+    if (dirIt != dirs.end())
+    {
+        auto& dirAssets = dirIt->second->assets;
+        assetIt = dirAssets.find(assetPath);
+
+        if (assetIt != dirAssets.end())
+        {
+            if (asset->assetType == shaderFile)
+                std::cout << "Could not remove Asset:ShaderFile. Remove Shader first\n";
+            else
+            {
+                dirAssets.erase(assetIt);
+                if (dirAssets.empty())
+                    dirs.erase(dirIt);
+            }
+        }
+    }
 }
 
 void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
@@ -48,9 +80,39 @@ void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
 
 void AssetManager::x_removeShader(int id)
 {
-    //TODO: DAAAAAAAWIDDD dla Ciebie.
-    // tutaj trzeba usunac shader, i zrobic _removeAsset na wszystkich
-    // shaderFile z nim powiązanych
+    for (auto& shaderIt : shaders)
+    {
+        auto shader = shaderIt.second;
+        if (shader->id() == id)
+        {
+            auto shaderFilesVector = shader->files;
+            for (std::shared_ptr<Asset> sf : shaderFilesVector)
+            {
+                auto shaderFilePath = sf->path;
+                fileAssets.erase(shaderFilePath);
+                auto dirPath = shaderFilePath.remove_filename();
+                auto dir = dirs.find(dirPath);
+
+                if (dir != dirs.end())
+                {
+                    auto& mapAssets = dir->second->assets;
+                    auto asset = mapAssets.find(sf->path);
+
+                    if (asset != mapAssets.end())
+                        mapAssets.erase(asset->first);
+
+                    if (mapAssets.empty())
+                    {
+                        dirs.erase(dir);
+                        break;
+                    }
+                }
+            }
+            shaderFilesVector.clear();
+            shaders.erase(shaderIt.first);
+            break;
+        }
+    }
 }
 
 std::shared_ptr<Shader> AssetManager::x_getShader(const std::string &name)

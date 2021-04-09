@@ -22,27 +22,43 @@
 #define OPENGL_LOG(message, ...)     PPK_ASSERT_CUSTOM(2, 0, message, __VA_ARGS__)
 #define OPENGL_THROW(message, ...)   PPK_ASSERT_CUSTOM(3, 0, message, __VA_ARGS__)
 
+std::string timestamp();
+
 static ppk::assert::implementation::AssertAction::AssertAction assertHandler(const char* file, int line, const char* function,
-                                                                              const char* expression, int level, const char* message)
+    const char* expression, int level, const char* message)
 {
-    //TODO: DAAAAAAWID zrób to ładne i zrób do tego timestamp
     using namespace ppk::assert::implementation;
     using namespace colorwin;
-    switch(level)
+
+    switch (level)
     {
-    case 0: std::cout<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
-    case 1: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
-    case 2: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
-    case 3: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
-    case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;
+    case 0: std::cout << message << "\n\n"; return AssertAction::None;
+    case 1: std::cout << color(red) << message << "\n\n"; return AssertAction::None;
+    case 2: std::cout << color(cyan) << "[OpenGL] " << message << "\n\n"; return AssertAction::None;
+    case 3: std::cout << color(red) << "[OpenGL] " << message << "\n\n"; return AssertAction::Throw;
+    case AssertLevel::Warning:
     case AssertLevel::Debug:
     case AssertLevel::Error:
     case AssertLevel::Fatal:
-        std::cout<<file<<line<<message;
+        std::cout << color(red) << "Error: " << message << "\nInvalid Assert level: " << level << "\nAssertion failed: "
+            << expression << "\n  in " << function << "\n  in " << file << ": " << "line " << line << "\n  at " << timestamp() << "\n\n ";
         return AssertAction::Throw;
     }
-    std::cout<<file<<" "<<line<<"Invalid Assert level:"<<level<<"\n\n"<<message;
+    std::cout << color(red) << "Error: " << message << "\nInvalid Assert level: " << level << "\nAssertion failed: "
+        << expression << "\n  in " << function << "\n  in " << file << ": " << "line " << line << "\n  at " << timestamp() << "\n\n ";
     return AssertAction::Throw;
+}
+
+inline std::string timestamp()
+{
+    struct tm tm_info;
+    time_t t;
+    time(&t);
+    localtime_s(&tm_info, &t);
+    char timestamp[] = "hh:mm:ss";
+    strftime(timestamp, strlen(timestamp) + 1, "%H:%M:%S", &tm_info);
+    std::string time_stamp(timestamp);
+    return time_stamp;
 }
 
 #define UNUSED(x) (void)(x)
