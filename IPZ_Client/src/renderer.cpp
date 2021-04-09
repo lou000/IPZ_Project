@@ -11,6 +11,7 @@ void Renderer::x_init()
     // For now this class is specific to rendering quads with one shader,
     // if we require multiple shaders, or multiple batches for geometry
     // we should use framebuffers
+    glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 

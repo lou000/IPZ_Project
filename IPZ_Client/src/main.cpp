@@ -108,7 +108,7 @@ int main(void)
                 movDir.z = 1;
         }
 
-
+        Renderer::DrawQuad({1.9f,0,1.9f}, {4, 4}, vec4(0.459, 0.349, 0.298, 1));
         for(int i=0; i<16; i++)
         {
             float x = 0.4f+i%4;
@@ -126,6 +126,7 @@ int main(void)
             else if( grid[i]!= 0)
                 Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
         }
+
 #if 0
         float w = 0.09f;
         float z = w/2;
