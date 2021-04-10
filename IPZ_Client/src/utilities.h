@@ -21,6 +21,8 @@
 #define WARN(message, ...)     PPK_ASSERT_CUSTOM(1, 0, message, __VA_ARGS__)
 #define OPENGL_LOG(message, ...)     PPK_ASSERT_CUSTOM(2, 0, message, __VA_ARGS__)
 #define OPENGL_THROW(message, ...)   PPK_ASSERT_CUSTOM(3, 0, message, __VA_ARGS__)
+#define GLFW_LOG(message, ...)     PPK_ASSERT_CUSTOM(4, 0, message, __VA_ARGS__)
+#define GLFW_THROW(message, ...)   PPK_ASSERT_CUSTOM(5, 0, message, __VA_ARGS__)
 
 static ppk::assert::implementation::AssertAction::AssertAction assertHandler(const char* file, int line, const char* function,
                                                                               const char* expression, int level, const char* message)
@@ -30,10 +32,17 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
     using namespace colorwin;
     switch(level)
     {
-    case 0: std::cout<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
-    case 1: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
-    case 2: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
-    case 3: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
+    // (13:12:45.245) [OpenGL] messege
+    //W funkcji log nie potrzebujemy expression ani fuction
+    case 0/*LOG */: std::cout<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
+    //Tutaj powinniśmy wypisać wszystko co mamy
+    case 1/*WARN*/: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
+
+    case 2/*OPENGL_LOG  */: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
+    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
+    case 4/*GLFW_LOG    */: std::cout<<color(cyan)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::None;
+    case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::Throw;
+
     case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;
     case AssertLevel::Debug:
     case AssertLevel::Error:
