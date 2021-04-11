@@ -122,7 +122,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         glfwSetWindowShouldClose(window, GLFW_TRUE);
 }
 
-bool App::x_getKeyOnce(int key, int mods, int action)
+bool App::x_getKeyOnce(int key, int mods, int action) //TODO: enable setting action as flags, we want to say GLFW_PRESS | GLFW_REPEAT
 {
     size_t hash = 0;
     hash ^= key + 0x9e3779b9 + (hash << 6) + (hash >> 2);

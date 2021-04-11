@@ -28,11 +28,11 @@ int main(void)
         randomPos.push_back({rndDouble(0, 6), rndDouble(0, 6)});
 
     auto winSize = App::getWindowSize();
-    auto camera = std::make_shared<Camera>(90.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+    auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     int n = 4;
     int size = n*n;
-    float center = (float)n/2;
-    camera->setPosition({center, 2, 4});
+    float center = (float)n/2-0.1f;
+    camera->setPosition({center, 8, 4});
     camera->setFocusPoint({center,0,center});
     camera->pointAt({center,0,center});
     auto puzzle = SlidePuzzle(n, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
@@ -40,17 +40,16 @@ int main(void)
     auto solutionPath = searcher.get_solution_path(0);
     auto iter = solutionPath.end();
     iter--;
-    float animationSpeed = 0.01f;
+    float animationSpeed = 0.02f;
     float animProgress = 1.0f;
     while (!App::shouldClose())
     {
-        auto hwnd = App::getWindowHandle();
         if(App::getKeyOnce(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
-        if(glfwGetKey(hwnd, GLFW_KEY_KP_SUBTRACT))
-            animationSpeed -= 0.002f;
-        if(glfwGetKey(hwnd, GLFW_KEY_KP_ADD))
-            animationSpeed += 0.002f;
+        if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT, 0, GLFW_REPEAT))
+            animationSpeed -= 0.02f;
+        if(App::getKeyOnce(GLFW_KEY_KP_ADD, 0, GLFW_REPEAT))
+            animationSpeed += 0.02f;
 
         float dt = App::getTimeStep();
         double currentTime = App::getTime();
@@ -111,7 +110,7 @@ int main(void)
                 movDir.z = 1;
         }
 
-        Renderer::DrawQuad({center-0.1f,0,center-0.1f}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
+        Renderer::DrawQuad({center,0,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
         for(int i=0; i<size; i++)
         {
             float x = 0.4f+i%n;
