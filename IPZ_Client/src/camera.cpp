@@ -210,5 +210,5 @@ void Camera::updateViewMat()
 
 void Camera::updateProjMat()
 {
-    m_projMat = perspective(m_fov, m_aspectRatio, m_nearClip, m_farClip);
+    m_projMat = perspective(radians(m_fov), m_aspectRatio, m_nearClip, m_farClip);
 }
