@@ -44,12 +44,18 @@ int main(void)
     float animProgress = 1.0f;
     while (!App::shouldClose())
     {
-        if(App::getKeyOnce(GLFW_KEY_SPACE))
+        if(App::getKey(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
-        if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
+        if(App::getKey(GLFW_KEY_KP_SUBTRACT, App::PRESS | App::REPEAT))
             animationSpeed -= 0.02f;
-        if(App::getKeyOnce(GLFW_KEY_KP_ADD))
+        if(App::getKey(GLFW_KEY_KP_ADD, App::PRESS | App::REPEAT))
             animationSpeed += 0.02f;
+        if(App::getKey(GLFW_KEY_R))
+        {
+            iter = solutionPath.end();
+            animProgress = 0;
+            iter--;
+        }
 
         float dt = App::getTimeStep();
         double currentTime = App::getTime();

@@ -175,9 +175,17 @@ void Camera::onUpdate(float dt)
     vec3 moveVec = {0, 0 ,0};
     // right click + mouse move = rotate around center (later selection or mouse pos on xz plane)
     if(glfwGetKey(hwnd, GLFW_KEY_UP))
-        moveVec +=  forward() * speed * dt;
+    {
+        moveVec +=  forward();
+        moveVec.y = 0;
+        moveVec = normalize(moveVec)* speed * dt;
+    }
     if(glfwGetKey(hwnd, GLFW_KEY_DOWN))
-        moveVec += -forward() * speed * dt;
+    {
+        moveVec += -forward();
+        moveVec.y = 0;
+        moveVec = normalize(moveVec)* speed * dt;
+    }
     if(glfwGetKey(hwnd, GLFW_KEY_RIGHT))
         moveVec +=  right() * speed * dt;
     if(glfwGetKey(hwnd, GLFW_KEY_LEFT))
@@ -185,9 +193,9 @@ void Camera::onUpdate(float dt)
 
 
     if(glfwGetKey(hwnd, GLFW_KEY_Q))
-        moveVec +=  up() * speed * dt;
+        moveVec +=  vec3(0,1,0) * speed * dt;
     if(glfwGetKey(hwnd, GLFW_KEY_Z))
-        moveVec += -up() * speed * dt;
+        moveVec += vec3(0, -1, 0) * speed * dt;
 
     move(moveVec);
 
