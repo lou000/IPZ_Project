@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "renderer.h"
 
+typedef uint8 KeyActionFlags;
 
 class App
 {
@@ -13,6 +14,12 @@ class App
         return instance;
     }
 public:
+    enum KeyAction{
+        RELEASE = 1,
+        PRESS   = 2,
+        REPEAT  = 4
+    };
+
     App(App const&)            = delete;
     void operator=(App const&) = delete;
 
@@ -28,7 +35,8 @@ public:
     static float getTimeStep(){return getInstance().x_getTimeStep();}
     static vec2 getMousePosChange(){return getInstance().x_getMousePosChange();}
     static double getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
-    static bool getKeyOnce(int key, int mods = 0, int action = GLFW_PRESS){return getInstance().x_getKeyOnce(key, mods, action);}
+    static bool getKey(int key, KeyActionFlags actionFlags = PRESS, int mods = 0)
+                {return getInstance().x_getKey(key, actionFlags, mods);}
 
 private:
     GLFWwindow* m_window;
@@ -38,7 +46,7 @@ private:
     vec2 m_prevMousePos = {0,0};
     double mouseScrollYOffset = 0;
     // this is probably very wrong way of doing this its only temporary
-    std::vector<size_t> keyHashBuffer;
+    std::vector<uint16> keyHashBuffer;
 
     void x_init(uint width, uint height);
     void x_setVsync(uint interval);
@@ -52,7 +60,7 @@ private:
     float x_getTimeStep();
     vec2 x_getMousePosChange();
     double x_getMouseScrollChange();
-    bool x_getKeyOnce(int key, int mods, int action);
+    bool x_getKey(int key, KeyActionFlags actionFlags, int mods);
 
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

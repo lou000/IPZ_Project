@@ -114,24 +114,20 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
     }
 }
 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
 {
-    UNUSED(scancode);
-    UNUSED(mods);
-    if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
 
-bool App::x_getKeyOnce(int key, int mods, int action) //TODO: enable setting action as flags, we want to say GLFW_PRESS | GLFW_REPEAT
-{
-    size_t hash = 0;
-    hash ^= key + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-    hash ^= action + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-    hash ^= mods + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    uint16 hash = 0;
+    hash |= key << 9;
+    hash |= mods << 3;
 
     for(auto h : keyHashBuffer)
-        if(h==hash)
-            return true;
+        if((h>>3)<<3==hash) // check if the hash matches without 3 bottom bits
+        {
+            auto bottomBits = h & 0x7;  //compare bottom bits to our flags
+            if(actionFlags & bottomBits)
+                return true;
+        }
 
     return false;
 }
@@ -140,11 +136,13 @@ void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, i
 {
     UNUSED(window);
     UNUSED(scancode);
-    //just fucking hash them, whats the worst that can happen
-    size_t hash = 0;
-    hash ^= key + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-    hash ^= action + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-    hash ^= mods + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+    //just jam them in one var
+    uint16 hash = 0;
+    hash |= key << 9;
+    hash |= mods << 3;
+    // convert glfw action to our flag
+    hash |= action == 0 ? 1 : action<<1;
+
     keyHashBuffer.push_back(hash);
 }
 
@@ -170,7 +168,6 @@ void App::x_init(uint width, uint height)
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-    glfwSetKeyCallback(m_window, key_callback);
     glfwMakeContextCurrent(m_window);
     glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
