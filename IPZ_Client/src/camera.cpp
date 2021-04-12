@@ -109,8 +109,6 @@ vec3 Camera::forward()
 
 void Camera::onUpdate(float dt)
 {
-    auto hwnd = App::getWindowHandle();
-
     //MOUSE
     float offset = (float)App::getMouseScrollChange();
     if(offset!=0)
@@ -125,9 +123,6 @@ void Camera::onUpdate(float dt)
         if(!firstMouseClick)
         {
             float sens = 0.15f*dt;
-            glfwSetInputMode(hwnd, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            glfwSetInputMode(hwnd, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-
             auto rot = angleAxis(-mChange.y*sens, right());
             auto rot2 = angleAxis(-mChange.x*sens, up());
             m_pos = m_focusPoint + (rot * (m_pos-m_focusPoint));
@@ -135,12 +130,15 @@ void Camera::onUpdate(float dt)
             pointAt(m_focusPoint);
         }
         else
+        {
+            App::disableCursor(true);
             firstMouseClick = false;
+        }
     }
     else
     {
         firstMouseClick = true;
-        glfwSetInputMode(hwnd, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        App::disableCursor(false);
     }
 
     //KEYBOARD

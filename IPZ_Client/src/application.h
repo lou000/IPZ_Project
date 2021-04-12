@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include <chrono>
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 #include "asset_manager.h"
 #include "shader.h"
 #include "renderer.h"
@@ -43,6 +45,7 @@ public:
                 {return getInstance().x_getMouseButton(key, actionFlags, mods);}
     static bool getMouseButtonHeld(int key, int mods = 0)
                 {return getInstance().x_getMouseButtonHeld(key, mods);}
+    static void disableCursor(bool disable){getInstance().x_disableCursor(disable);}
 
 private:
     GLFWwindow* m_window;
@@ -71,6 +74,7 @@ private:
     bool x_getKey(int key, KeyActionFlags actionFlags, int mods);
     bool x_getMouseButton(int button, KeyActionFlags actionFlags, int mods);
     bool x_getMouseButtonHeld(int button, int mods);
+    void x_disableCursor(bool disable);
 
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

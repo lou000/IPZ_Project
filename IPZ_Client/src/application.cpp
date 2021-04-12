@@ -205,6 +205,17 @@ bool App::x_getMouseButtonHeld(int button, int mods)
     return false;
 }
 
+void App::x_disableCursor(bool disable)
+{
+    if(disable)
+    {
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        glfwSetInputMode(m_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+    }
+    else
+        glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+}
+
 void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
     UNUSED(window);
