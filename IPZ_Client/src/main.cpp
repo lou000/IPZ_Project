@@ -5,6 +5,7 @@ int main(void)
 {
 
     App::init(800, 800);
+    App::setVsync(1);
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
@@ -20,8 +21,8 @@ int main(void)
     Renderer::init();
 
     // FPS counter should go to App
-    double lastTime = App::getTime();
-    int nbFrames = 0;
+    float dtSum = 0;
+    int frameCount = 0;
 
     std::vector<vec2> randomPos;
     for(int i=0; i<1000; i++)
@@ -58,15 +59,15 @@ int main(void)
         }
 
         float dt = App::getTimeStep();
-        double currentTime = App::getTime();
-        nbFrames++;
-        if ( currentTime - lastTime >= 1.0 ){
+        dtSum+=dt;
+        frameCount++;
+        if (frameCount == 20){
             char title[50];
-            double ms = 1000.0/double(nbFrames);
+            double ms = dtSum/double(frameCount) * 1000;
             sprintf_s(title, "Test - FPS: %.1f (%.2fms)", 1/ms*1000, ms);
             App::setWindowTitle(title);
-            nbFrames = 0;
-            lastTime = currentTime;
+            frameCount = 0;
+            dtSum = 0;
         }
 
         camera->onUpdate(dt); //this will go in entity manager

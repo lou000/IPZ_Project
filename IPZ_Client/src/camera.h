@@ -9,13 +9,11 @@ public:
 
     // Most of this functionality should be moved to entity base class class
 
-    void setPosition(vec3 pos)      {m_pos = pos;}
     void move(vec3 vec);
-    void rotateAroundY(vec3 point, float degree);
-    void rotateAroundX(vec3 point, float degree);
-    void setFov(float fov)          {m_fov = fov;}
+    void setPosition(vec3 pos){m_pos = pos;}
+    void setFov(float fov){m_fov = fov;}
     void setAspectRatio(float ratio){m_aspectRatio = ratio;}
-    void setRotation(quat rotation) {m_rotation = rotation;}
+    void setRotation(quat rotation){m_rotation = rotation;}
     void setRotationX(float degree);
     void setRotationY(float degree);
     void setRotationZ(float degree);
@@ -25,8 +23,8 @@ public:
     void setFocusPoint(vec3 point){m_focusPoint = point;}
     void pointAt(vec3 pos);
 
-    vec3 getPos()         {return m_pos;}
-    float getFov()        {return m_fov;}
+    vec3 getPos()          {return m_pos;}
+    float getFov()         {return m_fov;}
     float getAspectRatio(){return m_aspectRatio;}
     quat getRotation()    {return m_rotation;}
     float getRotationX();

@@ -34,7 +34,7 @@ public:
     static GLFWwindow* getWindowHandle(){return getInstance().x_getWindowHandle();}
     static float getTimeStep(){return getInstance().x_getTimeStep();}
     static vec2 getMousePosChange(){return getInstance().x_getMousePosChange();}
-    static double getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
+    static float getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
     static bool getKey(int key, KeyActionFlags actionFlags = PRESS, int mods = 0)
                 {return getInstance().x_getKey(key, actionFlags, mods);}
 
@@ -44,9 +44,9 @@ private:
     uint m_windowWidth = 0;
     float m_lastFrameTime = 0;
     vec2 m_prevMousePos = {0,0};
-    double mouseScrollYOffset = 0;
+    float mouseScrollYOffset = 0;
     // this is probably very wrong way of doing this its only temporary
-    std::vector<uint16> keyHashBuffer;
+    std::vector<uint16> keyBuffer;
 
     void x_init(uint width, uint height);
     void x_setVsync(uint interval);
@@ -59,8 +59,9 @@ private:
     GLFWwindow* x_getWindowHandle();
     float x_getTimeStep();
     vec2 x_getMousePosChange();
-    double x_getMouseScrollChange();
+    float x_getMouseScrollChange();
     bool x_getKey(int key, KeyActionFlags actionFlags, int mods);
+    bool x_getMouseButton(int button);
 
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

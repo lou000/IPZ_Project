@@ -16,18 +16,6 @@ void Camera::move(vec3 vec)
     m_pos += vec;
 }
 
-void Camera::rotateAroundY(vec3 point, float degree)
-{
-    m_pos.x = point.x + (m_pos.x - point.x)*cos(degree) - (m_pos.z-point.z)*sin(degree);
-    m_pos.z = point.x + (m_pos.x - point.x)*sin(degree) + (m_pos.z-point.z)*cos(degree);
-}
-
-void Camera::rotateAroundX(vec3 point, float degree)
-{
-    m_pos.x = point.x + (m_pos.x - point.x)*cos(degree) - (m_pos.y-point.y)*sin(degree);
-    m_pos.y = point.x + (m_pos.x - point.x)*sin(degree) + (m_pos.y-point.y)*cos(degree);
-}
-
 void Camera::setRotationX(float degree)
 {
     auto euler = eulerAngles(m_rotation);
@@ -127,24 +115,21 @@ void Camera::onUpdate(float dt)
     float offset = (float)App::getMouseScrollChange();
     if(offset!=0)
     {
-        float speed = 0.2f;
-        LOG("offset: %f", offset);
+        float speed = 8.0f * dt;
         m_pos += offset * speed * forward();
     }
 
     if(glfwGetMouseButton(hwnd, GLFW_MOUSE_BUTTON_RIGHT))
     {
-        // The problem is that first when we call this function mouseChange is huge.
-        // This is a very ugly hack, later we will use glfwSetCursorPosCallback().
         auto mChange = App::getMousePosChange();
         if(!firstMouseClick)
         {
-            float sens = 0.15f;
+            float sens = 0.15f*dt;
             glfwSetInputMode(hwnd, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             glfwSetInputMode(hwnd, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
-            auto rot = angleAxis(-mChange.y*sens*dt, right());
-            auto rot2 = angleAxis(-mChange.x*sens*dt, up());
+            auto rot = angleAxis(-mChange.y*sens, right());
+            auto rot2 = angleAxis(-mChange.x*sens, up());
             m_pos = m_focusPoint + (rot * (m_pos-m_focusPoint));
             m_pos = m_focusPoint + (rot2 * (m_pos-m_focusPoint));
             pointAt(m_focusPoint);
@@ -159,49 +144,44 @@ void Camera::onUpdate(float dt)
     }
 
     //KEYBOARD
-    float rotationSpeed = 100.f;
+    float rotationSpeed = 100.f * dt;
     if(glfwGetKey(hwnd, GLFW_KEY_W))
-        addRotationX(rotationSpeed*dt);
+        addRotationX(rotationSpeed);
     if(glfwGetKey(hwnd, GLFW_KEY_S))
-        addRotationX(-rotationSpeed*dt);
+        addRotationX(-rotationSpeed);
     if(glfwGetKey(hwnd, GLFW_KEY_A))
-        addRotationY(rotationSpeed*dt);
+        addRotationY(rotationSpeed);
     if(glfwGetKey(hwnd, GLFW_KEY_D))
-        addRotationY(-rotationSpeed*dt);
+        addRotationY(-rotationSpeed);
 //    if(glfwGetKey(hwnd, GLFW_KEY_SPACE))
 //        pointAt({0,0,0});
 
-    float speed = 3.f;
+    float speed = 3.f*dt;
     vec3 moveVec = {0, 0 ,0};
-    // right click + mouse move = rotate around center (later selection or mouse pos on xz plane)
     if(glfwGetKey(hwnd, GLFW_KEY_UP))
     {
         moveVec +=  forward();
         moveVec.y = 0;
-        moveVec = normalize(moveVec)* speed * dt;
+        moveVec = normalize(moveVec)* speed;
     }
     if(glfwGetKey(hwnd, GLFW_KEY_DOWN))
     {
         moveVec += -forward();
         moveVec.y = 0;
-        moveVec = normalize(moveVec)* speed * dt;
+        moveVec = normalize(moveVec)* speed;
     }
     if(glfwGetKey(hwnd, GLFW_KEY_RIGHT))
-        moveVec +=  right() * speed * dt;
+        moveVec +=  right() * speed;
     if(glfwGetKey(hwnd, GLFW_KEY_LEFT))
-        moveVec += -right() * speed * dt;
+        moveVec += -right() * speed;
 
 
     if(glfwGetKey(hwnd, GLFW_KEY_Q))
-        moveVec +=  vec3(0,1,0) * speed * dt;
+        moveVec +=  vec3(0,1,0) * speed;
     if(glfwGetKey(hwnd, GLFW_KEY_Z))
-        moveVec += vec3(0, -1, 0) * speed * dt;
+        moveVec += vec3(0, -1, 0) * speed;
 
     move(moveVec);
-
-//    auto angles = eulerAngles(getRotation());
-//    LOG("Rotation: x:%f  y:%f  z:%f    Pos: x:%f  y:%f  z:%f",
-//        angles.x, angles.y, angles.z, m_pos.x, m_pos.y, m_pos.z);
 }
 
 void Camera::onCreate()

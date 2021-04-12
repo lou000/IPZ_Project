@@ -121,7 +121,7 @@ bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
     hash |= key << 9;
     hash |= mods << 3;
 
-    for(auto h : keyHashBuffer)
+    for(auto h : keyBuffer)
         if((h>>3)<<3==hash) // check if the hash matches without 3 bottom bits
         {
             auto bottomBits = h & 0x7;  //compare bottom bits to our flags
@@ -143,12 +143,13 @@ void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, i
     // convert glfw action to our flag
     hash |= action == 0 ? 1 : action<<1;
 
-    keyHashBuffer.push_back(hash);
+    keyBuffer.push_back(hash);
 }
 
 void App::x_init(uint width, uint height)
 {
 
+    glfwInitHint(GLFW_WIN32_MESSAGES_IN_FIBER, GLFW_TRUE);
     if (!glfwInit())
     {
         ASSERT_FATAL(0, "glfwInit failed!");
@@ -172,13 +173,15 @@ void App::x_init(uint width, uint height)
     glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
     glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
     glfwSetKeyCallback(m_window, &App::keyCallback);
+
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
+    glDebugMessageCallback(glErrorCallback, 0);
 
     //This below is for RGB formats, if we stop supporting we can remove this.
-    glDebugMessageCallback(glErrorCallback, 0);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
+
     Renderer::setViewPort({0,0}, {width, height});
     Renderer::setClearColor({0.302, 0.345, 0.388, 1});
 
@@ -197,7 +200,7 @@ void App::x_setWindowTitle(const std::string &title)
 
 void App::x_submitFrame()
 {
-    keyHashBuffer.clear();
+    keyBuffer.clear();
     glfwSwapBuffers(m_window);
     glfwPollEvents();
 }
@@ -246,9 +249,9 @@ vec2 App::x_getMousePosChange()
     return mouseChange;
 }
 
-double App::x_getMouseScrollChange()
+float App::x_getMouseScrollChange()
 {
-    double offset = mouseScrollYOffset;
+    float offset = mouseScrollYOffset;
     mouseScrollYOffset = 0;
     return offset;
 }
@@ -257,8 +260,7 @@ void App::x_mouseScrollCallback(GLFWwindow *window, double xoffset, double yoffs
 {
     UNUSED(window);
     UNUSED(xoffset);
-    LOG("bigOffset: %f", yoffset);
-    mouseScrollYOffset += yoffset;
+    mouseScrollYOffset += (float)yoffset;
 }
 
 bool App::x_shouldClose()
