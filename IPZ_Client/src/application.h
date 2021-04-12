@@ -13,7 +13,7 @@ typedef uint8 KeyActionFlags;
 class App
 {
     App() = default;
-    static App& getInstance(){
+    inline static App& getInstance(){
         static App instance;
         return instance;
     }
@@ -28,24 +28,27 @@ public:
     void operator=(App const&) = delete;
 
     static void init(uint width, uint height){getInstance().x_init(width, height);}
-    static void setVsync(uint interval){getInstance().x_setVsync(interval);}
+    static void submitFrame()               {getInstance().x_submitFrame();}
+    static void quit()                       {getInstance().x_quit();}
+
+    static void setVsync(uint interval)                  {getInstance().x_setVsync(interval);}
+    static void disableCursor(bool disable)             {getInstance().x_disableCursor(disable);}
     static void setWindowTitle(const std::string& title){getInstance().x_setWindowTitle(title);}
-    static void submitFrame(){getInstance().x_submitFrame();}
-    static void quit(){getInstance().x_quit();}
-    static double getTime(){return getInstance().x_getTime();}
-    static uvec2 getWindowSize(){return getInstance().x_getWindowSize();}
-    static bool shouldClose(){return getInstance().x_shouldClose();}
+
+    static bool shouldClose()            {return getInstance().x_shouldClose();}
+    static uvec2 getWindowSize()         {return getInstance().x_getWindowSize();}
     static GLFWwindow* getWindowHandle(){return getInstance().x_getWindowHandle();}
-    static float getTimeStep(){return getInstance().x_getTimeStep();}
-    static vec2 getMousePosChange(){return getInstance().x_getMousePosChange();}
-    static float getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
+    static double getTime()              {return getInstance().x_getTime();}
+    static float getTimeStep()           {return getInstance().x_getTimeStep();}
+
+    static vec2 getMousePosChange()     {return getInstance().x_getMousePosChange();}
+    static float getMouseScrollChange() {return getInstance().x_getMouseScrollChange();}
     static bool getKey(int key, KeyActionFlags actionFlags = PRESS | REPEAT, int mods = 0)
                 {return getInstance().x_getKey(key, actionFlags, mods);}
     static bool getMouseButton(int key, KeyActionFlags actionFlags = PRESS, int mods = 0)
                 {return getInstance().x_getMouseButton(key, actionFlags, mods);}
     static bool getMouseButtonHeld(int key, int mods = 0)
                 {return getInstance().x_getMouseButtonHeld(key, mods);}
-    static void disableCursor(bool disable){getInstance().x_disableCursor(disable);}
 
 private:
     GLFWwindow* m_window;
@@ -60,21 +63,24 @@ private:
     std::vector<uint16> mouseHeldBuffer;
 
     void x_init(uint width, uint height);
-    void x_setVsync(uint interval);
-    void x_setWindowTitle(const std::string& title);
     void x_submitFrame();
     void x_quit();
-    double x_getTime();
-    uvec2 x_getWindowSize();
+
+    void x_setVsync(uint interval);
+    void x_disableCursor(bool disable);
+    void x_setWindowTitle(const std::string& title);
+
     bool x_shouldClose();
+    uvec2 x_getWindowSize();
     GLFWwindow* x_getWindowHandle();
+    double x_getTime();
     float x_getTimeStep();
+
     vec2 x_getMousePosChange();
     float x_getMouseScrollChange();
     bool x_getKey(int key, KeyActionFlags actionFlags, int mods);
     bool x_getMouseButton(int button, KeyActionFlags actionFlags, int mods);
     bool x_getMouseButtonHeld(int button, int mods);
-    void x_disableCursor(bool disable);
 
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
