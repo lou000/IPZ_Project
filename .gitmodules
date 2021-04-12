@@ -3,7 +3,8 @@
 	url = https://github.com/g-truc/glm
 [submodule "IPZ_Client/external/glfw"]
 	path = IPZ_Client/external/glfw
-	url = https://github.com/glfw/glfw
+	url = https://github.com/mmozeiko/glfw.git
+    branch = unblock_events_windows_move_resize
 [submodule "IPZ_Client/external/colorwin"]
 	path = IPZ_Client/external/colorwin
 	url = https://github.com/jrebacz/colorwin
