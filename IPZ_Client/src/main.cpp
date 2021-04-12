@@ -46,9 +46,9 @@ int main(void)
     {
         if(App::getKeyOnce(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
-        if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT, 0, GLFW_REPEAT))
+        if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
             animationSpeed -= 0.02f;
-        if(App::getKeyOnce(GLFW_KEY_KP_ADD, 0, GLFW_REPEAT))
+        if(App::getKeyOnce(GLFW_KEY_KP_ADD))
             animationSpeed += 0.02f;
 
         float dt = App::getTimeStep();
