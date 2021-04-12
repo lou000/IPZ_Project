@@ -47,9 +47,9 @@ int main(void)
     {
         if(App::getKey(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
-        if(App::getKey(GLFW_KEY_KP_SUBTRACT, App::PRESS | App::REPEAT))
+        if(App::getKey(GLFW_KEY_KP_SUBTRACT))
             animationSpeed -= 0.02f;
-        if(App::getKey(GLFW_KEY_KP_ADD, App::PRESS | App::REPEAT))
+        if(App::getKey(GLFW_KEY_KP_ADD))
             animationSpeed += 0.02f;
         if(App::getKey(GLFW_KEY_R))
         {

@@ -119,7 +119,7 @@ void Camera::onUpdate(float dt)
         m_pos += offset * speed * forward();
     }
 
-    if(glfwGetMouseButton(hwnd, GLFW_MOUSE_BUTTON_RIGHT))
+    if(App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT))
     {
         auto mChange = App::getMousePosChange();
         if(!firstMouseClick)
@@ -145,40 +145,40 @@ void Camera::onUpdate(float dt)
 
     //KEYBOARD
     float rotationSpeed = 100.f * dt;
-    if(glfwGetKey(hwnd, GLFW_KEY_W))
+    if(App::getKey(GLFW_KEY_W))
         addRotationX(rotationSpeed);
-    if(glfwGetKey(hwnd, GLFW_KEY_S))
+    if(App::getKey(GLFW_KEY_S))
         addRotationX(-rotationSpeed);
-    if(glfwGetKey(hwnd, GLFW_KEY_A))
+    if(App::getKey(GLFW_KEY_A))
         addRotationY(rotationSpeed);
-    if(glfwGetKey(hwnd, GLFW_KEY_D))
+    if(App::getKey(GLFW_KEY_D))
         addRotationY(-rotationSpeed);
-//    if(glfwGetKey(hwnd, GLFW_KEY_SPACE))
+//    if(App::getKey(GLFW_KEY_SPACE))
 //        pointAt({0,0,0});
 
     float speed = 3.f*dt;
     vec3 moveVec = {0, 0 ,0};
-    if(glfwGetKey(hwnd, GLFW_KEY_UP))
+    if(App::getKey(GLFW_KEY_UP))
     {
         moveVec +=  forward();
         moveVec.y = 0;
         moveVec = normalize(moveVec)* speed;
     }
-    if(glfwGetKey(hwnd, GLFW_KEY_DOWN))
+    if(App::getKey(GLFW_KEY_DOWN))
     {
         moveVec += -forward();
         moveVec.y = 0;
         moveVec = normalize(moveVec)* speed;
     }
-    if(glfwGetKey(hwnd, GLFW_KEY_RIGHT))
+    if(App::getKey(GLFW_KEY_RIGHT))
         moveVec +=  right() * speed;
-    if(glfwGetKey(hwnd, GLFW_KEY_LEFT))
+    if(App::getKey(GLFW_KEY_LEFT))
         moveVec += -right() * speed;
 
 
-    if(glfwGetKey(hwnd, GLFW_KEY_Q))
+    if(App::getKey(GLFW_KEY_Q))
         moveVec +=  vec3(0,1,0) * speed;
-    if(glfwGetKey(hwnd, GLFW_KEY_Z))
+    if(App::getKey(GLFW_KEY_Z))
         moveVec += vec3(0, -1, 0) * speed;
 
     move(moveVec);

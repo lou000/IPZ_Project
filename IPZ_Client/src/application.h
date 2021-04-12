@@ -4,6 +4,8 @@
 #include "shader.h"
 #include "renderer.h"
 
+#define KEY_BUFFER_SIZE 30 //this should be enough?
+
 typedef uint8 KeyActionFlags;
 
 class App
@@ -35,8 +37,12 @@ public:
     static float getTimeStep(){return getInstance().x_getTimeStep();}
     static vec2 getMousePosChange(){return getInstance().x_getMousePosChange();}
     static float getMouseScrollChange(){return getInstance().x_getMouseScrollChange();}
-    static bool getKey(int key, KeyActionFlags actionFlags = PRESS, int mods = 0)
+    static bool getKey(int key, KeyActionFlags actionFlags = PRESS | REPEAT, int mods = 0)
                 {return getInstance().x_getKey(key, actionFlags, mods);}
+    static bool getMouseButton(int key, KeyActionFlags actionFlags = PRESS, int mods = 0)
+                {return getInstance().x_getMouseButton(key, actionFlags, mods);}
+    static bool getMouseButtonHeld(int key, int mods = 0)
+                {return getInstance().x_getMouseButtonHeld(key, mods);}
 
 private:
     GLFWwindow* m_window;
@@ -47,6 +53,8 @@ private:
     float mouseScrollYOffset = 0;
     // this is probably very wrong way of doing this its only temporary
     std::vector<uint16> keyBuffer;
+    std::vector<uint16> mouseButtonBuffer;
+    std::vector<uint16> mouseHeldBuffer;
 
     void x_init(uint width, uint height);
     void x_setVsync(uint interval);
@@ -61,7 +69,8 @@ private:
     vec2 x_getMousePosChange();
     float x_getMouseScrollChange();
     bool x_getKey(int key, KeyActionFlags actionFlags, int mods);
-    bool x_getMouseButton(int button);
+    bool x_getMouseButton(int button, KeyActionFlags actionFlags, int mods);
+    bool x_getMouseButtonHeld(int button, int mods);
 
 
     static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -71,5 +80,9 @@ private:
     static void mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
     {return getInstance().x_mouseScrollCallback(window, xoffset, yoffset);}
     void x_mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+    static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+    {return getInstance().x_mouseButtonCallback(window, button, action, mods);}
+    void x_mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
 };
 

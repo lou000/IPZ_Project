@@ -114,40 +114,10 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
     }
 }
 
-bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
-{
-
-    uint16 hash = 0;
-    hash |= key << 9;
-    hash |= mods << 3;
-
-    for(auto h : keyBuffer)
-        if((h>>3)<<3==hash) // check if the hash matches without 3 bottom bits
-        {
-            auto bottomBits = h & 0x7;  //compare bottom bits to our flags
-            if(actionFlags & bottomBits)
-                return true;
-        }
-
-    return false;
-}
-
-void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-{
-    UNUSED(window);
-    UNUSED(scancode);
-    //just jam them in one var
-    uint16 hash = 0;
-    hash |= key << 9;
-    hash |= mods << 3;
-    // convert glfw action to our flag
-    hash |= action == 0 ? 1 : action<<1;
-
-    keyBuffer.push_back(hash);
-}
-
 void App::x_init(uint width, uint height)
 {
+
+    keyBuffer.reserve(KEY_BUFFER_SIZE);
 
     glfwInitHint(GLFW_WIN32_MESSAGES_IN_FIBER, GLFW_TRUE);
     if (!glfwInit())
@@ -171,8 +141,9 @@ void App::x_init(uint width, uint height)
     }
     glfwMakeContextCurrent(m_window);
     glfwSetInputMode(m_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
     glfwSetKeyCallback(m_window, &App::keyCallback);
+    glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
+    glfwSetMouseButtonCallback(m_window, &App::mouseButtonCallback);
 
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
@@ -188,6 +159,90 @@ void App::x_init(uint width, uint height)
     glfwSwapInterval(1);
 }
 
+bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
+{
+
+    uint16 hash = 0;
+    hash |= key << 9;
+    hash |= mods << 3;
+
+    for(auto h : keyBuffer)
+        if((h>>3)<<3==hash) // check if the hash matches without 3 bottom bits
+        {
+            auto bottomBits = h & 0x7;  //compare bottom bits to our flags
+            if(actionFlags & bottomBits)
+                return true;
+        }
+
+    return false;
+}
+
+bool App::x_getMouseButton(int button, KeyActionFlags actionFlags, int mods)
+{
+    uint16 hash = 0;
+    hash |= button << 9;
+    hash |= mods << 3;
+    ASSERT(!(actionFlags & REPEAT), "App: There is no REPEAT action for mouse.");
+    for(auto h : mouseButtonBuffer)
+        if((h>>3)<<3==hash) // check if the hash matches without 3 bottom bits
+        {
+            auto bottomBits = h & 0x7;  //compare bottom bits to our flags
+            if(actionFlags & bottomBits)
+                return true;
+        }
+
+    return false;
+}
+
+bool App::x_getMouseButtonHeld(int button, int mods)
+{
+    uint16 hash = 0;
+    hash |= button << 6;
+    hash |= mods;
+    for(auto h : mouseHeldBuffer)
+        if(h == hash)
+            return true;
+    return false;
+}
+
+void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
+{
+    UNUSED(window);
+    UNUSED(scancode);
+    //just jam them in one var
+    uint16 hash = 0;
+    hash |= key << 9;
+    hash |= mods << 3;
+    // convert glfw action to our flag
+    hash |= action == 0 ? 1 : action<<1;
+
+    keyBuffer.push_back(hash);
+}
+void App::x_mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
+{
+    UNUSED(window);
+    //just jam them in one var
+    uint16 hash = 0;
+    hash |= button << 9;
+    hash |= mods << 3;
+    // convert glfw action to our flag
+    int _action = action == 0 ? 1 : action<<1;
+    hash |= _action;
+
+    mouseButtonBuffer.push_back(hash);
+
+    //If its pressed add button if its released remove it
+    hash = hash>>3;
+    if(_action & PRESS)
+        mouseHeldBuffer.push_back(hash);
+    else
+    {
+        for(size_t i=0; i<mouseHeldBuffer.size(); i++)
+            if(mouseHeldBuffer[i] == hash)
+                mouseHeldBuffer.erase(mouseHeldBuffer.begin()+i);
+    }
+}
+
 void App::x_setVsync(uint interval)
 {
     glfwSwapInterval(interval);
@@ -201,6 +256,7 @@ void App::x_setWindowTitle(const std::string &title)
 void App::x_submitFrame()
 {
     keyBuffer.clear();
+    mouseButtonBuffer.clear();
     glfwSwapBuffers(m_window);
     glfwPollEvents();
 }
