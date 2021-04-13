@@ -45,6 +45,8 @@ public:
     static float getMouseScrollChange() {return getInstance().x_getMouseScrollChange();}
     static bool getKey(int key, KeyActionFlags actionFlags = PRESS | REPEAT, int mods = 0)
                 {return getInstance().x_getKey(key, actionFlags, mods);}
+    static bool getKeyOnce(int key, KeyActionFlags actionFlags = PRESS | REPEAT, int mods = 0)
+                {return getInstance().x_getKeyOnce(key, actionFlags, mods);}
     static bool getMouseButton(int key, KeyActionFlags actionFlags = PRESS, int mods = 0)
                 {return getInstance().x_getMouseButton(key, actionFlags, mods);}
     static bool getMouseButtonHeld(int key, int mods = 0)
@@ -79,6 +81,7 @@ private:
     vec2 x_getMousePosChange();
     float x_getMouseScrollChange();
     bool x_getKey(int key, KeyActionFlags actionFlags, int mods);
+    bool x_getKeyOnce(int key, KeyActionFlags actionFlags, int mods);
     bool x_getMouseButton(int button, KeyActionFlags actionFlags, int mods);
     bool x_getMouseButtonHeld(int button, int mods);
 

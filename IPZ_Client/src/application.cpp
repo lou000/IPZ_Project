@@ -161,6 +161,16 @@ void App::x_init(uint width, uint height)
 
 bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
 {
+    UNUSED(mods); // this will not work for mods, maybe we can make it work?
+    int action = glfwGetKey(m_window, key);
+    action = action == 0 ? 1 : action<<1;
+    if(actionFlags & action)
+        return true;
+    return false;
+}
+
+bool App::x_getKeyOnce(int key, KeyActionFlags actionFlags, int mods)
+{
 
     uint16 hash = 0;
     hash |= key << 9;

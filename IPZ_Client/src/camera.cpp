@@ -142,7 +142,7 @@ void Camera::onUpdate(float dt)
     }
 
     //KEYBOARD //getKey is just wrong here, rename it to getKeyOnce and setup a function for glfwGetKey
-    float rotationSpeed = 500.f*dt;
+    float rotationSpeed = 30.f*dt;
     if(App::getKey(GLFW_KEY_W))
         addRotationX(rotationSpeed);
     if(App::getKey(GLFW_KEY_S))
@@ -154,7 +154,7 @@ void Camera::onUpdate(float dt)
 //    if(App::getKey(GLFW_KEY_SPACE))
 //        pointAt({0,0,0});
 
-    float speed = 300.f*dt;
+    float speed = 3.f*dt;
     vec3 moveVec = {0, 0 ,0};
     if(App::getKey(GLFW_KEY_UP))
     {

@@ -5,7 +5,7 @@ int main(void)
 {
 
     App::init(800, 800);
-    App::setVsync(0);
+    App::setVsync(1);
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
@@ -45,13 +45,13 @@ int main(void)
     float animProgress = 1.0f;
     while (!App::shouldClose())
     {
-        if(App::getKey(GLFW_KEY_SPACE))
+        if(App::getKeyOnce(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 2.f;
-        if(App::getKey(GLFW_KEY_KP_SUBTRACT))
+        if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
             animationSpeed -= 1.f;
-        if(App::getKey(GLFW_KEY_KP_ADD))
+        if(App::getKeyOnce(GLFW_KEY_KP_ADD))
             animationSpeed += 1.f;
-        if(App::getKey(GLFW_KEY_R))
+        if(App::getKeyOnce(GLFW_KEY_R))
         {
             iter = solutionPath.end();
             animProgress = 0;
