@@ -11,6 +11,14 @@ void Renderer::x_init()
     // For now this class is specific to rendering quads with one shader,
     // if we require multiple shaders, or multiple batches for geometry
     // we should use framebuffers
+
+
+    //TODO: Rewrite this so it doesnt use QuadVertex, just creates void* memory block
+    //      We add everything to buffer according to layout.
+    //      Make renderer take buffer when starting batch and add shader as buffer member.
+    //      Maybe make vertex buffer identifyable by shader.
+    //      All this hopefully enables us to render using diffirent shaders, and finally use depth buffer
+    //
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
