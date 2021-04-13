@@ -11,7 +11,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
 set(client_INCLUDE_DIRS
     external/stb
-    external/glad
+    external/glad/include
     external/glfw/include/GLFW
     external/glm/glm
     external/ppk_assert/src
