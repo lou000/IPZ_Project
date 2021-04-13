@@ -113,7 +113,7 @@ void Camera::onUpdate(float dt)
     float offset = (float)App::getMouseScrollChange();
     if(offset!=0)
     {
-        float speed = 8.0f * dt;
+        float speed = 0.5f;
         m_pos += offset * speed * forward();
     }
 
@@ -122,7 +122,7 @@ void Camera::onUpdate(float dt)
         auto mChange = App::getMousePosChange();
         if(!firstMouseClick)
         {
-            float sens = 0.15f*dt;
+            float sens = 0.0015f;
             auto rot = angleAxis(-mChange.y*sens, right());
             auto rot2 = angleAxis(-mChange.x*sens, up());
             m_pos = m_focusPoint + (rot * (m_pos-m_focusPoint));
@@ -141,8 +141,8 @@ void Camera::onUpdate(float dt)
         App::disableCursor(false);
     }
 
-    //KEYBOARD
-    float rotationSpeed = 100.f * dt;
+    //KEYBOARD //getKey is just wrong here, rename it to getKeyOnce and setup a function for glfwGetKey
+    float rotationSpeed = 500.f*dt;
     if(App::getKey(GLFW_KEY_W))
         addRotationX(rotationSpeed);
     if(App::getKey(GLFW_KEY_S))
@@ -154,7 +154,7 @@ void Camera::onUpdate(float dt)
 //    if(App::getKey(GLFW_KEY_SPACE))
 //        pointAt({0,0,0});
 
-    float speed = 3.f*dt;
+    float speed = 300.f*dt;
     vec3 moveVec = {0, 0 ,0};
     if(App::getKey(GLFW_KEY_UP))
     {

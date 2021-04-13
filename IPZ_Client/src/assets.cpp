@@ -71,9 +71,13 @@ void Texture::initTexture()
 {
     glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
     glTextureStorage2D(m_id, 1, m_formatInternal, m_width, m_height);
+    glGenerateTextureMipmap(m_id);
 
-    glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
     glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    GLfloat maxAnisotropy = 0.f;
+    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
+    glTextureParameterf(m_id, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy);
 
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, GL_REPEAT);

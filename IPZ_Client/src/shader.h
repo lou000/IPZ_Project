@@ -7,7 +7,7 @@
 #include <memory>
 #include <any>
 #include "assets.h"
-#include "glad.h"
+#include "glad/glad.h"
 
 using namespace glm;
 class Shader

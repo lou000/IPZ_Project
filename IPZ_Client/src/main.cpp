@@ -5,7 +5,7 @@ int main(void)
 {
 
     App::init(800, 800);
-    App::setVsync(1);
+    App::setVsync(0);
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
@@ -41,16 +41,16 @@ int main(void)
     auto solutionPath = searcher.get_solution_path(0);
     auto iter = solutionPath.end();
     iter--;
-    float animationSpeed = 0.02f;
+    float animationSpeed = 2.f;
     float animProgress = 1.0f;
     while (!App::shouldClose())
     {
         if(App::getKey(GLFW_KEY_SPACE))
-            animationSpeed = animationSpeed > 0 ? 0 : 0.01f;
+            animationSpeed = animationSpeed > 0 ? 0 : 2.f;
         if(App::getKey(GLFW_KEY_KP_SUBTRACT))
-            animationSpeed -= 0.02f;
+            animationSpeed -= 1.f;
         if(App::getKey(GLFW_KEY_KP_ADD))
-            animationSpeed += 0.02f;
+            animationSpeed += 1.f;
         if(App::getKey(GLFW_KEY_R))
         {
             iter = solutionPath.end();
@@ -130,7 +130,7 @@ int main(void)
             {
                 pos += movDir * animProgress;
                 Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
-                animProgress+=animationSpeed;
+                animProgress+=animationSpeed*dt;
             }
             else if( grid[i]!= 0)
                 Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
