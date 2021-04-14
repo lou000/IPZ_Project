@@ -10,7 +10,7 @@ int main(void)
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
     AssetManager::addAsset(texture2);
-    for(int i=1; i<=15; i++)
+    for(int i=1; i<=35; i++)
         AssetManager::addAsset(std::make_shared<Texture>("../assets/img/numero"+std::to_string(i)+".png"));
 
     std::vector<std::filesystem::path> shaderSrcs = {
@@ -30,7 +30,7 @@ int main(void)
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    int n = 4;
+    int n = 6;
     int size = n*n;
     float center = (float)n/2-0.1f;
     camera->setPosition({center, 8, 4});
@@ -126,7 +126,9 @@ int main(void)
             float x = 0.4f+i%n;
             float z = 0.4f+i/n;
             vec3 pos = {x, 0, z};
-            auto tileText = std::dynamic_pointer_cast<Texture>(AssetManager::getAsset("../assets/img/numero"+std::to_string(grid[i])+".png"));
+            std::shared_ptr<Texture> tileText = nullptr;
+            if(grid[i]!= 0)
+                tileText = std::dynamic_pointer_cast<Texture>(AssetManager::getAsset("../assets/img/numero"+std::to_string(grid[i])+".png"));
 
             // Here be animation
             if(i == movingFromIndx)
