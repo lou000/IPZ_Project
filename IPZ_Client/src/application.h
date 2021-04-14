@@ -97,5 +97,9 @@ private:
     static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
     {return getInstance().x_mouseButtonCallback(window, button, action, mods);}
     void x_mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+
+    static void frameBufferSizeCallback(GLFWwindow* window, int width, int height)
+    {getInstance().x_frameBufferSizeCallback(window, width, height);}
+    void x_frameBufferSizeCallback(GLFWwindow* window, int width, int height);
 };
 

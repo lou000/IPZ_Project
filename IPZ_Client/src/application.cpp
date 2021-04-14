@@ -144,6 +144,7 @@ void App::x_init(uint width, uint height)
     glfwSetKeyCallback(m_window, &App::keyCallback);
     glfwSetScrollCallback(m_window, &App::mouseScrollCallback);
     glfwSetMouseButtonCallback(m_window, &App::mouseButtonCallback);
+    glfwSetFramebufferSizeCallback(m_window, &App::frameBufferSizeCallback);
 
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
@@ -262,6 +263,14 @@ void App::x_mouseButtonCallback(GLFWwindow *window, int button, int action, int 
             if(mouseHeldBuffer[i] == hash)
                 mouseHeldBuffer.erase(mouseHeldBuffer.begin()+i);
     }
+}
+
+void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
+{
+    //this might be called before we initialize the Renderer
+    UNUSED(window);
+    Renderer::setViewPort({0,0}, {width, height});
+    Renderer::getCamera()->setAspectRatio((float)width/(float)height);
 }
 
 void App::x_setVsync(uint interval)
