@@ -8,23 +8,11 @@ _declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 void Renderer::x_init()
 {
-    // For now this class is specific to rendering quads with one shader,
-    // if we require multiple shaders, or multiple batches for geometry
-    // we should use framebuffers
-
-
-    //TODO: Rewrite this so it doesnt use QuadVertex, just creates void* memory block
-    //      We add everything to buffer according to layout.
-    //      Make renderer take buffer when starting batch and add shader as buffer member.
-    //      Maybe make vertex buffer identifyable by shader.
-    //      All this hopefully enables us to render using diffirent shaders, and finally use depth buffer
-    //
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 
     intermBuffer = (byte*)malloc(sizeof(byte)*MAX_VERTEX_BUFFER_SIZE);
-
 }
 
 void Renderer::x_begin(const std::string& renderable)
@@ -123,32 +111,16 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
 
     int textureIndex = 0;
     if(texture == nullptr)
-    {
         textureIndex = 0;
-    }
     else
     {
-        //dude make something else for this
-        for (uint32_t i = 1; i < renderable->textureCount; i++)
+        textureIndex = renderable->addTexture(texture);
+        if(textureIndex == 0)
         {
-            if (renderable->textureSlots[i]->id() == texture->id())
-            {
-                textureIndex = i;
-                break;
-            }
-        }
-
-        if (textureIndex == 0)
-        {
-            if (renderable->textureCount >= renderable->textureSlots.size())
-                nextBatch();
-
-            textureIndex = renderable->textureCount;
-            renderable->textureSlots[renderable->textureCount] = texture;
-            renderable->textureCount++;
+            nextBatch();
+            textureIndex = renderable->addTexture(texture);
         }
     }
-
 
     auto bPtr = (TexturedQuad::QuadVertex*) intermBufferPtr;
     for (size_t i = 0; i < 4; i++)

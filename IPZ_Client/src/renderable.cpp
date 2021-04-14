@@ -78,3 +78,20 @@ void TexturedQuad::onFlush()
             textureSlots[i]->bind(i);
     textureCount = 1;
 }
+
+int TexturedQuad::addTexture(std::shared_ptr<Texture> texture)
+{
+    for (uint32_t i = 1; i < textureCount; i++)
+    {
+        if (textureSlots[i]->id() == texture->id())
+            return i;
+    }
+
+    if (textureCount >= textureSlots.size())
+        return 0;
+
+    int textureIndex = textureCount;
+    textureSlots[textureCount] = texture;
+    textureCount++;
+    return textureIndex;
+}

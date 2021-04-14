@@ -52,6 +52,7 @@ public:
 
     void onBegin() override;
     void onFlush() override;
+    int addTexture(std::shared_ptr<Texture> texture); //returns 0 if buffer is full otherwise returns texIndex
 
 private:
     int texSamplers[MAX_TEXTURE_SLOTS];
