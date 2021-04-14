@@ -31,7 +31,7 @@ void Renderer::x_begin(const std::string& renderable)
 {
     glClear(GL_COLOR_BUFFER_BIT);
     currentRenderable = renderables[renderable];
-    ASSERT(currentRenderable, "WHAT U DOIN?");
+    ASSERT(currentRenderable, "Renderer: Couldnt find renderable with name %s.", renderable.c_str());
     currentRenderable->onBegin();
 
     // it doesnt really belong here but we can always check by type later
@@ -101,11 +101,13 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
     x_DrawQuad(transform, nullptr, 1, tintColor);
 }
 
+//should this be here or in TexturedQuad, idk either way feels wrong
 void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
-    if(currentRenderable->type() != texturedQuad)
-        ASSERT("WHAT U DOIN!");
+    ASSERT(currentRenderable->type() == texturedQuad,
+           "Renderer: Renderables %s type is not a part of current rendering pass.",
+           currentRenderable->name().c_str());
 
     constexpr vec2 textureCoords[] = {
         {0.0f, 0.0f},
