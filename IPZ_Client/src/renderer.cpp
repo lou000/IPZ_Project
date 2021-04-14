@@ -23,59 +23,19 @@ void Renderer::x_init()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
 
-    intermBuffer = new QuadVertex[maxVertices];
-    vertexArray = std::make_shared<VertexArray>();
-    BufferLayout layout = {
-        {Shader::Float3, "a_Position"    },
-        {Shader::Float4, "a_Color"       },
-        {Shader::Float2, "a_TexCoord"    },
-        {Shader::Float , "a_TexIndex"    },
-        {Shader::Float , "a_TilingFactor"}
-    };
-    currentBuffer = std::make_shared<VertexBuffer>(layout, maxVertices*(uint)sizeof(QuadVertex), intermBuffer);
-    vertexArray->addVBuffer(currentBuffer);
-    auto shader = AssetManager::getShader("test");
-    currentBuffer->setShader(shader);
-    uint* indices = new uint[maxIndices];
+    intermBuffer = (byte*)malloc(sizeof(byte)*MAX_VERTEX_BUFFER_SIZE);
 
-    uint offset = 0;
-
-    for(uint i=0; i<maxIndices-6; i+=6, offset+=4)
-    {
-        indices[i + 0] = offset + 0;
-        indices[i + 1] = offset + 1;
-        indices[i + 2] = offset + 2;
-
-        indices[i + 3] = offset + 2;
-        indices[i + 4] = offset + 3;
-        indices[i + 5] = offset + 0;
-    }
-
-    auto indexBuffer = std::make_shared<IndexBuffer>(indices, maxIndices);
-    vertexArray->setIBuffer(indexBuffer);
-    delete[] indices;
-
-    for(uint i=0; i<maxTexturesPerBuffer; i++)
-        texSamplers[i] = i;
-
-
-    whiteTex = std::make_shared<Texture>(1, 1);
-    uint whiteData = 0xffffffff;
-    whiteTex->setTextureData(&whiteData, sizeof(uint));
-    textureSlots[0] = whiteTex;
-
-    shader->bind();
 }
 
-void Renderer::x_begin(const std::shared_ptr<Camera>& camera)
+void Renderer::x_begin(const std::string& renderable)
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    mat4 viewProj =  camera->getViewProjectionMatrix();
+    currentRenderable = renderables[renderable];
+    ASSERT(currentRenderable, "WHAT U DOIN?");
+    currentRenderable->onBegin();
 
-    currentBuffer->shader()->bind();
-    currentBuffer->shader()->setUniform("u_ViewProjection", Shader::Mat4, viewProj);
-    currentBuffer->shader()->setUniformArray("u_Textures", Shader::Int, texSamplers, maxTexturesPerBuffer);
-
+    // it doesnt really belong here but we can always check by type later
+    currentRenderable->shader()->setUniform("u_ViewProjection", Shader::Mat4, m_camera->getViewProjectionMatrix());
     startBatch();
 }
 
@@ -88,7 +48,7 @@ void Renderer::startBatch()
 {
     indexCount = 0;
     intermBufferPtr = intermBuffer;
-    textureCount = 1;
+
 }
 
 void Renderer::nextBatch()
@@ -103,11 +63,8 @@ void Renderer::flush()
         return;
 
     uint size = (uint)((uint8*)intermBufferPtr - (uint8*)intermBuffer);
-    currentBuffer->setData(intermBuffer, size);
-
-    for (uint32_t i = 0; i < textureCount; i++)
-        textureSlots[i]->bind(i);
-
+    currentRenderable->onFlush();
+    currentRenderable->buffer()->setData(intermBuffer, size);
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -120,6 +77,11 @@ void Renderer::x_setViewPort(uvec2 pos, uvec2 size)
 void Renderer::x_setClearColor(vec4 color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
+}
+
+void Renderer::x_addRenderable(std::shared_ptr<Renderable> renderable)
+{
+    renderables.insert({renderable->name(), renderable});
 }
 
 void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
@@ -142,6 +104,9 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
 void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
+    if(currentRenderable->type() != texturedQuad)
+        ASSERT("WHAT U DOIN!");
+
     constexpr vec2 textureCoords[] = {
         {0.0f, 0.0f},
         {1.0f, 0.0f},
@@ -149,7 +114,9 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
         {0.0f, 1.0f}
     };
 
-    if (indexCount + 6 >= maxIndices)
+    auto renderable = std::dynamic_pointer_cast<TexturedQuad>(currentRenderable);
+
+    if (indexCount + 6 >= renderable->maxIndices)
         nextBatch();
 
     int textureIndex = 0;
@@ -159,9 +126,10 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
     }
     else
     {
-        for (uint32_t i = 1; i < textureCount; i++)
+        //dude make something else for this
+        for (uint32_t i = 1; i < renderable->textureCount; i++)
         {
-            if (textureSlots[i]->id() == texture->id())
+            if (renderable->textureSlots[i]->id() == texture->id())
             {
                 textureIndex = i;
                 break;
@@ -170,24 +138,27 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
 
         if (textureIndex == 0)
         {
-            if (textureCount >= maxTexturesPerBuffer)
+            if (renderable->textureCount >= renderable->textureSlots.size())
                 nextBatch();
 
-            textureIndex = textureCount;
-            textureSlots[textureCount] = texture;
-            textureCount++;
+            textureIndex = renderable->textureCount;
+            renderable->textureSlots[renderable->textureCount] = texture;
+            renderable->textureCount++;
         }
     }
 
+
+    auto bPtr = (TexturedQuad::QuadVertex*) intermBufferPtr;
     for (size_t i = 0; i < 4; i++)
     {
-        intermBufferPtr->position = transform * quadVertexPos[i];
-        intermBufferPtr->color = tintColor;
-        intermBufferPtr->texCoord = textureCoords[i];
-        intermBufferPtr->texIndex = (float)textureIndex;
-        intermBufferPtr->tilingFactor = tilingFactor;
-        intermBufferPtr++;
+        bPtr->position = transform * quadVertexPos[i];
+        bPtr->color = tintColor;
+        bPtr->texCoord = textureCoords[i];
+        bPtr->texIndex = (float)textureIndex;
+        bPtr->tilingFactor = tilingFactor;
+        bPtr++;
     }
+    intermBufferPtr = (byte*)bPtr;
 
     indexCount += 6;
 }

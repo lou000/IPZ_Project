@@ -36,6 +36,9 @@ int main(void)
     camera->setPosition({center, 8, 4});
     camera->setFocusPoint({center,0,center});
     camera->pointAt({center,0,center});
+    Renderer::setCamera(camera);
+    auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
+    Renderer::addRenderable(renderable);
     auto puzzle = SlidePuzzle(n, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
     auto searcher = informative_searcher(puzzle, &SlidePuzzle::compare);
     auto solutionPath = searcher.get_solution_path(0);
@@ -75,7 +78,7 @@ int main(void)
         AssetManager::tryReloadAssets();
 
 
-        Renderer::begin(camera);
+        Renderer::begin("BasicQuad");
         if(animProgress>=1.0f && iter != solutionPath.begin())
         {
             iter--;

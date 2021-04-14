@@ -2,7 +2,9 @@
 #include <array>
 #include "shader.h"
 #include "camera.h"
-#include "buffer.h"
+#include "renderable.h"
+#include <map>
+#define MAX_VERTEX_BUFFER_SIZE 0xFFFFF
 
 static const vec4 quadVertexPos[4] =
 {
@@ -33,7 +35,7 @@ public:
     void operator=(Renderer const&) = delete;
 
     static void init(){getInstance().x_init();}
-    static void begin(const std::shared_ptr<Camera>& camera){getInstance().x_begin(camera);}
+    static void begin(const std::string& renderable){getInstance().x_begin(renderable);}
     static void end(){getInstance().x_end();}
     static void DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
@@ -45,32 +47,25 @@ public:
     {getInstance().x_DrawQuad(pos, size, tintColor);}
     static void setViewPort(uvec2 pos, uvec2 size){getInstance().x_setViewPort(pos, size);}
     static void setClearColor(vec4 color){getInstance().x_setClearColor(color);}
+    static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}
+    static std::shared_ptr<Camera> getCamera(){return getInstance().x_getCamera();}
+    static void addRenderable(std::shared_ptr<Renderable> renderable){getInstance().x_addRenderable(renderable);}
 
 
 private:
-    static const uint maxVertices = 0xFFFFF;  // hmm lets see how this goes
-    static const uint maxIndices  = 0xFFFFF;
 
-    static const uint maxTexturesPerBuffer = 32; // idk about that
-//    const uint maxTexturesTotal = 32*5; for now we make it single buffer
-
-    QuadVertex* intermBuffer    = nullptr;
-    QuadVertex* intermBufferPtr = nullptr;
+    byte* intermBuffer    = nullptr;
+    byte* intermBufferPtr = nullptr;
 
     uint indexCount   = 0;
-    uint textureCount = 0;
 
-    std::shared_ptr<VertexArray>  vertexArray;
-    std::shared_ptr<VertexBuffer> currentBuffer;
-    std::shared_ptr<Camera> camera = nullptr;
+    std::map<std::string, std::shared_ptr<Renderable>> renderables;
+    std::shared_ptr<Renderable> currentRenderable;
+    std::shared_ptr<Camera> m_camera = nullptr;
 
-    std::shared_ptr<Texture> whiteTex;
-    std::array<std::shared_ptr<Texture>, maxTexturesPerBuffer> textureSlots;
-
-    int texSamplers[maxTexturesPerBuffer];
 
     void x_init();
-    void x_begin(const std::shared_ptr<Camera>& camera);
+    void x_begin(const std::string& renderable);
     void x_end();
     void x_DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
@@ -79,8 +74,10 @@ private:
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
     void x_setViewPort(uvec2 pos, uvec2 size);
     void x_setClearColor(vec4 color);
-    void x_setCamera(std::shared_ptr<Camera> camera);
-    void x_getCamera(std::shared_ptr<Camera> camera);
+    void x_setCamera(std::shared_ptr<Camera> camera){m_camera = camera;}
+    std::shared_ptr<Camera> x_getCamera(){return m_camera;}
+    void x_addRenderable(std::shared_ptr<Renderable> renderable);
+    //TODO: removeRenderable
 
     void startBatch();
     void nextBatch();

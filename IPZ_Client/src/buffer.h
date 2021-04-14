@@ -50,13 +50,13 @@ public:
     void bind();
     void unbind();
     void setData(const void* data, uint size);
-    void setShader(const std::shared_ptr<Shader>& shader);
-    std::shared_ptr<Shader> shader(){return m_shader;}
+    uint size(){return m_size;}
+    BufferLayout layout(){return m_layout;}
 
 private:
     uint id = 0;
-    BufferLayout layout;
-    std::shared_ptr<Shader> m_shader;
+    uint m_size = 0;
+    BufferLayout m_layout;
 
 };
 

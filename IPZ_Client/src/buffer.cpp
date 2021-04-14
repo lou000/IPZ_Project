@@ -13,7 +13,7 @@ void BufferLayout::processElements()
 }
 
 VertexBuffer::VertexBuffer(const BufferLayout &layout, uint size, void *data)
-    :layout(layout)
+    : m_size(size), m_layout(layout)
 {
     glCreateBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
@@ -43,13 +43,6 @@ void VertexBuffer::setData(const void *data, uint size)
     glBindBuffer(GL_ARRAY_BUFFER, id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 }
-
-void VertexBuffer::setShader(const std::shared_ptr<Shader> &shader)
-{
-    this->m_shader = shader;
-}
-
-
 
 IndexBuffer::IndexBuffer(uint *indices, uint count)
 {
@@ -100,7 +93,7 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
 {
     glBindVertexArray(id);
     buffer->bind();
-    for(auto& element : buffer->layout.elements)
+    for(auto& element : buffer->m_layout.elements)
     {
         switch (element.type) {
 
@@ -108,7 +101,7 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
         {
             glEnableVertexAttribArray(vBufferIndex);
             glVertexAttribIPointer(vBufferIndex, Shader::typeComponentCount(element.type), Shader::typeToNative(element.type),
-                                   buffer->layout.m_stride, (const void*)(size_t)element.offset);
+                                   buffer->m_layout.m_stride, (const void*)(size_t)element.offset);
 
             vBufferIndex++;
             break;
@@ -120,7 +113,7 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
         {
             glEnableVertexAttribArray(vBufferIndex);
             glVertexAttribPointer(vBufferIndex, Shader::typeComponentCount(element.type),Shader::typeToNative(element.type),
-                                  element.normalized, buffer->layout.m_stride, (const void*)(size_t)element.offset);
+                                  element.normalized, buffer->m_layout.m_stride, (const void*)(size_t)element.offset);
 
             vBufferIndex++;
             break;
@@ -133,7 +126,7 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
             {
                 glEnableVertexAttribArray(vBufferIndex);
                 glVertexAttribPointer(vBufferIndex, count, Shader::typeToNative(element.type),
-                                      element.normalized, buffer->layout.m_stride, (const void*)(element.offset + sizeof(float) * count * i));
+                                      element.normalized, buffer->m_layout.m_stride, (const void*)(element.offset + sizeof(float) * count * i));
                 glVertexAttribDivisor(vBufferIndex, 1);
                 vBufferIndex++;
             }
