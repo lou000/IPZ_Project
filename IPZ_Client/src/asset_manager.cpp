@@ -25,7 +25,10 @@ void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
 std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path& path)
 {
     if(fileAssets.find(path) == fileAssets.end())
+    {
+        WARN("AssetManager: There is no asset named %s.", path.string().c_str());
         return nullptr;
+    }
     else
         return fileAssets.at(path);
 }
