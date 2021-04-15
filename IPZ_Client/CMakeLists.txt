@@ -17,6 +17,7 @@ set(client_INCLUDE_DIRS
     external/ppk_assert/src
     external/colorwin/src
     external/SIplusplus_wchar
+    external/fast_obj
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
@@ -31,7 +32,7 @@ set(client_INCLUDE_SRCS
     ${SIplusplus_SRC}
     )
 
-
+add_subdirectory(external/fast_obj)
 add_subdirectory(external/glfw)
 add_library(glad "external/glad/src/glad.c")
 
