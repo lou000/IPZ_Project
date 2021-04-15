@@ -96,7 +96,7 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
         break;
 
     case GL_DEBUG_SEVERITY_MEDIUM:
-        OPENGL_THROW("%s: %d   SEVERITY: MEDIUM   FROM: %s\n%s", _type, id, _source, message);
+        OPENGL_LOG("%s: %d   SEVERITY: MEDIUM   FROM: %s\n%s", _type, id, _source, message);
         break;
 
     case GL_DEBUG_SEVERITY_LOW:
@@ -289,6 +289,7 @@ void App::x_submitFrame()
     mouseButtonBuffer.clear();
     glfwSwapBuffers(m_window);
     glfwPollEvents();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void App::x_quit()

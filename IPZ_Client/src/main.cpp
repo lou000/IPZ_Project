@@ -56,6 +56,7 @@ int main(void)
     float animProgress = 1.0f;
     while (!App::shouldClose())
     {
+
         if(App::getKeyOnce(GLFW_KEY_SPACE))
             animationSpeed = animationSpeed > 0 ? 0 : 2.f;
         if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
@@ -128,7 +129,7 @@ int main(void)
                 movDir.z = 1;
         }
 
-        Renderer::DrawQuad({center,0,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
+        Renderer::DrawQuad({center,-0.001,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
         for(int i=0; i<size; i++)
         {
             float x = 0.4f+i%n;
@@ -183,10 +184,10 @@ int main(void)
         Renderer::end();
 
         auto renderable = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
-//        Renderer::addRenderable(renderable);
-//        Renderer::begin("MeshTest");
-
-//        Renderer::end();
+        Renderer::addRenderable(renderable);
+        Renderer::begin("MeshTest");
+        Renderer::DrawMesh({0,0,0}, {2,2,2}, mesh, {1,1,1,1});
+        Renderer::end();
 
         App::submitFrame();
     }

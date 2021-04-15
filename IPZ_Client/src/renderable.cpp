@@ -3,7 +3,7 @@
 
 Renderable::Renderable(const std::string &name, RenderableType type) : m_type(type), m_name(name)
 {
-    m_vertexArray = std::make_shared<VertexArray>();
+
 }
 
 void Renderable::addVertexBuffer(std::shared_ptr<VertexBuffer> vertexBuffer)
@@ -11,17 +11,15 @@ void Renderable::addVertexBuffer(std::shared_ptr<VertexBuffer> vertexBuffer)
     m_buffer = vertexBuffer;
 }
 
-void Renderable::setIndexBuffer(std::shared_ptr<IndexBuffer> indexBuffer)
-{
-    m_indexBuffer = indexBuffer;
-    m_vertexArray->setIBuffer(indexBuffer);
-}
-
 void Renderable::setShader(std::shared_ptr<Shader> shader)
 {
     m_shader = shader;
 }
 
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////
 TexturedQuad::TexturedQuad(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
     : Renderable(name, RenderableType::texturedQuad)
 {
@@ -33,26 +31,7 @@ TexturedQuad::TexturedQuad(const std::string &name, std::shared_ptr<Shader> shad
         {Shader::Float , "a_TilingFactor"}
     };
     m_buffer = std::make_shared<VertexBuffer>(layout, maxVBufferSize);
-    m_vertexArray->addVBuffer(m_buffer);
     m_shader = shader;
-
-    //this is wrong fix!
-    uint maxIndices = (m_buffer->size()/m_buffer->layout().stride());
-    uint* indices = new uint[maxIndices];
-    uint offset = 0;
-    for(uint i=0; i<maxIndices-6; i+=6, offset+=4)
-    {
-        indices[i + 0] = offset + 0;
-        indices[i + 1] = offset + 1;
-        indices[i + 2] = offset + 2;
-
-        indices[i + 3] = offset + 2;
-        indices[i + 4] = offset + 3;
-        indices[i + 5] = offset + 0;
-    }
-    m_indexBuffer = std::make_shared<IndexBuffer>(indices, maxIndices);
-    m_vertexArray->setIBuffer(m_indexBuffer);
-    delete[] indices;
 
     for(uint i=0; i<MAX_TEXTURE_SLOTS; i++)
         texSamplers[i] = i;
@@ -96,6 +75,9 @@ int TexturedQuad::addTexture(std::shared_ptr<Texture> texture)
     return textureIndex;
 }
 
+
+
+////////////////////////////////////////////////////////////////////////////////////////
 Mesh::Mesh(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
     :Renderable(name, RenderableType::mesh)
 {
@@ -104,12 +86,7 @@ Mesh::Mesh(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBuf
         {Shader::Float3, "a_Normal"  }
     };
     m_buffer = std::make_shared<VertexBuffer>(layout, maxVBufferSize);
-    m_vertexArray->addVBuffer(m_buffer);
     m_shader = shader;
-
-    uint* indices = new uint[1000];
-    m_indexBuffer = std::make_shared<IndexBuffer>(indices, 1000);
-    m_vertexArray->setIBuffer(m_indexBuffer);
 
 }
 

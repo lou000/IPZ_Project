@@ -288,17 +288,17 @@ void MeshFile::loadOBJ()
     uint vertexFlags = 1;
     int componentCount = 3;
     fastObjMesh* mesh = fast_obj_read(c_str);
-    if(mesh->position_count == 0)
+    if(mesh->position_count <= 1)
     {
         WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
         return;
     }
-    if(mesh->texcoord_count>0)
+    if(mesh->texcoord_count>1)
     {
         vertexFlags |= VertexComponent::texcoord;
         componentCount += 2;
     }
-    if(mesh->normal_count>0)
+    if(mesh->normal_count>1)
     {
         vertexFlags |= VertexComponent::normal;
         componentCount += 3;
@@ -312,11 +312,13 @@ void MeshFile::loadOBJ()
     std::vector<uint> indices;
     std::vector<float> vertices;
     int count = 0;
+    int globalCount = 0;
     for(uint i=0; i<mesh->face_count; i++)
     {
         for(uint j=0; j<mesh->face_vertices[i]; j++)
         {
-            auto index = mesh->indices[i*j];
+            auto index = mesh->indices[globalCount];
+            globalCount++;
             size_t hash = 0;
             hash ^= index.n + 0x9e3779b9 + (hash << 6) + (hash >> 2);
             hash ^= index.p + 0x9e3779b9 + (hash << 6) + (hash >> 2);
@@ -363,6 +365,6 @@ void MeshFile::loadOBJ()
     memcpy(m_vertexData, vertices.data(), vertices.size()*sizeof(float));
     m_indexData = (uint*)malloc(indices.size()*sizeof(uint));
     memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint));
-    m_indexCount = indices.size();
-    m_vertexCount = vertices.size();
+    m_indexCount = (uint)indices.size();
+    m_vertexCount = (uint)vertices.size();
 }

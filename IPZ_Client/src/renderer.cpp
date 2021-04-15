@@ -11,17 +11,21 @@ void Renderer::x_init()
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+    glClear(GL_COLOR_BUFFER_BIT);
 
-    intermBuffer = (byte*)malloc(sizeof(byte)*MAX_VERTEX_BUFFER_SIZE);
+    vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
+    indexBuffer = (uint*)malloc(MAX_INDEX_BUFFER_SIZE);
+    vertexArray = std::make_shared<VertexArray>();
+    vertexArray->bind();
+    vertexArray->setIBuffer(std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE));
 }
 
 void Renderer::x_begin(const std::string& renderable)
 {
-    glClear(GL_COLOR_BUFFER_BIT);
     currentRenderable = renderables[renderable];
     ASSERT(currentRenderable, "Renderer: Couldnt find renderable with name %s.", renderable.c_str());
     currentRenderable->onBegin();
-
+    vertexArray->setVBuffer(currentRenderable->buffer());
     // it doesnt really belong here but we can always check by type later
     currentRenderable->shader()->setUniform("u_ViewProjection", Shader::Mat4, m_camera->getViewProjectionMatrix());
     startBatch();
@@ -35,8 +39,9 @@ void Renderer::x_end()
 void Renderer::startBatch()
 {
     indexCount = 0;
-    intermBufferPtr = intermBuffer;
-
+    elementCount = 0;
+    vertexBufferPtr = vertexBuffer;
+    indexBufferPtr = indexBuffer;
 }
 
 void Renderer::nextBatch()
@@ -50,9 +55,12 @@ void Renderer::flush()
     if (indexCount == 0)
         return;
 
-    uint size = (uint)((uint8*)intermBufferPtr - (uint8*)intermBuffer);
     currentRenderable->onFlush();
-    currentRenderable->buffer()->setData(intermBuffer, size);
+    uint sizeVB = (uint)((uint8*)vertexBufferPtr - (uint8*)vertexBuffer);
+    uint sizeIB = (uint)((uint8*)indexBufferPtr - (uint8*)indexBuffer);
+    currentRenderable->buffer()->setData(vertexBuffer, sizeVB);
+    vertexArray->indexBuffer()->setData(indexBuffer, sizeIB);
+
     glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
@@ -93,6 +101,9 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
 void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
+    if (indexCount + 6 >= MAX_INDEX_BUFFER_SIZE/sizeof(uint))
+        nextBatch();
+
     ASSERT(currentRenderable->type() == texturedQuad,
            "Renderer: Renderables %s type is not a part of current rendering pass.",
            currentRenderable->name().c_str());
@@ -106,8 +117,6 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
 
     auto renderable = std::dynamic_pointer_cast<TexturedQuad>(currentRenderable);
 
-    if (indexCount + 6 >= renderable->maxIndices())
-        nextBatch();
 
     int textureIndex = 0;
     if(texture == nullptr)
@@ -122,7 +131,15 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
         }
     }
 
-    auto bPtr = (TexturedQuad::QuadVertex*) intermBufferPtr;
+    //VERTICES
+    const vec4 quadVertexPos[4] =
+    {
+        {-0.5f,  0.0f,  0.5f, 1.0f},
+        { 0.5f,  0.0f,  0.5f, 1.0f},
+        { 0.5f,  0.0f, -0.5f, 1.0f},
+        {-0.5f,  0.0f, -0.5f, 1.0f}
+    };
+    auto bPtr = (TexturedQuad::QuadVertex*) vertexBufferPtr;
     for (size_t i = 0; i < 4; i++)
     {
         bPtr->position = transform * quadVertexPos[i];
@@ -132,25 +149,63 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
         bPtr->tilingFactor = tilingFactor;
         bPtr++;
     }
-    intermBufferPtr = (byte*)bPtr;
+    vertexBufferPtr = (byte*)bPtr;
+
+    //INDICES
+    indexBufferPtr[0] = elementCount + 0;
+    indexBufferPtr[1] = elementCount + 1;
+    indexBufferPtr[2] = elementCount + 2;
+
+    indexBufferPtr[3] = elementCount + 2;
+    indexBufferPtr[4] = elementCount + 3;
+    indexBufferPtr[5] = elementCount + 0;
+
+    indexBufferPtr+=6;
 
     indexCount += 6;
+    elementCount+=4;
 }
 
+void Renderer::x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color)
+{
 
-void Renderer::x_DrawMesh(const vec3 &transform, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+    mat4 transform = translate(mat4(1.0f), pos)
+                     * scale(mat4(1.0f), size);
+    x_DrawMesh(transform, mesh, color);
+}
+
+void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
 {
     ASSERT(currentRenderable->type() == RenderableType::mesh,
            "Renderer: Renderables %s type is not a part of current rendering pass.",
            currentRenderable->name().c_str());
-    UNUSED(transform);// just testing for now
 
     auto renderable = std::dynamic_pointer_cast<Mesh>(currentRenderable);
-    if (indexCount + mesh->indexCount() >= renderable->maxIndices())
+    if (indexCount + mesh->indexCount() >= MAX_INDEX_BUFFER_SIZE/sizeof(uint))
         nextBatch();
 
-    memcpy(intermBufferPtr, mesh->vertices(), mesh->vertexCount()*sizeof (float));
-    auto indexBuffer = std::make_shared<IndexBuffer>(mesh->indices(), mesh->indexCount());
-    renderable->setIndexBuffer(indexBuffer);
+
+
+    auto vertices = (Mesh::MeshVertex*) mesh->vertices();
+    auto bPtr = (Mesh::MeshVertex*) vertexBufferPtr;
+    for(uint i=0; i<mesh->vertexCount(); i+=(mesh->stride()/sizeof(float)))
+    {
+        bPtr->position = transform * vec4(vertices->position, 1);
+        bPtr->normals = vertices->normals;
+        bPtr++;
+        vertices++;
+    }
+    vertexBufferPtr = (byte*)bPtr;
+
+    //For now we increment indices, we'll see what to do later
+    uint* indices = mesh->indices();
+    for(uint i=0; i<mesh->indexCount(); i++)
+    {
+        *indexBufferPtr = indices[i]+elementCount;
+        indexBufferPtr++;
+    }
+
     renderable->shader()->setUniform("u_Color", Shader::Float4, color);
+    elementCount+=mesh->vertexCount();
+    indexCount+=mesh->indexCount();
 }

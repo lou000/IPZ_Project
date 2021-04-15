@@ -101,6 +101,7 @@ public:
     uint vertexCount(){return m_vertexCount;}
     uint* indices(){return m_indexData;}
     uint indexCount(){return m_indexCount;}
+    uint stride(){return m_stride;}
 
 private:
     uint m_vertexComponentsFlags = 0;

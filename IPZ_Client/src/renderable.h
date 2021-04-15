@@ -23,10 +23,7 @@ public:
     std::shared_ptr<Shader> shader(){return m_shader;}
 
     void addVertexBuffer(std::shared_ptr<VertexBuffer> vertexBuffer);
-    void setIndexBuffer(std::shared_ptr<IndexBuffer> indexBuffer);
     void setShader(std::shared_ptr<Shader> shader);
-
-    uint maxIndices(){return m_vertexArray->indexBuffer()->count();}
 
     virtual void onBegin() = 0;
     virtual void onFlush() = 0;
@@ -34,8 +31,6 @@ public:
 protected:
     const RenderableType m_type;
     const std::string m_name;
-    std::shared_ptr<VertexArray> m_vertexArray;
-    std::shared_ptr<IndexBuffer> m_indexBuffer;
     std::shared_ptr<VertexBuffer> m_buffer;
     std::shared_ptr<Shader> m_shader;
 };

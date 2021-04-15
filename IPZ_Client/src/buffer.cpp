@@ -44,11 +44,14 @@ void VertexBuffer::setData(const void *data, uint size)
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 }
 
-IndexBuffer::IndexBuffer(uint *indices, uint count)
+IndexBuffer::IndexBuffer(uint size, uint *indices)
 {
     glCreateBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(uint), indices, GL_STATIC_DRAW);
+    if(indices)
+        glBufferData(GL_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
+    else
+        glBufferData(GL_ARRAY_BUFFER, size, nullptr, GL_DYNAMIC_DRAW);
 }
 
 IndexBuffer::~IndexBuffer()
@@ -66,7 +69,11 @@ void IndexBuffer::unbind()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
 }
 
-
+void IndexBuffer::setData(const uint *data, uint size)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, id);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
+}
 
 
 VertexArray::VertexArray()
@@ -89,7 +96,7 @@ void VertexArray::unbind()
     glBindVertexArray(0);
 }
 
-void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
+void VertexArray::setVBuffer(std::shared_ptr<VertexBuffer> buffer)
 {
     glBindVertexArray(id);
     buffer->bind();
@@ -134,7 +141,8 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
         }
         }
     }
-    vBuffers.push_back(buffer);
+    vBufferIndex = 0;
+    vBuffer=buffer;
 }
 
 void VertexArray::setIBuffer(std::shared_ptr<IndexBuffer> buffer)

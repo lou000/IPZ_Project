@@ -5,14 +5,7 @@
 #include "renderable.h"
 #include <map>
 #define MAX_VERTEX_BUFFER_SIZE 0xFFFFF
-
-static const vec4 quadVertexPos[4] =
-{
-    {-0.5f,  0.0f,  0.5f, 1.0f},
-    { 0.5f,  0.0f,  0.5f, 1.0f},
-    { 0.5f,  0.0f, -0.5f, 1.0f},
-    {-0.5f,  0.0f, -0.5f, 1.0f}
-};
+#define MAX_INDEX_BUFFER_SIZE 0x2FFFFF
 
 struct QuadVertex{
     vec3 position;
@@ -45,6 +38,13 @@ public:
     {getInstance().x_DrawQuad(pos, size, texture, tilingFactor, tintColor);}
     static void DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_DrawQuad(pos, size, tintColor);}
+
+    static void DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>& mesh, const vec4& color)
+    {getInstance().x_DrawMesh(transform, mesh, color);}
+    static void DrawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<MeshFile>& mesh, const vec4& color)
+    {getInstance().x_DrawMesh(pos, size, mesh, color);}
+
+
     static void setViewPort(uvec2 pos, uvec2 size){getInstance().x_setViewPort(pos, size);}
     static void setClearColor(vec4 color){getInstance().x_setClearColor(color);}
     static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}
@@ -53,11 +53,20 @@ public:
 
 
 private:
+    std::shared_ptr<VertexArray> vertexArray = nullptr;
 
-    byte* intermBuffer    = nullptr;
-    byte* intermBufferPtr = nullptr;
+    byte* vertexBuffer    = nullptr;
+    byte* vertexBufferPtr = nullptr;
+    byte* vertexBufferEnd = nullptr;
+
+    uint* indexBuffer = nullptr;
+    uint* indexBufferPtr = nullptr;
+    uint* indexBufferEnd = nullptr;
+
+
 
     uint indexCount   = 0;
+    uint elementCount = 0;
 
     std::map<std::string, std::shared_ptr<Renderable>> renderables;
     std::shared_ptr<Renderable> currentRenderable;
@@ -73,7 +82,9 @@ private:
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
-    void x_DrawMesh(const vec3 &transform, const std::shared_ptr<MeshFile>& mesh, const vec4& color);
+
+    void x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color);
+    void x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>& mesh, const vec4& color);
 
 
 

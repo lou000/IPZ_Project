@@ -65,11 +65,12 @@ private:
 class IndexBuffer{
 
 public:
-    IndexBuffer(uint* indices, uint count);
+    IndexBuffer(uint size, uint* indices = nullptr);
     ~IndexBuffer();
 
     void bind();
     void unbind();
+    void setData(const uint* data, uint size);
     uint count(){return m_count;}
 
 private:
@@ -88,16 +89,16 @@ public:
     void bind();
     void unbind();
 
-    void addVBuffer(std::shared_ptr<VertexBuffer> buffer);
+    void setVBuffer(std::shared_ptr<VertexBuffer> buffer);
     void setIBuffer(std::shared_ptr<IndexBuffer> buffer);
 
     std::shared_ptr<IndexBuffer> indexBuffer(){return iBuffer;}
-    std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers(){return vBuffers;}
+    std::shared_ptr<VertexBuffer> vertexBuffers(){return vBuffer;}
 
 private:
     uint id = 0;
     uint vBufferIndex = 0;
-    std::vector<std::shared_ptr<VertexBuffer>> vBuffers;
+    std::shared_ptr<VertexBuffer> vBuffer;
     std::shared_ptr<IndexBuffer> iBuffer;
 
 };

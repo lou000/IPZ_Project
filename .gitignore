@@ -1,20 +1,5 @@
-
-# Client
-/IPZ_Client/build_release/*
-!/IPZ_Client/build_release/*.exe
-/IPZ_Client/build_debug/*
-!/IPZ_Client/build_debug/*.exe
-
-#Server
-/IPZ_Server/build_release/*
-!/IPZ_Server/build_release/*.exe
-/IPZ_Server/build_debug/*
-!/IPZ_Server/build_debug/*.exe
-
-
 #All
 CMakeSettings.json
-
 *.user
 *.autosave
 *.obj
@@ -22,3 +7,17 @@ CMakeSettings.json
 *.vs
 *.sln
 *.vcxproj
+
+
+# Client
+/IPZ_Client/build_release/*
+!/IPZ_Client/build_release/*.exe
+/IPZ_Client/build_debug/*
+!/IPZ_Client/build_debug/*.exe
+!/IPZ_Client/assets/meshes/*.obj
+
+#Server
+/IPZ_Server/build_release/*
+!/IPZ_Server/build_release/*.exe
+/IPZ_Server/build_debug/*
+!/IPZ_Server/build_debug/*.exe
