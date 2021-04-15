@@ -8,6 +8,7 @@ int main(void)
     App::setVsync(1);
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
+    auto mesh = std::make_shared<MeshFile>("../assets/meshes/cube.obj");
     AssetManager::addAsset(texture);
     AssetManager::addAsset(texture2);
     for(int i=1; i<=35; i++)
@@ -18,6 +19,13 @@ int main(void)
         "../assets/shaders/test_vert.glsl"
     };
     AssetManager::addShader(std::make_shared<Shader>("test", shaderSrcs));
+
+    std::vector<std::filesystem::path> shaderSrcs2 = {
+        "../assets/shaders/mesh_frag.glsl",
+        "../assets/shaders/mesh_vert.glsl"
+    };
+    AssetManager::addShader(std::make_shared<Shader>("testMesh", shaderSrcs2));
+
     Renderer::init();
 
     // FPS counter should go to App
@@ -173,6 +181,13 @@ int main(void)
 #endif
 
         Renderer::end();
+
+        auto renderable = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
+//        Renderer::addRenderable(renderable);
+//        Renderer::begin("MeshTest");
+
+//        Renderer::end();
+
         App::submitFrame();
     }
 }

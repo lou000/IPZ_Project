@@ -67,11 +67,16 @@ private:
     void x_init();
     void x_begin(const std::string& renderable);
     void x_end();
+
     void x_DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
+    void x_DrawMesh(const vec3 &transform, const std::shared_ptr<MeshFile>& mesh, const vec4& color);
+
+
+
     void x_setViewPort(uvec2 pos, uvec2 size);
     void x_setClearColor(vec4 color);
     void x_setCamera(std::shared_ptr<Camera> camera){m_camera = camera;}

@@ -14,3 +14,6 @@
 [submodule "IPZ_Shared/external/asio"]
 	path = IPZ_Shared/external/asio
 	url = https://github.com/barrbrain/asio
+[submodule "IPZ_Client/external/fast_obj"]
+	path = IPZ_Client/external/fast_obj
+	url = https://github.com/thisistherk/fast_obj

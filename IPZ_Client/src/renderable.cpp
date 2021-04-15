@@ -22,7 +22,7 @@ void Renderable::setShader(std::shared_ptr<Shader> shader)
     m_shader = shader;
 }
 
-TexturedQuad::TexturedQuad(const std::string &name, std::shared_ptr<Shader> shader, uint maxVertices)
+TexturedQuad::TexturedQuad(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
     : Renderable(name, RenderableType::texturedQuad)
 {
     BufferLayout layout = {
@@ -32,12 +32,12 @@ TexturedQuad::TexturedQuad(const std::string &name, std::shared_ptr<Shader> shad
         {Shader::Float , "a_TexIndex"    },
         {Shader::Float , "a_TilingFactor"}
     };
-    m_buffer = std::make_shared<VertexBuffer>(layout, maxVertices*(uint)sizeof(QuadVertex));
+    m_buffer = std::make_shared<VertexBuffer>(layout, maxVBufferSize);
     m_vertexArray->addVBuffer(m_buffer);
     m_shader = shader;
 
     //this is wrong fix!
-    maxIndices = (m_buffer->size()/m_buffer->layout().stride());
+    uint maxIndices = (m_buffer->size()/m_buffer->layout().stride());
     uint* indices = new uint[maxIndices];
     uint offset = 0;
     for(uint i=0; i<maxIndices-6; i+=6, offset+=4)
@@ -94,4 +94,32 @@ int TexturedQuad::addTexture(std::shared_ptr<Texture> texture)
     textureSlots[textureCount] = texture;
     textureCount++;
     return textureIndex;
+}
+
+Mesh::Mesh(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
+    :Renderable(name, RenderableType::mesh)
+{
+    BufferLayout layout = {
+        {Shader::Float3, "a_Position"},
+        {Shader::Float3, "a_Normal"  }
+    };
+    m_buffer = std::make_shared<VertexBuffer>(layout, maxVBufferSize);
+    m_vertexArray->addVBuffer(m_buffer);
+    m_shader = shader;
+
+    uint* indices = new uint[1000];
+    m_indexBuffer = std::make_shared<IndexBuffer>(indices, 1000);
+    m_vertexArray->setIBuffer(m_indexBuffer);
+
+}
+
+void Mesh::onBegin()
+{
+    m_shader->bind();
+}
+
+void Mesh::onFlush()
+{
+    //Nothing here... yet
+    return;
 }

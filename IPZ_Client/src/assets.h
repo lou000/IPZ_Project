@@ -10,7 +10,8 @@ using namespace glm;
 
 enum AssetType{
     texture,
-    shaderFile
+    shaderFile,
+    meshFile,
 };
 
 
@@ -82,6 +83,37 @@ private:
     char* loadFile();
     bool getTypeFromFile();
     char* data;
+};
+
+class MeshFile : public Asset
+{
+    enum VertexComponent{
+        position = 1,
+        texcoord = 2,
+        normal   = 4
+    };
+
+public:
+    MeshFile(const std::filesystem::path& path);
+
+    virtual void doReload() override;
+    float* vertices(){return m_vertexData;}
+    uint vertexCount(){return m_vertexCount;}
+    uint* indices(){return m_indexData;}
+    uint indexCount(){return m_indexCount;}
+
+private:
+    uint m_vertexComponentsFlags = 0;
+    uint m_stride = 0;
+
+    float* m_vertexData;
+    uint m_vertexCount = 0;
+
+    uint* m_indexData;
+    uint m_indexCount = 0;
+
+    void loadOBJ();
+
 };
 
 

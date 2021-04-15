@@ -70,10 +70,11 @@ public:
 
     void bind();
     void unbind();
+    uint count(){return m_count;}
 
 private:
     uint id = 0;
-    uint count = 0;
+    uint m_count = 0;
 };
 
 
@@ -89,6 +90,9 @@ public:
 
     void addVBuffer(std::shared_ptr<VertexBuffer> buffer);
     void setIBuffer(std::shared_ptr<IndexBuffer> buffer);
+
+    std::shared_ptr<IndexBuffer> indexBuffer(){return iBuffer;}
+    std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers(){return vBuffers;}
 
 private:
     uint id = 0;

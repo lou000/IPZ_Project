@@ -1,6 +1,9 @@
 ﻿#include "assets.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define FAST_OBJ_IMPLEMENTATION
+#include "fast_obj.h"
+#include <unordered_set>
 #include <cstdlib> //calloc
 
 Texture::Texture(uint width, uint height, GLenum format, GLenum formatInternal)
@@ -259,4 +262,107 @@ bool ShaderFile::getTypeFromFile()
         return false;
     }
     return true;
+}
+
+MeshFile::MeshFile(const std::filesystem::path &path)
+{
+    this->path = path;
+    loadOBJ();
+}
+
+void MeshFile::doReload()
+{
+    loadOBJ();
+}
+
+void MeshFile::loadOBJ()
+{
+    auto str = path.string();
+    auto c_str = str.c_str();
+    if(!std::filesystem::exists(path))
+    {
+        WARN("Asset: Couldnt load the mesh file %s doesnt exist", c_str);
+        return;
+    }
+
+    uint vertexFlags = 1;
+    int componentCount = 3;
+    fastObjMesh* mesh = fast_obj_read(c_str);
+    if(mesh->position_count == 0)
+    {
+        WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
+        return;
+    }
+    if(mesh->texcoord_count>0)
+    {
+        vertexFlags |= VertexComponent::texcoord;
+        componentCount += 2;
+    }
+    if(mesh->normal_count>0)
+    {
+        vertexFlags |= VertexComponent::normal;
+        componentCount += 3;
+    }
+    m_stride = componentCount*sizeof(float);
+    m_vertexComponentsFlags = vertexFlags;
+
+    // We have to convert from obj indices to opengl indices,
+    // we can only index full vertices not individual components
+    std::unordered_map<size_t, uint> map;
+    std::vector<uint> indices;
+    std::vector<float> vertices;
+    int count = 0;
+    for(uint i=0; i<mesh->face_count; i++)
+    {
+        for(uint j=0; j<mesh->face_vertices[i]; j++)
+        {
+            auto index = mesh->indices[i*j];
+            size_t hash = 0;
+            hash ^= index.n + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            hash ^= index.p + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            hash ^= index.t + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+
+
+            auto pair = map.insert({hash, count});
+            if(pair.second) // if this is a unique vertex
+            {
+                // push 3 positions
+                int indx = index.p*3;
+                vertices.push_back(mesh->positions[indx+0]);
+                vertices.push_back(mesh->positions[indx+1]);
+                vertices.push_back(mesh->positions[indx+2]);
+
+                if(vertexFlags & VertexComponent::texcoord)
+                {
+                    //push 2 texture coordinates
+                    indx = index.t*2;
+                    vertices.push_back(mesh->texcoords[indx+0]);
+                    vertices.push_back(mesh->texcoords[indx+1]);
+                }
+
+                if(vertexFlags & VertexComponent::normal)
+                {
+                    //push 3 normals
+                    indx = index.n*3;
+                    vertices.push_back(mesh->normals[indx+0]);
+                    vertices.push_back(mesh->normals[indx+1]);
+                    vertices.push_back(mesh->normals[indx+2]);
+                }
+                indices.push_back(count);//push index
+                count++;
+            }
+            else
+            {
+                indices.push_back((*pair.first).second);//push index of previous vertex
+            }
+        }
+    }
+    delete mesh;
+    // copy vectors memory to storage
+    m_vertexData = (float*)malloc(vertices.size()*sizeof(float));
+    memcpy(m_vertexData, vertices.data(), vertices.size()*sizeof(float));
+    m_indexData = (uint*)malloc(indices.size()*sizeof(uint));
+    memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint));
+    m_indexCount = indices.size();
+    m_vertexCount = vertices.size();
 }

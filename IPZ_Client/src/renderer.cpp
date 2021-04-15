@@ -106,7 +106,7 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
 
     auto renderable = std::dynamic_pointer_cast<TexturedQuad>(currentRenderable);
 
-    if (indexCount + 6 >= renderable->maxIndices)
+    if (indexCount + 6 >= renderable->maxIndices())
         nextBatch();
 
     int textureIndex = 0;
@@ -137,3 +137,20 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
     indexCount += 6;
 }
 
+
+void Renderer::x_DrawMesh(const vec3 &transform, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+{
+    ASSERT(currentRenderable->type() == RenderableType::mesh,
+           "Renderer: Renderables %s type is not a part of current rendering pass.",
+           currentRenderable->name().c_str());
+    UNUSED(transform);// just testing for now
+
+    auto renderable = std::dynamic_pointer_cast<Mesh>(currentRenderable);
+    if (indexCount + mesh->indexCount() >= renderable->maxIndices())
+        nextBatch();
+
+    memcpy(intermBufferPtr, mesh->vertices(), mesh->vertexCount()*sizeof (float));
+    auto indexBuffer = std::make_shared<IndexBuffer>(mesh->indices(), mesh->indexCount());
+    renderable->setIndexBuffer(indexBuffer);
+    renderable->shader()->setUniform("u_Color", Shader::Float4, color);
+}

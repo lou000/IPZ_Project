@@ -24,6 +24,8 @@ public:
     void setIndexBuffer(std::shared_ptr<IndexBuffer> indexBuffer);
     void setShader(std::shared_ptr<Shader> shader);
 
+    uint maxIndices(){return m_vertexArray->indexBuffer()->count();}
+
     virtual void onBegin() = 0;
     virtual void onFlush() = 0;
 
@@ -48,7 +50,7 @@ class TexturedQuad : public Renderable
         float tilingFactor; //???
     };
 public:
-    TexturedQuad(const std::string& name, std::shared_ptr<Shader> shader, uint maxVertices);
+    TexturedQuad(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
 
     void onBegin() override;
     void onFlush() override;
@@ -59,6 +61,22 @@ private:
     std::array<std::shared_ptr<Texture>, MAX_TEXTURE_SLOTS> textureSlots;
     std::shared_ptr<Texture> whiteTex;
     uint textureCount = 1;
-    uint maxIndices = 0;
+
+};
+
+class Mesh : public Renderable
+{
+    friend class Renderer;
+    struct MeshVertex{
+        vec3 position;
+        vec3 normals;
+    };
+public:
+    Mesh(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
+    virtual void onBegin() override;
+    virtual void onFlush() override;
+
+private:
+
 
 };
