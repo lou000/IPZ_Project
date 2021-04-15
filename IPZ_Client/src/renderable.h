@@ -3,6 +3,8 @@
 #include <array>
 #define MAX_TEXTURE_SLOTS 32
 
+
+//TODO: We need to move indexbuffer to vertexArray to renderer... leave only vBuffers here.
 enum RenderableType{
     texturedQuad,
     mesh,

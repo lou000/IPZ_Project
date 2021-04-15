@@ -182,7 +182,7 @@ int main(void)
 
         Renderer::end();
 
-        auto renderable = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
+        auto renderable = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
 //        Renderer::addRenderable(renderable);
 //        Renderer::begin("MeshTest");
 
