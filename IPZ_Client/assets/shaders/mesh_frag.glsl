@@ -12,10 +12,10 @@ uniform vec3 u_CameraPosition;
 void main(){
     vec3 color = v_Color.rgb;
     // ambient
-    vec3 ambient = 0.10 * color;
+    vec3 ambient = 0.05 * color;
 
     // diffuse
-    vec3 lightDir = normalize(vec3(2.3,3,3) - v_Pos);
+    vec3 lightDir = normalize(u_LightPosition - v_Pos);
     vec3 normal = normalize(v_Normal);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * color;

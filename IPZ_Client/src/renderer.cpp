@@ -36,7 +36,7 @@ void Renderer::x_begin(const std::string& renderable)
     if(currentRenderable->type() == RenderableType::mesh)
     {
         currentRenderable->shader()->setUniform("u_CameraPosition", Shader::Float3, m_camera->getPos());
-        currentRenderable->shader()->setUniform("u_LightPosition", Shader::Float3, vec3{20, 20, 10});
+        currentRenderable->shader()->setUniform("u_LightPosition", Shader::Float3, vec3{2.3, 3, 3});
     }
     startBatch();
 }
