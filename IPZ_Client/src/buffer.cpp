@@ -44,7 +44,7 @@ void VertexBuffer::setData(const void *data, uint size)
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 }
 
-IndexBuffer::IndexBuffer(uint size, uint *indices)
+IndexBuffer::IndexBuffer(uint size, uint16 *indices)
 {
     glCreateBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
@@ -69,7 +69,7 @@ void IndexBuffer::unbind()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
 }
 
-void IndexBuffer::setData(const uint *data, uint size)
+void IndexBuffer::setData(const uint16 *data, uint size)
 {
     glBindBuffer(GL_ARRAY_BUFFER, id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);

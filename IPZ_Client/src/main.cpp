@@ -9,6 +9,7 @@ int main(void)
     auto texture = std::make_shared<Texture>("../assets/img/test.png");
     auto texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     auto mesh = std::make_shared<MeshFile>("../assets/meshes/cube.obj");
+    auto mesh2 = std::make_shared<MeshFile>("../assets/meshes/lamp.obj");
     AssetManager::addAsset(texture);
     AssetManager::addAsset(texture2);
     for(int i=1; i<=35; i++)
@@ -187,6 +188,8 @@ int main(void)
         Renderer::addRenderable(renderable);
         Renderer::begin("MeshTest");
         Renderer::DrawMesh({0,0,0}, {2,2,2}, mesh, {1,1,1,1});
+        Renderer::DrawMesh({3,0,3}, {1,1,1}, mesh, {1,1,1,1});
+        Renderer::DrawMesh({3,0,3}, {0.15,0.15,0.15}, mesh2, {0.769, 0.643, 0.294, 1});
         Renderer::end();
 
         App::submitFrame();

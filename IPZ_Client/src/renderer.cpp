@@ -11,10 +11,15 @@ void Renderer::x_init()
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
-    glClear(GL_COLOR_BUFFER_BIT);
+
+    glEnable(GL_DEPTH_TEST);
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LEQUAL);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
     vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
-    indexBuffer = (uint*)malloc(MAX_INDEX_BUFFER_SIZE);
+    indexBuffer = (uint16*)malloc(MAX_INDEX_BUFFER_SIZE);
     vertexArray = std::make_shared<VertexArray>();
     vertexArray->bind();
     vertexArray->setIBuffer(std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE));
@@ -28,6 +33,11 @@ void Renderer::x_begin(const std::string& renderable)
     vertexArray->setVBuffer(currentRenderable->buffer());
     // it doesnt really belong here but we can always check by type later
     currentRenderable->shader()->setUniform("u_ViewProjection", Shader::Mat4, m_camera->getViewProjectionMatrix());
+    if(currentRenderable->type() == RenderableType::mesh)
+    {
+        currentRenderable->shader()->setUniform("u_CameraPosition", Shader::Float3, m_camera->getPos());
+        currentRenderable->shader()->setUniform("u_LightPosition", Shader::Float3, vec3{20, 20, 10});
+    }
     startBatch();
 }
 
@@ -61,7 +71,7 @@ void Renderer::flush()
     currentRenderable->buffer()->setData(vertexBuffer, sizeVB);
     vertexArray->indexBuffer()->setData(indexBuffer, sizeIB);
 
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -188,7 +198,7 @@ void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>
 
     auto vertices = (Mesh::MeshVertex*) mesh->vertices();
     auto bPtr = (Mesh::MeshVertex*) vertexBufferPtr;
-    for(uint i=0; i<mesh->vertexCount(); i+=(mesh->stride()/sizeof(float)))
+    for(uint i=0; i<mesh->vertexCount(); i+=1)
     {
         bPtr->position = transform * vec4(vertices->position, 1);
         bPtr->normals = vertices->normals;
@@ -198,14 +208,17 @@ void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>
     vertexBufferPtr = (byte*)bPtr;
 
     //For now we increment indices, we'll see what to do later
-    uint* indices = mesh->indices();
+    uint16* indices = mesh->indices();
+    int wtf=0;
     for(uint i=0; i<mesh->indexCount(); i++)
     {
         *indexBufferPtr = indices[i]+elementCount;
         indexBufferPtr++;
+        wtf++;
     }
 
     renderable->shader()->setUniform("u_Color", Shader::Float4, color);
+    //bug right here
     elementCount+=mesh->vertexCount();
     indexCount+=mesh->indexCount();
 }

@@ -59,9 +59,9 @@ private:
     byte* vertexBufferPtr = nullptr;
     byte* vertexBufferEnd = nullptr;
 
-    uint* indexBuffer = nullptr;
-    uint* indexBufferPtr = nullptr;
-    uint* indexBufferEnd = nullptr;
+    uint16* indexBuffer = nullptr;
+    uint16* indexBufferPtr = nullptr;
+    uint16* indexBufferEnd = nullptr;
 
 
 

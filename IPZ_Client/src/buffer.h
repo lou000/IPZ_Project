@@ -65,12 +65,12 @@ private:
 class IndexBuffer{
 
 public:
-    IndexBuffer(uint size, uint* indices = nullptr);
+    IndexBuffer(uint size, uint16* indices = nullptr);
     ~IndexBuffer();
 
     void bind();
     void unbind();
-    void setData(const uint* data, uint size);
+    void setData(const uint16* data, uint size);
     uint count(){return m_count;}
 
 private:

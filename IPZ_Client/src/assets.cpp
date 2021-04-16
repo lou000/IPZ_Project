@@ -308,8 +308,8 @@ void MeshFile::loadOBJ()
 
     // We have to convert from obj indices to opengl indices,
     // we can only index full vertices not individual components
-    std::unordered_map<size_t, uint> map;
-    std::vector<uint> indices;
+    std::unordered_map<size_t, uint16> map;
+    std::vector<uint16> indices;
     std::vector<float> vertices;
     int count = 0;
     int globalCount = 0;
@@ -320,9 +320,11 @@ void MeshFile::loadOBJ()
             auto index = mesh->indices[globalCount];
             globalCount++;
             size_t hash = 0;
-            hash ^= index.n + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-            hash ^= index.p + 0x9e3779b9 + (hash << 6) + (hash >> 2);
-            hash ^= index.t + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+            hash |= ((size_t)index.n)<<16;
+            hash |= ((size_t)index.p)<<32;
+            hash |= ((size_t)index.t)<<48;
+
+            //switch to multiple buffers dude its hard this way
 
 
             auto pair = map.insert({hash, count});
@@ -355,6 +357,7 @@ void MeshFile::loadOBJ()
             }
             else
             {
+                ASSERT(hash != (*pair.first).second, "Fuck");
                 indices.push_back((*pair.first).second);//push index of previous vertex
             }
         }
@@ -363,8 +366,8 @@ void MeshFile::loadOBJ()
     // copy vectors memory to storage
     m_vertexData = (float*)malloc(vertices.size()*sizeof(float));
     memcpy(m_vertexData, vertices.data(), vertices.size()*sizeof(float));
-    m_indexData = (uint*)malloc(indices.size()*sizeof(uint));
-    memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint));
+    m_indexData = (uint16*)malloc(indices.size()*sizeof(uint16));
+    memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint16));
     m_indexCount = (uint)indices.size();
-    m_vertexCount = (uint)vertices.size();
+    m_vertexCount = (uint)vertices.size()/(m_stride/sizeof(float));
 }

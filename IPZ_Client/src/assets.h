@@ -99,7 +99,7 @@ public:
     virtual void doReload() override;
     float* vertices(){return m_vertexData;}
     uint vertexCount(){return m_vertexCount;}
-    uint* indices(){return m_indexData;}
+    uint16* indices(){return m_indexData;}
     uint indexCount(){return m_indexCount;}
     uint stride(){return m_stride;}
 
@@ -110,7 +110,7 @@ private:
     float* m_vertexData;
     uint m_vertexCount = 0;
 
-    uint* m_indexData;
+    uint16* m_indexData;
     uint m_indexCount = 0;
 
     void loadOBJ();
