@@ -1,10 +1,10 @@
 ﻿#pragma once
 #include <chrono>
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
 #include "asset_manager.h"
 #include "shader.h"
 #include "renderer.h"
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 #define KEY_BUFFER_SIZE 30 //this should be enough?
 
