@@ -151,7 +151,7 @@ int main(void)
                 Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
         }
 
-#if 1
+#if 0
         float w = 0.09f;
         float z = w/2;
         float x = w/2;

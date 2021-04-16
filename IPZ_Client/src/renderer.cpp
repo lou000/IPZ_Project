@@ -20,6 +20,8 @@ void Renderer::x_init()
 
     vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
     indexBuffer = (uint16*)malloc(MAX_INDEX_BUFFER_SIZE);
+    vertexBufferEnd = vertexBuffer + MAX_VERTEX_BUFFER_SIZE/sizeof(byte);//redundant but clear
+    indexBufferEnd  = indexBuffer + MAX_INDEX_BUFFER_SIZE/sizeof(uint16);
     vertexArray = std::make_shared<VertexArray>();
     vertexArray->bind();
     vertexArray->setIBuffer(std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE));
@@ -111,7 +113,7 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
 void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
-    if (indexCount + 6 >= MAX_INDEX_BUFFER_SIZE/sizeof(uint))
+    if (indexBufferPtr+6 >= indexBufferEnd || vertexBufferPtr + 64 >= vertexBufferEnd)
         nextBatch();
 
     ASSERT(currentRenderable->type() == texturedQuad,
@@ -190,11 +192,15 @@ void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>
            "Renderer: Renderables %s type is not a part of current rendering pass.",
            currentRenderable->name().c_str());
 
-    auto renderable = std::dynamic_pointer_cast<Mesh>(currentRenderable);
-    if (indexCount + mesh->indexCount() >= MAX_INDEX_BUFFER_SIZE/sizeof(uint))
+    if (indexBufferPtr+mesh->indexCount() >= indexBufferEnd ||
+        vertexBufferPtr + (mesh->vertexCount()*mesh->stride()) >= vertexBufferEnd)
         nextBatch();
 
+    auto renderable = std::dynamic_pointer_cast<Mesh>(currentRenderable);
 
+    if(renderable->color()!=color && renderable->color() != vec4(0,0,0,0))
+        nextBatch();
+    renderable->setColor(color);
 
     auto vertices = (Mesh::MeshVertex*) mesh->vertices();
     auto bPtr = (Mesh::MeshVertex*) vertexBufferPtr;
@@ -217,7 +223,6 @@ void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>
         wtf++;
     }
 
-    renderable->shader()->setUniform("u_Color", Shader::Float4, color);
     //bug right here
     elementCount+=mesh->vertexCount();
     indexCount+=mesh->indexCount();

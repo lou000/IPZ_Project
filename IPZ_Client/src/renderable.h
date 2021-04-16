@@ -37,8 +37,7 @@ protected:
 
 class TexturedQuad : public Renderable
 {
-    friend class Renderer;
-
+public:
     struct QuadVertex{
         vec3 position;
         vec4 color;
@@ -46,7 +45,6 @@ class TexturedQuad : public Renderable
         float texIndex;
         float tilingFactor; //???
     };
-public:
     TexturedQuad(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
 
     void onBegin() override;
@@ -63,17 +61,18 @@ private:
 
 class Mesh : public Renderable
 {
-    friend class Renderer;
+public:
     struct MeshVertex{
         vec3 position;
         vec3 normals;
     };
-public:
     Mesh(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
     virtual void onBegin() override;
     virtual void onFlush() override;
+    void setColor(vec4 color){m_color = color;}
+    vec4 color(){return m_color;}
 
 private:
-
+    vec4 m_color = {0,0,0,0};
 
 };

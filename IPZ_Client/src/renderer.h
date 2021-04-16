@@ -4,8 +4,8 @@
 #include "camera.h"
 #include "renderable.h"
 #include <map>
-#define MAX_VERTEX_BUFFER_SIZE 0xFFFFF
-#define MAX_INDEX_BUFFER_SIZE 0x2FFFFF
+#define MAX_VERTEX_BUFFER_SIZE 0xFFFFFF
+#define MAX_INDEX_BUFFER_SIZE 0x2FFFFFF
 
 struct QuadVertex{
     vec3 position;

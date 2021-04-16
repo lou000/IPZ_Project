@@ -97,6 +97,6 @@ void Mesh::onBegin()
 
 void Mesh::onFlush()
 {
-    //Nothing here... yet
+    m_shader->setUniform("u_Color", Shader::Float4, m_color);
     return;
 }
