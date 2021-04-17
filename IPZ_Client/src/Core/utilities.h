@@ -24,6 +24,7 @@
 #define GLFW_LOG(message, ...)     PPK_ASSERT_CUSTOM(4, 0, message, __VA_ARGS__)
 #define GLFW_THROW(message, ...)   PPK_ASSERT_CUSTOM(5, 0, message, __VA_ARGS__)
 //TODO: Add LOG_ONCE and WARN_ONCE macros!
+// std::unordered_set<size_t> hashujesz i dodajesz tutaj jak wyjdzie ze juz tam bylo to nie wyswietlasz loga a jak udalo sie dodac to wyswietlasz
 
 static ppk::assert::implementation::AssertAction::AssertAction assertHandler(const char* file, int line, const char* function,
                                                                               const char* expression, int level, const char* message)
