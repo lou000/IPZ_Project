@@ -41,6 +41,7 @@ public:
     static double getTime()              {return getInstance().x_getTime();}
     static float getTimeStep()           {return getInstance().x_getTimeStep();}
 
+    static vec2 getMousePos()           {return getInstance().x_getMousePos();}
     static vec2 getMousePosChange()     {return getInstance().x_getMousePosChange();}
     static float getMouseScrollChange() {return getInstance().x_getMouseScrollChange();}
     static bool getKey(int key, KeyActionFlags actionFlags = PRESS | REPEAT, int mods = 0)
@@ -78,6 +79,7 @@ private:
     double x_getTime();
     float x_getTimeStep();
 
+    vec2 x_getMousePos();
     vec2 x_getMousePosChange();
     float x_getMouseScrollChange();
     bool x_getKey(int key, KeyActionFlags actionFlags, int mods);

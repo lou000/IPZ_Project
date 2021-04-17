@@ -269,6 +269,8 @@ void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     //this might be called before we initialize the Renderer
     UNUSED(window);
+    m_windowWidth = width;
+    m_windowHeight = height;
     Renderer::setViewPort({0,0}, {width, height});
     Renderer::getCamera()->setAspectRatio((float)width/(float)height);
 }
@@ -320,6 +322,13 @@ float App::x_getTimeStep()
     float dt = currentFrame - m_lastFrameTime;
     m_lastFrameTime = currentFrame;
     return dt;
+}
+
+vec2 App::x_getMousePos()
+{
+    dvec2 currentMousePos;
+    glfwGetCursorPos(m_window, &currentMousePos.x, &currentMousePos.y);
+    return (vec2) currentMousePos;
 }
 
 vec2 App::x_getMousePosChange()
