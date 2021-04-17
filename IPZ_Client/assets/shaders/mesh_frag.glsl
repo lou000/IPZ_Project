@@ -15,7 +15,7 @@ void main(){
     vec3 ambient = 0.05 * color;
 
     // diffuse
-    vec3 lightDir = normalize(u_LightPosition - v_Pos);
+    vec3 lightDir = normalize(vec3(2, 6, 10) - v_Pos);
     vec3 normal = normalize(v_Normal);
     float diff = max(dot(lightDir, normal), 0.0);
     vec3 diffuse = diff * color;
@@ -36,6 +36,6 @@ void main(){
         spec = pow(max(dot(viewDir, reflectDir), 0.0), 8.0);
     }
     vec3 specular = vec3(0.3) * spec; // assuming bright white light color
-    o_Color = vec4(ambient + diffuse + specular, 1.0);
+    o_Color = vec4(ambient + diffuse + specular, v_Color.a);
 
 }
