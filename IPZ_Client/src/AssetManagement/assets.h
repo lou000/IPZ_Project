@@ -2,8 +2,8 @@
 #include <unordered_map>
 #include <filesystem>
 #include <iostream>
-#include "utilities.h"
-#include "shader.h"
+#include "../Core/utilities.h"
+#include "../Renderer/shader.h"
 
 
 using namespace glm;

@@ -12,7 +12,7 @@
 #include <cstring>  //for memcmp
 #include <vector>
 #include "graph_search.hpp"
-#include "utilities.h"
+#include "../../Core/utilities.h"
 #include "math.h"
 
 

@@ -1,5 +1,4 @@
 ﻿#include "renderer.h"
-#include "asset_manager.h"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
@@ -202,9 +201,11 @@ void Renderer::x_DrawMesh(const mat4& translation, const mat4& rotation, const m
 
     auto vertices = (Mesh::MeshVertex*) mesh->vertices();
     auto bPtr = (Mesh::MeshVertex*) vertexBufferPtr;
+
+    auto transform = translation * rotation * scale;
     for(uint i=0; i<mesh->vertexCount(); i+=1)
     {
-        bPtr->position = translation * rotation * scale * vec4(vertices->position, 1);
+        bPtr->position = transform * vec4(vertices->position, 1);
         bPtr->normals = rotation * vec4(vertices->normals, 1);
         bPtr++;
         vertices++;
@@ -213,12 +214,10 @@ void Renderer::x_DrawMesh(const mat4& translation, const mat4& rotation, const m
 
     //For now we increment indices, we'll see what to do later
     uint16* indices = mesh->indices();
-    int wtf=0;
     for(uint i=0; i<mesh->indexCount(); i++)
     {
         *indexBufferPtr = indices[i]+elementCount;
         indexBufferPtr++;
-        wtf++;
     }
 
     //bug right here

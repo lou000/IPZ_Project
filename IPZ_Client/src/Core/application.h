@@ -1,8 +1,8 @@
 ﻿#pragma once
 #include <chrono>
-#include "asset_manager.h"
-#include "shader.h"
-#include "renderer.h"
+#include "../AssetManagement/asset_manager.h"
+#include "../Renderer/shader.h"
+#include "../Renderer/renderer.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 

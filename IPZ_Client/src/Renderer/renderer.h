@@ -5,7 +5,7 @@
 #include "renderable.h"
 #include <map>
 #define MAX_VERTEX_BUFFER_SIZE 0xFFFFFF
-#define MAX_INDEX_BUFFER_SIZE 0x2FFFFFF
+#define MAX_INDEX_BUFFER_SIZE 0x30000 //this is max for uint16
 
 struct QuadVertex{
     vec3 position;
@@ -62,7 +62,6 @@ private:
     uint16* indexBuffer = nullptr;
     uint16* indexBufferPtr = nullptr;
     uint16* indexBufferEnd = nullptr;
-
 
 
     uint indexCount   = 0;

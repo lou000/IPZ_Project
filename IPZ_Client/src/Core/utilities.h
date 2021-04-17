@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "colorwin.hpp"
+#define PPK_ASSERT_ENABLED 1
 #define PPK_ASSERT_DISABLE_STL
 #define PPK_ASSERT_DEFAULT_LEVEL Error
 #include "ppk_assert.h"
@@ -8,6 +9,7 @@
 #include <glad/glad.h>
 #include <gtc/matrix_transform.hpp>
 #include <gtc/type_ptr.hpp>
+#define LOGGING_ENABLED
 
 
 #define ASSERT                PPK_ASSERT

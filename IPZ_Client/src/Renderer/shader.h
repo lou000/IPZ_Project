@@ -6,7 +6,7 @@
 #include <glm.hpp>
 #include <memory>
 #include <any>
-#include "assets.h"
+#include "../AssetManagement/assets.h"
 #include "glad/glad.h"
 
 using namespace glm;

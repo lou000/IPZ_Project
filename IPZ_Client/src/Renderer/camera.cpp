@@ -1,5 +1,5 @@
 ﻿#include "camera.h"
-#include "application.h"
+#include "../Core/application.h"
 #include "gtx/quaternion.hpp"
 #include "gtx/transform.hpp"
 

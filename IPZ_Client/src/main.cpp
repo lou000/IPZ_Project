@@ -1,7 +1,7 @@
-﻿#include "application.h"
-#include "test1.h"
-#include "testslidingpuzzle.h"
-#include "testconnect4.h"
+﻿#include "Core/application.h"
+#include "Tests/test1.h"
+#include "Tests/testslidingpuzzle.h"
+#include "Tests/testconnect4.h"
 
 int main(void)
 {

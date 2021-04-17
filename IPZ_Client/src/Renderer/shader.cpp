@@ -1,5 +1,5 @@
 ﻿#include "shader.h"
-#include "asset_manager.h"
+#include "../AssetManagement/asset_manager.h"
 
 Shader::Shader(const std::string &name, std::vector<std::filesystem::path> filePaths)
     :name(name)

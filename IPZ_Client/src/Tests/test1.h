@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "application.h"
+#include "../Core/application.h"
 
 
 class Test1

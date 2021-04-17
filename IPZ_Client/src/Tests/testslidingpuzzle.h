@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "slidepuzzle.h"
-#include "application.h"
+#include "SlidingPuzzle/slidepuzzle.h"
+#include "../Core/application.h"
 
 class TestSlidingPuzzle
 {
