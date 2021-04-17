@@ -39,8 +39,8 @@ public:
     static void DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_DrawQuad(pos, size, tintColor);}
 
-    static void DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>& mesh, const vec4& color)
-    {getInstance().x_DrawMesh(transform, mesh, color);}
+    static void DrawMesh(const mat4& translation, const mat4& rotation, const mat4& scale, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+    {getInstance().x_DrawMesh(translation, rotation, scale, mesh, color);}
     static void DrawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<MeshFile>& mesh, const vec4& color)
     {getInstance().x_DrawMesh(pos, size, mesh, color);}
 
@@ -84,7 +84,7 @@ private:
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
 
     void x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color);
-    void x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>& mesh, const vec4& color);
+    void x_DrawMesh(const mat4& translation, const mat4& rotation, const mat4& scale, const std::shared_ptr<MeshFile> &mesh, const vec4 &color);
 
 
 

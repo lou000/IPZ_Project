@@ -13,6 +13,7 @@ void Renderer::x_init()
     glEnable(GL_BLEND);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LEQUAL);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -180,13 +181,10 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
 
 void Renderer::x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color)
 {
-
-    mat4 transform = translate(mat4(1.0f), pos)
-                     * scale(mat4(1.0f), size);
-    x_DrawMesh(transform, mesh, color);
+    x_DrawMesh(translate(mat4(1.0f), pos), mat4(1), scale(mat4(1.0f), size), mesh, color);
 }
 
-void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+void Renderer::x_DrawMesh(const mat4& translation, const mat4& rotation, const mat4& scale, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
 {
     ASSERT(currentRenderable->type() == RenderableType::mesh,
            "Renderer: Renderables %s type is not a part of current rendering pass.",
@@ -206,8 +204,8 @@ void Renderer::x_DrawMesh(const mat4& transform, const std::shared_ptr<MeshFile>
     auto bPtr = (Mesh::MeshVertex*) vertexBufferPtr;
     for(uint i=0; i<mesh->vertexCount(); i+=1)
     {
-        bPtr->position = transform * vec4(vertices->position, 1);
-        bPtr->normals = vertices->normals;
+        bPtr->position = translation * rotation * scale * vec4(vertices->position, 1);
+        bPtr->normals = rotation * vec4(vertices->normals, 1);
         bPtr++;
         vertices++;
     }
