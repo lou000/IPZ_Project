@@ -72,6 +72,18 @@ float Camera::getRotationZ()
     return eulerAngles(m_rotation).z;
 }
 
+vec3 Camera::getMouseRay()
+{
+    auto mousePos = App::getMousePos();
+    auto wSize = App::getWindowSize();
+    vec4 rayEye = inverse(getProjMatrix())*vec4{(2.0f*mousePos.x)/wSize.x-1.0f, 1.0f-(2.0f*mousePos.y)/wSize.y, -1, 1};
+    rayEye = vec4(rayEye.x, rayEye.y, -1, 0);
+    vec4 rayWorld = inverse(getViewMatrix())*rayEye;
+
+    return normalize(vec3(rayWorld.x, rayWorld.y, rayWorld.z));
+
+}
+
 mat4 Camera::getViewMatrix()
 {
     updateViewMat();

@@ -30,6 +30,7 @@ public:
     float getRotationX();
     float getRotationY();
     float getRotationZ();
+    vec3 getMouseRay();
 
     mat4 getViewMatrix();
     mat4 getProjMatrix();
