@@ -84,6 +84,7 @@ inline double rndDouble(double min, double max)
 
 inline int rndInt(int min, int max)
 {
+    if(min-max == 0) return min;
     return (rnd() % (max - min)) + min;
 }
 

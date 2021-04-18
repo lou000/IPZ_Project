@@ -17,6 +17,32 @@ bool intersectPlane(const vec3 &planeNormal, const vec3 &planePos, const vec3 &r
     }
     return false;
 }
+Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorted
+{
+    double bestMove = moves.front().second;
+    std::vector<std::pair<Move, double>> bestMoves;
+    for(size_t i=0; i<moves.size(); i++)
+    {
+        auto move = moves[i];
+        if(move.second>bestMove)
+            bestMove = move.second;
+    }
+    std::wstringstream stream;
+    stream<<"Computer moves: ";
+    for(auto move:moves)
+    {
+        if(move.second>=bestMove*0.95f)
+        {
+            stream<<"!!("<<move.first.x<<","<<move.first.y<<") g:"<<move.second<<"!! ";
+            bestMoves.push_back(move);
+        }
+        else
+            stream<<"  ("<<move.first.x<<","<<move.first.y<<") g:"<<move.second<<"   ";
+    }
+    std::wcout<<stream.str()<<"\n";
+    int random = rndInt(0, bestMoves.size());
+    return bestMoves[random].first;
+}
 TestConnect4::TestConnect4()
 {
     mesh1 = std::make_shared<MeshFile>("../assets/meshes/connect4Board.obj");
@@ -49,9 +75,8 @@ TestConnect4::TestConnect4()
     for(int i=0;i<6; i++)
         vPositions[i] = top      - i*vOffset;
 
-    c4 = new Connect4(7, 6, 1);
+    c4 = new Connect4(7, 6);
     searcher = new alpha_beta_searcher<Move, true>(3,true);
-
 
 }
 
@@ -63,7 +88,7 @@ void TestConnect4::onUpdate(float dt)
 
 
     Renderer::begin("MeshTest");
-    if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && playerTurn && c4->is_terminal() == std::nullopt)
+    if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && c4->userTurn && c4->is_terminal() == std::nullopt)
     {
         if(intersectPlane({0, 0, -1}, {0,0,0.45}, cameraPos, mouseRay, intersection))
         {
@@ -75,39 +100,24 @@ void TestConnect4::onUpdate(float dt)
                     {
                         Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[i],11,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,0.2});
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
-                        {
                             animating = true;
-                            playerTurn = false;
-                        }
                     }
                 }
         }
     }
-    if(!animating && !playerTurn && c4->is_terminal() == std::nullopt)
+    if(!animating && !c4->userTurn && c4->is_terminal() == std::nullopt)
     {
         searcher->do_search(*c4);
         auto moves = searcher->get_scores();
-        std::sort(moves.begin(), moves.end(),[](std::pair<Move, double> a, std::pair<Move, double> b){
-           return a.first.h_grade>b.first.h_grade;
-        });
-        std::wstringstream stream;
-        stream<<"Computer moves: ";
-        for(auto move:moves)
-        {
-            //pick random move if the grade is similar
-            stream<<"("<<move.first.x<<","<<move.first.y<<") g:"<<move.second<<"   ";
-        }
-        std::wcout<<stream.str()<<"\n";
-        currentMove = moves.front().first;
+        currentMove = pickRandomTopMove(moves);
         animating = true;
-        playerTurn = true;
     }
 
     if(animating)
     {
         ySpeed += 20*dt;
         yPos -= ySpeed*dt;
-        if(!playerTurn)
+        if(c4->userTurn)
             Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,1});
         else
             Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh2, {0.882, 0.192, 0.161,1});
@@ -117,7 +127,7 @@ void TestConnect4::onUpdate(float dt)
             animating = false;
             ySpeed = 0;
             yPos = 11;
-            c4->commitMove(currentMove, !playerTurn);
+            c4->commitMove(currentMove);
         }
     }
 

@@ -18,7 +18,6 @@ private:
     float hPositions[7];
     float vPositions[6];
 
-    bool playerTurn = true;
     bool animating = false;
     Move currentMove;
     int dropIndex = 0;
