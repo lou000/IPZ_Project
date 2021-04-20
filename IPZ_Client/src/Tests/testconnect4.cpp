@@ -19,19 +19,22 @@ bool intersectPlane(const vec3 &planeNormal, const vec3 &planePos, const vec3 &r
 }
 Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorted
 {
-    double bestMove = moves.front().second;
+    std::pair<Move, double> bestMove = moves.front();
     std::vector<std::pair<Move, double>> bestMoves;
     for(size_t i=0; i<moves.size(); i++)
     {
         auto move = moves[i];
-        if(move.second>bestMove)
-            bestMove = move.second;
+        if(move.second>bestMove.second)
+            bestMove = move;
     }
     std::wstringstream stream;
     stream<<"Computer moves: ";
+    if(std::isinf(bestMove.second))
+        return bestMove.first;
+
     for(auto move:moves)
     {
-        if(move.second>=bestMove*0.95f)
+        if(move.second>=bestMove.second-abs(bestMove.second*0.05f))
         {
             stream<<"!!("<<move.first.x<<","<<move.first.y<<") g:"<<move.second<<"!! ";
             bestMoves.push_back(move);
@@ -41,6 +44,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
     }
     std::wcout<<stream.str()<<"\n";
     int random = rndInt(0, bestMoves.size());
+    ASSERT(bestMoves.size());
     return bestMoves[random].first;
 }
 TestConnect4::TestConnect4()
