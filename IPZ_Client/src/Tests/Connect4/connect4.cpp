@@ -4,7 +4,7 @@
 #include <sstream>
 
 Connect4::Connect4(uint8 w, uint8 h)
-    :width(w), height(h), size(w*h)
+    :hGrade(0), userTurn(true), width(w), height(h), size(w*h)
 {
     grid = (char*)malloc(size*sizeof(char));
     for(uint i=0; i<size; i++)
