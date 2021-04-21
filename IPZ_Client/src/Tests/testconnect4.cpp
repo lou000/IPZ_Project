@@ -52,6 +52,10 @@ TestConnect4::TestConnect4()
     mesh1 = std::make_shared<MeshFile>("../assets/meshes/connect4Board.obj");
     mesh2 = std::make_shared<MeshFile>("../assets/meshes/connect4Puck1.obj");
     mesh3 = std::make_shared<MeshFile>("../assets/meshes/connect4Puck2.obj");
+
+    AssetManager::addAsset(mesh1);
+    AssetManager::addAsset(mesh2);
+    AssetManager::addAsset(mesh3);
     std::vector<std::filesystem::path> shaderSrcs2 = {
         "../assets/shaders/mesh_frag.glsl",
         "../assets/shaders/mesh_vert.glsl"
