@@ -16,9 +16,9 @@ public:
     virtual void onUpdate(float dt) = 0;
     virtual void onDestroy() = 0;
     virtual void draw() = 0;
+    //maybe add here some transform functions from camera
 
 private:
-    //maybe add here some functions from Camera
     uint64 id;
     uint type;
     vec3 pos;

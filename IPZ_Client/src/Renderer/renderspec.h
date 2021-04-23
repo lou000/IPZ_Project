@@ -33,15 +33,6 @@ protected:
     std::shared_ptr<Shader> m_shader;
 };
 
-class Renderable
-{
-    Renderable() = delete;
-
-    virtual void render() = 0;
-
-private:
-    std::shared_ptr<RenderSpec> renderSpec;
-};
 
 class TexturedQuad : public RenderSpec
 {
