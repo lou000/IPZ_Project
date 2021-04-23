@@ -2,7 +2,7 @@
 #include <array>
 #include "shader.h"
 #include "camera.h"
-#include "renderable.h"
+#include "renderspec.h"
 #include <map>
 #define MAX_VERTEX_BUFFER_SIZE 0xFFFFFF
 #define MAX_INDEX_BUFFER_SIZE 0x30000 //this is max for uint16
