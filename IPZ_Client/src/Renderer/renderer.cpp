@@ -35,7 +35,7 @@ void Renderer::x_begin(const std::string& renderable)
     vertexArray->setVBuffer(currentRenderable->buffer());
     // it doesnt really belong here but we can always check by type later
     currentRenderable->shader()->setUniform("u_ViewProjection", Shader::Mat4, m_camera->getViewProjectionMatrix());
-    if(currentRenderable->type() == RenderableType::mesh)
+    if(currentRenderable->type() == RenderSpecType::mesh)
     {
         currentRenderable->shader()->setUniform("u_CameraPosition", Shader::Float3, m_camera->getPos());
         currentRenderable->shader()->setUniform("u_LightPosition", Shader::Float3, vec3{2.3, 3, 3});
@@ -87,7 +87,7 @@ void Renderer::x_setClearColor(vec4 color)
     glClearColor(color.r, color.g, color.b, color.a);
 }
 
-void Renderer::x_addRenderable(std::shared_ptr<Renderable> renderable)
+void Renderer::x_addRenderable(std::shared_ptr<RenderSpec> renderable)
 {
     renderables.insert({renderable->name(), renderable});
 }
@@ -185,7 +185,7 @@ void Renderer::x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_p
 
 void Renderer::x_DrawMesh(const mat4& translation, const mat4& rotation, const mat4& scale, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
 {
-    ASSERT(currentRenderable->type() == RenderableType::mesh,
+    ASSERT(currentRenderable->type() == RenderSpecType::mesh,
            "Renderer: Renderables %s type is not a part of current rendering pass.",
            currentRenderable->name().c_str());
 
@@ -193,14 +193,14 @@ void Renderer::x_DrawMesh(const mat4& translation, const mat4& rotation, const m
         vertexBufferPtr + (mesh->vertexCount()*mesh->stride()) >= vertexBufferEnd)
         nextBatch();
 
-    auto renderable = std::dynamic_pointer_cast<Mesh>(currentRenderable);
+    auto renderable = std::dynamic_pointer_cast<ColoredMesh>(currentRenderable);
 
     if(renderable->color()!=color && renderable->color() != vec4(0,0,0,0))
         nextBatch();
     renderable->setColor(color);
 
-    auto vertices = (Mesh::MeshVertex*) mesh->vertices();
-    auto bPtr = (Mesh::MeshVertex*) vertexBufferPtr;
+    auto vertices = (ColoredMesh::MeshVertex*) mesh->vertices();
+    auto bPtr = (ColoredMesh::MeshVertex*) vertexBufferPtr;
 
     auto transform = translation * rotation * scale;
     for(uint i=0; i<mesh->vertexCount(); i+=1)

@@ -49,7 +49,7 @@ public:
     static void setClearColor(vec4 color){getInstance().x_setClearColor(color);}
     static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}
     static std::shared_ptr<Camera> getCamera(){return getInstance().x_getCamera();}
-    static void addRenderable(std::shared_ptr<Renderable> renderable){getInstance().x_addRenderable(renderable);}
+    static void addRenderable(std::shared_ptr<RenderSpec> renderable){getInstance().x_addRenderable(renderable);}
 
 
 private:
@@ -67,8 +67,8 @@ private:
     uint indexCount   = 0;
     uint elementCount = 0;
 
-    std::map<std::string, std::shared_ptr<Renderable>> renderables;
-    std::shared_ptr<Renderable> currentRenderable;
+    std::map<std::string, std::shared_ptr<RenderSpec>> renderables;
+    std::shared_ptr<RenderSpec> currentRenderable;
     std::shared_ptr<Camera> m_camera = nullptr;
 
 
@@ -91,7 +91,7 @@ private:
     void x_setClearColor(vec4 color);
     void x_setCamera(std::shared_ptr<Camera> camera){m_camera = camera;}
     std::shared_ptr<Camera> x_getCamera(){return m_camera;}
-    void x_addRenderable(std::shared_ptr<Renderable> renderable);
+    void x_addRenderable(std::shared_ptr<RenderSpec> renderable);
     //TODO: removeRenderable
 
     void startBatch();

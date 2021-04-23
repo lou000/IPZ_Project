@@ -1,5 +1,8 @@
 #pragma once
+#include <unordered_map>
+#include <unordered_set>
 #include "../Core/utilities.h"
+#include "../Renderer/renderable.h"
 #define MAX_ENTITIES 2000
 // unordered_map<int, weak?_pointer>
 // large preallocated memory block
@@ -22,6 +25,7 @@ public:
 
 private:
     uint id;
+    uint type;
     vec3 pos;
     quat rotation;
 };
@@ -31,9 +35,14 @@ class EntityManager
 public:
     EntityManager();
     std::weak_ptr<Entity> getEntity(uint id);
-
+    std::weak_ptr<Entity> createEntity(uint type);
+    void deleteEntity(uint id);
 private:
-    byte* data;
+    std::unordered_map<uint, std::weak_ptr<Entity>> entitiesByID;
+    std::unordered_map<uint, std::weak_ptr<Entity>> entitiesByType;
+    std::unordered_map<uint, std::shared_ptr<RenderSpec>> renderables;
+    std::unordered_set<Entity*> availableMemory;
+    Entity* entities;
 };
 
 

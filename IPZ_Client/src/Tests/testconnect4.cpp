@@ -76,7 +76,7 @@ TestConnect4::TestConnect4()
     Renderer::setCamera(camera);
     auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
     Renderer::addRenderable(renderable);
-    auto renderable2 = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
+    auto renderable2 = std::make_shared<ColoredMesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
     Renderer::addRenderable(renderable2);
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
