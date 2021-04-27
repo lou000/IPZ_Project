@@ -1,11 +1,11 @@
-﻿#include "renderer.h"
+﻿#include "imrenderer.h"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
 _declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 }
 
-void Renderer::x_init()
+void ImRender::x_init()
 {
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -27,7 +27,7 @@ void Renderer::x_init()
     vertexArray->setIBuffer(std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE));
 }
 
-void Renderer::x_begin(const std::string& renderable)
+void ImRender::x_begin(const std::string& renderable)
 {
     currentRenderable = renderables[renderable];
     ASSERT(currentRenderable, "Renderer: Couldnt find renderable with name %s.", renderable.c_str());
@@ -43,12 +43,12 @@ void Renderer::x_begin(const std::string& renderable)
     startBatch();
 }
 
-void Renderer::x_end()
+void ImRender::x_end()
 {
     flush();
 }
 
-void Renderer::startBatch()
+void ImRender::startBatch()
 {
     indexCount = 0;
     elementCount = 0;
@@ -56,13 +56,13 @@ void Renderer::startBatch()
     indexBufferPtr = indexBuffer;
 }
 
-void Renderer::nextBatch()
+void ImRender::nextBatch()
 {
     flush();
     startBatch();
 }
 
-void Renderer::flush()
+void ImRender::flush()
 {
     if (indexCount == 0)
         return;
@@ -77,22 +77,22 @@ void Renderer::flush()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Renderer::x_setViewPort(uvec2 pos, uvec2 size)
+void ImRender::x_setViewPort(uvec2 pos, uvec2 size)
 {
     glViewport(pos.x, pos.y, size.x, size.y);
 }
 
-void Renderer::x_setClearColor(vec4 color)
+void ImRender::x_setClearColor(vec4 color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
 }
 
-void Renderer::x_addRenderable(std::shared_ptr<Renderable> renderable)
+void ImRender::x_addRenderable(std::shared_ptr<Renderable> renderable)
 {
     renderables.insert({renderable->name(), renderable});
 }
 
-void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
+void ImRender::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
 
@@ -101,7 +101,7 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_p
     x_DrawQuad(transform, texture, tilingFactor, tintColor);
 }
 
-void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintColor)
+void ImRender::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintColor)
 {
 
     mat4 transform = translate(mat4(1.0f), pos)
@@ -110,7 +110,7 @@ void Renderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintCol
 }
 
 //should this be here or in TexturedQuad, idk either way feels wrong
-void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
+void ImRender::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
     if (indexBufferPtr+6 >= indexBufferEnd || vertexBufferPtr + 64 >= vertexBufferEnd)
@@ -178,12 +178,12 @@ void Renderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>&
     elementCount+=4;
 }
 
-void Renderer::x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color)
+void ImRender::x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color)
 {
     x_DrawMesh(translate(mat4(1.0f), pos), mat4(1), scale(mat4(1.0f), size), mesh, color);
 }
 
-void Renderer::x_DrawMesh(const mat4& translation, const mat4& rotation, const mat4& scale, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+void ImRender::x_DrawMesh(const mat4& translation, const mat4& rotation, const mat4& scale, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
 {
     ASSERT(currentRenderable->type() == RenderableType::mesh,
            "Renderer: Renderables %s type is not a part of current rendering pass.",

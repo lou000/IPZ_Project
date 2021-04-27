@@ -69,11 +69,11 @@ TestConnect4::TestConnect4()
     camera->setPosition({0, 7, 20});
     camera->setFocusPoint({0,6,0});
     camera->pointAt({0,6,0});
-    Renderer::setCamera(camera);
+    ImRender::setCamera(camera);
     auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
-    Renderer::addRenderable(renderable);
+    ImRender::addRenderable(renderable);
     auto renderable2 = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
-    Renderer::addRenderable(renderable2);
+    ImRender::addRenderable(renderable2);
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
     for(int i=0;i<6; i++)
@@ -86,12 +86,12 @@ TestConnect4::TestConnect4()
 
 void TestConnect4::onUpdate(float dt)
 {
-    auto mouseRay = Renderer::getCamera()->getMouseRay();
-    auto cameraPos = Renderer::getCamera()->getPos();
+    auto mouseRay = ImRender::getCamera()->getMouseRay();
+    auto cameraPos = ImRender::getCamera()->getPos();
     vec3 intersection = {};
 
 
-    Renderer::begin("MeshTest");
+    ImRender::begin("MeshTest");
     if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && c4->userTurn && c4->is_terminal() == std::nullopt)
     {
         if(intersectPlane({0, 0, -1}, {0,0,0.45}, cameraPos, mouseRay, intersection))
@@ -102,7 +102,7 @@ void TestConnect4::onUpdate(float dt)
                     currentMove = c4->createMove(i);
                     if(currentMove.h_grade>=0)
                     {
-                        Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[i],11,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,0.2});
+                        ImRender::DrawMesh(translate(mat4(1.0f), {hPositions[i],11,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,0.2});
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
                             animating = true;
                     }
@@ -122,9 +122,9 @@ void TestConnect4::onUpdate(float dt)
         ySpeed += 20*dt;
         yPos -= ySpeed*dt;
         if(c4->userTurn)
-            Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,1});
+            ImRender::DrawMesh(translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,1});
         else
-            Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh2, {0.882, 0.192, 0.161,1});
+            ImRender::DrawMesh(translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh2, {0.882, 0.192, 0.161,1});
 
         if(yPos<=vPositions[currentMove.y])
         {
@@ -140,19 +140,19 @@ void TestConnect4::onUpdate(float dt)
         uint x = i%c4->width;
         uint y = i/c4->width;
         if(c4->grid[i] == 'O')
-            Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[x], vPositions[y],-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,1});
+            ImRender::DrawMesh(translate(mat4(1.0f), {hPositions[x], vPositions[y],-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh3, {0.906, 0.878, 0.302,1});
         else if(c4->grid[i] == 'X')
-            Renderer::DrawMesh(translate(mat4(1.0f), {hPositions[x], vPositions[y],-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh2, {0.882, 0.192, 0.161,1});
+            ImRender::DrawMesh(translate(mat4(1.0f), {hPositions[x], vPositions[y],-0.45}), rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f }), mat4(1), mesh2, {0.882, 0.192, 0.161,1});
     }
-    Renderer::DrawMesh({0,0,0}, {1,1,1}, mesh1, {0.165, 0.349, 1.000,1});
-    Renderer::DrawMesh({1,0,3}, {1,1,1}, mesh2, {0.882, 0.192, 0.161,1});
-    Renderer::DrawMesh({-1,0,3}, {1,1,1}, mesh3, {0.906, 0.878, 0.302,1});
-    Renderer::end();
+    ImRender::DrawMesh({0,0,0}, {1,1,1}, mesh1, {0.165, 0.349, 1.000,1});
+    ImRender::DrawMesh({1,0,3}, {1,1,1}, mesh2, {0.882, 0.192, 0.161,1});
+    ImRender::DrawMesh({-1,0,3}, {1,1,1}, mesh3, {0.906, 0.878, 0.302,1});
+    ImRender::end();
 
 
-    Renderer::begin("BasicQuad");
-    Renderer::DrawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
-    Renderer::end();
+    ImRender::begin("BasicQuad");
+    ImRender::DrawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
+    ImRender::end();
 }
 
 

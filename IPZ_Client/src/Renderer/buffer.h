@@ -97,9 +97,39 @@ public:
 
 private:
     uint id = 0;
-    uint vBufferIndex = 0;
     std::shared_ptr<VertexBuffer> vBuffer;
     std::shared_ptr<IndexBuffer> iBuffer;
 
 };
 
+struct FrameBufferAttachment
+{
+    GLenum textureFormat;
+    uint samples = 1;
+    bool renderBuffer = false;
+};
+
+class FrameBuffer
+{
+    //TODO: fill out the functions, and remember to blit to screen for now
+public:
+    FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
+                FrameBufferAttachment depthAttachment);
+    void resize(uint width, uint height);
+    void bind();
+    void bind(std::vector<GLenum> attachments);
+    void unbind();
+
+private:
+    void update();
+
+    uint id = 0;
+    uint width = 0;
+    uint height = 0;
+
+    std::vector<FrameBufferAttachment> attachments;
+    FrameBufferAttachment depthAttachment;
+
+    std::vector<uint> attachmentIds;
+    uint depthAttachmentId; //could be depth+stencil
+};

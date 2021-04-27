@@ -2,7 +2,7 @@
 #include <chrono>
 #include "../AssetManagement/asset_manager.h"
 #include "../Renderer/shader.h"
-#include "../Renderer/renderer.h"
+#include "../Renderer/imrenderer.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 

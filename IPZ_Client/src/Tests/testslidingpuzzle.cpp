@@ -13,7 +13,7 @@ TestSlidingPuzzle::TestSlidingPuzzle()
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    Renderer::setCamera(camera);
+    ImRender::setCamera(camera);
     n = 5;
     size = n*n;
     center = (float)n/2-0.1f;
@@ -21,7 +21,7 @@ TestSlidingPuzzle::TestSlidingPuzzle()
     camera->setFocusPoint({center,0,center});
     camera->pointAt({center,0,center});
     auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
-    Renderer::addRenderable(renderable);
+    ImRender::addRenderable(renderable);
 
     puzzle = new SlidePuzzle(n, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
     searcher = new informative_searcher(*puzzle, &SlidePuzzle::compare);
@@ -46,7 +46,7 @@ void TestSlidingPuzzle::onUpdate(float dt)
         iter--;
     }
 
-    Renderer::begin("BasicQuad");
+    ImRender::begin("BasicQuad");
     if(animProgress>=1.0f && iter != solutionPath.begin())
     {
         iter--;
@@ -88,7 +88,7 @@ void TestSlidingPuzzle::onUpdate(float dt)
             movDir.z = 1;
     }
 
-    Renderer::DrawQuad({center,-0.001,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
+    ImRender::DrawQuad({center,-0.001,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
     for(int i=0; i<size; i++)
     {
         float x = 0.4f+i%n;
@@ -102,12 +102,12 @@ void TestSlidingPuzzle::onUpdate(float dt)
         if(i == movingFromIndx)
         {
             pos += movDir * animProgress;
-            Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
+            ImRender::DrawQuad(pos, {0.8f, 0.8f}, tileText);
             animProgress+=animationSpeed*dt;
         }
         else if( grid[i]!= 0)
-            Renderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
+            ImRender::DrawQuad(pos, {0.8f, 0.8f}, tileText);
     }
 
-    Renderer::end();
+    ImRender::end();
 }

@@ -15,17 +15,25 @@ struct QuadVertex{
     float tilingFactor; //???
 };
 
-class Renderer{
+/* -----------------------------------------------------------------------
+TODO: This will become implicit batch renderer for debug/2d rendering.
+- enable switching between ortho and 3d camera
+- hardcode the pipeline, maybe enable switching shaders and some other useful things, flush after every change
+- create opengl vertex buffer when flushing? to enable switching buffer layout, or maybe make it fixed layout
+- make all the debug drawing functions, draw line, draw quad, draw cube, !draw text(might be special shader becouse of distance field fonts?)!
+- actually when i think about it, font rendering should be on separate buffer
+----------------------------------------------------------------------- */
+class ImRender{
 
-    Renderer() = default;
-    static Renderer& getInstance(){
-        static Renderer instance;
+    ImRender() = default;
+    static ImRender& getInstance(){
+        static ImRender instance;
         return instance;
     }
 
 public:
-    Renderer(Renderer const&)       = delete;
-    void operator=(Renderer const&) = delete;
+    ImRender(ImRender const&)       = delete;
+    void operator=(ImRender const&) = delete;
 
     static void init(){getInstance().x_init();}
     static void begin(const std::string& renderable){getInstance().x_begin(renderable);}

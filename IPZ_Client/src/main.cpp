@@ -8,7 +8,7 @@ int main(void)
     //TODO: add initialization tests everywhere and setup some defaults like camera etc
     App::init(800, 800);
     App::setVsync(1);
-    Renderer::init();
+    ImRender::init();
 
     // FPS counter should go to App
     float dtSum = 0;
@@ -30,7 +30,7 @@ int main(void)
             frameCount = 0;
             dtSum = 0;
         }
-        Renderer::getCamera()->onUpdate(dt);
+        ImRender::getCamera()->onUpdate(dt);
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
 

@@ -154,3 +154,33 @@ void VertexArray::setIBuffer(std::shared_ptr<IndexBuffer> buffer)
 
 
 
+
+FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments, FrameBufferAttachment depthAttachment)
+{
+
+}
+
+void FrameBuffer::resize(uint width, uint height)
+{
+
+}
+
+void FrameBuffer::bind()
+{
+
+}
+
+void FrameBuffer::bind(std::vector<GLenum> attachments)
+{
+
+}
+
+void FrameBuffer::unbind()
+{
+
+}
+
+void FrameBuffer::update()
+{
+
+}
