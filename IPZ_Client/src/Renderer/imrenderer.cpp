@@ -87,7 +87,7 @@ void ImRender::x_setClearColor(vec4 color)
     glClearColor(color.r, color.g, color.b, color.a);
 }
 
-void Renderer::x_addRenderable(std::shared_ptr<RenderSpec> renderable)
+void ImRender::x_addRenderable(std::shared_ptr<RenderSpec> renderable)
 {
     renderables.insert({renderable->name(), renderable});
 }

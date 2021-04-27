@@ -22,6 +22,7 @@ std::weak_ptr<Entity> EntityManager::createEntity(uint type)
     // memset to zero
     // add to all
     idCounter++;
+    return std::weak_ptr<Entity>();
 }
 
 void EntityManager::deleteEntity(uint id)

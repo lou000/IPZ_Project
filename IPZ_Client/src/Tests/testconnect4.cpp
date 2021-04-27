@@ -70,14 +70,27 @@ TestConnect4::TestConnect4()
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+
+//    FrameBufferAttachment colorAtt;
+//    colorAtt.type = GL_COLOR_ATTACHMENT0;
+//    colorAtt.format = GL_DEPTH24_STENCIL8;
+//    colorAtt.renderBuffer = true;
+
+//    FrameBufferAttachment depthAtt;
+//    depthAtt.type = GL_DEPTH_STENCIL_ATTACHMENT;
+//    depthAtt.format = GL_RGBA8;
+//    depthAtt.renderBuffer = true;
+
+//    fbo = std::make_shared<FrameBuffer>(winSize.x, winSize.y, std::vector<FrameBufferAttachment>{colorAtt}, depthAtt);
+//    fbo->bind();
     camera->setPosition({0, 7, 20});
     camera->setFocusPoint({0,6,0});
     camera->pointAt({0,6,0});
     ImRender::setCamera(camera);
     auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
-    Renderer::addRenderable(renderable);
+    ImRender::addRenderable(renderable);
     auto renderable2 = std::make_shared<ColoredMesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
-    Renderer::addRenderable(renderable2);
+    ImRender::addRenderable(renderable2);
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
     for(int i=0;i<6; i++)
@@ -157,4 +170,6 @@ void TestConnect4::onUpdate(float dt)
     ImRender::begin("BasicQuad");
     ImRender::DrawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
     ImRender::end();
+
+//    fbo->blitToFrontBuffer();
 }

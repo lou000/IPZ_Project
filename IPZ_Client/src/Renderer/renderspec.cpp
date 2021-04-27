@@ -1,4 +1,4 @@
-﻿#include "renderable.h"
+﻿#include "renderspec.h"
 //Well there is not much going on here but im sure something will come up
 
 RenderSpec::RenderSpec(const std::string &name, RenderSpecType type) : m_type(type), m_name(name)

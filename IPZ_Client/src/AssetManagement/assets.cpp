@@ -6,16 +6,20 @@
 #include <unordered_set>
 #include <cstdlib> //calloc
 
-Texture::Texture(uint width, uint height, GLenum format, GLenum formatInternal)
-    : m_width(width), m_height(height), m_format(format), m_formatInternal(formatInternal)
+Texture::Texture(uint width, uint height, GLenum formatInternal, uint samples, bool loadDebug)
+    : m_width(width), m_height(height), m_samples(samples), m_formatInternal(formatInternal)
 {
     assetType = AssetType::texture;
     initTexture();
-    loadDebugTexture(format, formatInternal, width, height);
-    setTextureData(data, getSize());
+    if(loadDebug)
+    {
+        loadDebugTexture(formatInternal, width, height);
+        setTextureData(data, getSize());
+    }
 }
 
-Texture::Texture(const std::filesystem::path& path)
+Texture::Texture(const std::filesystem::path& path, uint samples)
+    :m_samples(samples)
 {
     assetType = AssetType::texture;
     this->path = path;
@@ -23,7 +27,7 @@ Texture::Texture(const std::filesystem::path& path)
     {
         m_width = 1;
         m_height = 1;
-        loadDebugTexture(GL_RGBA, GL_RGBA8, 1, 1);
+        loadDebugTexture(GL_RGBA, 1, 1);
     }
     initTexture();
     setTextureData(data, getSize());
@@ -38,12 +42,12 @@ Texture::~Texture()
 
 bool Texture::doReload()
 {
-    GLenum oldFormat = m_format;
+    GLenum oldFormat = m_formatInternal;
     uint oldWidth  = m_width;
     uint oldHeight = m_height;
     if(loadFromFile(path))
     {
-        if(oldFormat != m_format)
+        if(oldFormat != m_formatInternal)
         {
             WARN("AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
             glDeleteTextures(1, &m_id);
@@ -60,9 +64,8 @@ bool Texture::doReload()
     return false;
 }
 
-void Texture::loadDebugTexture(GLenum format, GLenum formatInternal, uint width, uint height)
+void Texture::loadDebugTexture(GLenum formatInternal, uint width, uint height)
 {
-    m_format = format;
     m_formatInternal = formatInternal;
     data = malloc(sizeof(uvec4)*width*height);
     for(uint i=0; i<m_width*m_height; i++)
@@ -71,18 +74,25 @@ void Texture::loadDebugTexture(GLenum format, GLenum formatInternal, uint width,
 
 void Texture::initTexture()
 {
-    glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
-    glTextureStorage2D(m_id, 1, m_formatInternal, m_width, m_height);
-    glGenerateTextureMipmap(m_id);
+    if(m_samples>1)
+    {
+        //this is only for framebuffer for now
+        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_formatInternal, m_width, m_height, GL_FALSE);
+        glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &m_id);
+    }
+    else{
+        glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
+        glTextureStorage2D(m_id, 1, m_formatInternal, m_width, m_height);
+        glGenerateTextureMipmap(m_id);
+        glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        GLfloat maxAnisotropy = 0.f;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
+        glTextureParameterf(m_id, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy);
+        glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
 
-    glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-    glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    GLfloat maxAnisotropy = 0.f;
-    glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
-    glTextureParameterf(m_id, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy);
-
-    glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 }
 
 void Texture::setTextureData(void *d, size_t size)
@@ -94,12 +104,13 @@ void Texture::setTextureData(void *d, size_t size)
         data = malloc(size); //allocate our own memory becouse someone could have given us a pointer thats about to expire
         memcpy_s(data, size, d, size);
     }
-    glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, m_format, GL_UNSIGNED_BYTE, data);
+    glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_formatInternal), GL_UNSIGNED_BYTE, data);
 }
 
 size_t Texture::getSize()
 {
-    size_t dataSize = m_format == GL_RGB ? sizeof(stbi_uc)*3 : sizeof(stbi_uc)*4;
+    //FIXME: will not work for formats other then GL_RGB and GL_RGBA
+    size_t dataSize = m_formatInternal == GL_RGB8 ? sizeof(stbi_uc)*3 : sizeof(stbi_uc)*4;
     return dataSize*m_width*m_height;
 }
 
@@ -133,11 +144,9 @@ bool Texture::loadFromFile(const std::filesystem::path& path){
     switch (ch) {
     case 3:
         m_formatInternal = GL_RGB8;
-        m_format = GL_RGB;
         break;
     case 4:
         m_formatInternal = GL_RGBA8;
-        m_format = GL_RGBA;
         break;
     default:
         ASSERT(0, "Error: Image format not supported!");

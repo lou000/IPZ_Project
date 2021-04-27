@@ -99,14 +99,15 @@ private:
     uint id = 0;
     std::shared_ptr<VertexBuffer> vBuffer;
     std::shared_ptr<IndexBuffer> iBuffer;
+    uint vBufferIndex = 0;
 
 };
 
 struct FrameBufferAttachment
 {
-    GLenum textureFormat;
-    uint samples = 1;
-    bool renderBuffer = false;
+    GLenum format = 0;
+    GLenum type = 0;
+    bool renderBuffer = true;
 };
 
 class FrameBuffer
@@ -114,22 +115,27 @@ class FrameBuffer
     //TODO: fill out the functions, and remember to blit to screen for now
 public:
     FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
-                FrameBufferAttachment depthAttachment);
+                FrameBufferAttachment depthAttachment, uint samples = 1);
     void resize(uint width, uint height);
     void bind();
     void bind(std::vector<GLenum> attachments);
     void unbind();
+    void blitToFrontBuffer();
 
 private:
     void update();
 
-    uint id = 0;
-    uint width = 0;
-    uint height = 0;
+    uint id      = 0;
+    uint width   = 0;
+    uint height  = 0;
+    uint samples = 1;
+    int maxAttachments = 0;
 
-    std::vector<FrameBufferAttachment> attachments;
-    FrameBufferAttachment depthAttachment;
+    std::vector<FrameBufferAttachment> colorAttachments;
+    FrameBufferAttachment depthAttachment = {};
 
-    std::vector<uint> attachmentIds;
-    uint depthAttachmentId; //could be depth+stencil
+    std::vector<uint> rboIds;
+
+    std::vector<std::shared_ptr<Texture>> attachedTextures; //give weak pointer if we take from here
+    std::shared_ptr<Texture> depthTexture = nullptr; //could be depth+stencil
 };

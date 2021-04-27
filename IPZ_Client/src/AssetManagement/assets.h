@@ -32,8 +32,8 @@ protected:
 class Texture : public Asset
 {
 public:
-    Texture(uint width, uint height, GLenum format = GL_RGBA, GLenum formatInternal = GL_RGBA8);
-    Texture(const std::filesystem::path& path);
+    Texture(uint width, uint height, GLenum formatInternal = GL_RGBA8, uint samples = 1, bool loadDebug = false);
+    Texture(const std::filesystem::path& path, uint samples = 1);
     ~Texture();
 
 public:
@@ -44,16 +44,16 @@ public:
     uint id() {return m_id;}
 
 private:
-    uint m_width  = 0;
-    uint m_height = 0;
-    uint m_id     = 0;
-    GLenum m_format = 0;
+    uint m_width   = 0;
+    uint m_height  = 0;
+    uint m_id      = 0;
+    uint m_samples = 1;
     GLenum m_formatInternal = 0;
 
     void* data  = nullptr;
     void initTexture();
     bool loadFromFile(const std::filesystem::path& path);
-    void loadDebugTexture(GLenum format, GLenum formatInternal, uint width, uint height);
+    void loadDebugTexture(GLenum formatInternal, uint width, uint height);
 };
 
 
@@ -107,10 +107,10 @@ private:
     uint m_vertexComponentsFlags = 0;
     uint m_stride = 0;
 
-    float* m_vertexData;
+    float* m_vertexData = nullptr;
     uint m_vertexCount = 0;
 
-    uint16* m_indexData;
+    uint16* m_indexData = nullptr;;
     uint m_indexCount = 0;
 
     bool loadOBJ();
