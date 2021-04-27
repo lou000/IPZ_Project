@@ -19,7 +19,7 @@ enum AssetType{
 class Asset{
     friend class AssetManager;
 public:
-    virtual void doReload() = 0;
+    virtual bool doReload() = 0;
 
 protected:
     AssetType assetType;
@@ -37,7 +37,7 @@ public:
     ~Texture();
 
 public:
-    virtual void doReload() override;
+    virtual bool doReload() override;
     void setTextureData(void* data, size_t size);
     size_t getSize();
     void bind(uint slot);
@@ -74,8 +74,8 @@ public:
     ShaderFile(const std::filesystem::path& path, const std::string shaderName);
     ShaderFile(const std::filesystem::path& path, ShaderType type, const std::string shaderName);
 
+    virtual bool doReload() override;
     const std::string& shaderName(){return m_shaderName;}
-    void doReload() override;
 
 private:
     const std::string m_shaderName;
@@ -96,7 +96,7 @@ class MeshFile : public Asset
 public:
     MeshFile(const std::filesystem::path& path);
 
-    virtual void doReload() override;
+    virtual bool doReload() override;
     float* vertices(){return m_vertexData;}
     uint vertexCount(){return m_vertexCount;}
     uint16* indices(){return m_indexData;}
@@ -113,7 +113,7 @@ private:
     uint16* m_indexData;
     uint m_indexCount = 0;
 
-    void loadOBJ();
+    bool loadOBJ();
 
 };
 

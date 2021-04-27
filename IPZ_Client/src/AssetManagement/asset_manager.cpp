@@ -166,7 +166,11 @@ void AssetManager::x_tryReloadAssets()
     {
         if(asset.second->reloadScheduled)
         {
-            asset.second->doReload();
+            if(asset.second->doReload())
+            {
+                LOG("Asset %s reloaded.", asset.second->path.string().c_str());
+                asset.second->reloadScheduled = false;
+            }
             if(asset.second->assetType == AssetType::shaderFile)
             {
                 auto sF = std::dynamic_pointer_cast<ShaderFile>(asset.second);

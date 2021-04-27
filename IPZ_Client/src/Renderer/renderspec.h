@@ -4,20 +4,18 @@
 #define MAX_TEXTURE_SLOTS 32
 
 
-//TODO: We need to move indexbuffer to vertexArray to renderer... leave only vBuffers here.
-enum RenderableType{
+enum RenderSpecType{
     texturedQuad,
     mesh,
 };
 
-class Renderable
+class RenderSpec
 {
 public:
     //In future might want more then one buffer per renderable?
-    //Maybe if u set vertex buffer data here we draw from there?
-    Renderable(const std::string& name, RenderableType type);
+    RenderSpec(const std::string& name, RenderSpecType type);
 
-    RenderableType type(){return m_type;}
+    RenderSpecType type(){return m_type;}
     const std::string& name() {return m_name;}
     std::shared_ptr<VertexBuffer> buffer(){return m_buffer;}
     std::shared_ptr<Shader> shader(){return m_shader;}
@@ -29,13 +27,14 @@ public:
     virtual void onFlush() = 0;
 
 protected:
-    const RenderableType m_type;
+    const RenderSpecType m_type;
     const std::string m_name;
     std::shared_ptr<VertexBuffer> m_buffer;
     std::shared_ptr<Shader> m_shader;
 };
 
-class TexturedQuad : public Renderable
+
+class TexturedQuad : public RenderSpec
 {
 public:
     struct QuadVertex{
@@ -59,14 +58,14 @@ private:
 
 };
 
-class Mesh : public Renderable
+class ColoredMesh : public RenderSpec
 {
 public:
     struct MeshVertex{
         vec3 position;
         vec3 normals;
     };
-    Mesh(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
+    ColoredMesh(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
     virtual void onBegin() override;
     virtual void onFlush() override;
     void setColor(vec4 color){m_color = color;}

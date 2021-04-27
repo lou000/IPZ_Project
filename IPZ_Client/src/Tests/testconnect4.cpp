@@ -52,6 +52,10 @@ TestConnect4::TestConnect4()
     mesh1 = std::make_shared<MeshFile>("../assets/meshes/connect4Board.obj");
     mesh2 = std::make_shared<MeshFile>("../assets/meshes/connect4Puck1.obj");
     mesh3 = std::make_shared<MeshFile>("../assets/meshes/connect4Puck2.obj");
+
+    AssetManager::addAsset(mesh1);
+    AssetManager::addAsset(mesh2);
+    AssetManager::addAsset(mesh3);
     std::vector<std::filesystem::path> shaderSrcs2 = {
         "../assets/shaders/mesh_frag.glsl",
         "../assets/shaders/mesh_vert.glsl"
@@ -71,9 +75,9 @@ TestConnect4::TestConnect4()
     camera->pointAt({0,6,0});
     ImRender::setCamera(camera);
     auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
-    ImRender::addRenderable(renderable);
-    auto renderable2 = std::make_shared<Mesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
-    ImRender::addRenderable(renderable2);
+    Renderer::addRenderable(renderable);
+    auto renderable2 = std::make_shared<ColoredMesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
+    Renderer::addRenderable(renderable2);
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
     for(int i=0;i<6; i++)
@@ -154,5 +158,3 @@ void TestConnect4::onUpdate(float dt)
     ImRender::DrawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
     ImRender::end();
 }
-
-

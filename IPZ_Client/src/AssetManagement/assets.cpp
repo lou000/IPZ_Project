@@ -36,7 +36,7 @@ Texture::~Texture()
     glDeleteTextures(1, &m_id);
 }
 
-void Texture::doReload()
+bool Texture::doReload()
 {
     GLenum oldFormat = m_format;
     uint oldWidth  = m_width;
@@ -54,11 +54,10 @@ void Texture::doReload()
             glDeleteTextures(1, &m_id);
             initTexture();
         }
-
-        LOG("Sprite %s reloaded.", path.string().c_str());
         setTextureData(data, getSize());
-        reloadScheduled = false;
+        return true;
     }
+    return false;
 }
 
 void Texture::loadDebugTexture(GLenum format, GLenum formatInternal, uint width, uint height)
@@ -175,7 +174,7 @@ ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType
     data = loadFile();
 }
 
-void ShaderFile::doReload()
+bool ShaderFile::doReload()
 {
     char* temp = loadFile();
     if(temp)
@@ -183,9 +182,9 @@ void ShaderFile::doReload()
         if(data)
             free(data);
         data = temp;
-        reloadScheduled = false;
-        LOG("ShaderFile %s reloaded.", path.string().c_str());
+        return true;
     }
+    return false;
 }
 
 char* ShaderFile::loadFile()
@@ -270,19 +269,19 @@ MeshFile::MeshFile(const std::filesystem::path &path)
     loadOBJ();
 }
 
-void MeshFile::doReload()
+bool MeshFile::doReload()
 {
-    loadOBJ();
+    return loadOBJ();
 }
 
-void MeshFile::loadOBJ()
+bool MeshFile::loadOBJ()
 {
     auto str = path.string();
     auto c_str = str.c_str();
     if(!std::filesystem::exists(path))
     {
         WARN("Asset: Couldnt load the mesh file %s doesnt exist", c_str);
-        return;
+        return false;
     }
 
     uint vertexFlags = 1;
@@ -291,7 +290,7 @@ void MeshFile::loadOBJ()
     if(mesh->position_count <= 1)
     {
         WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
-        return;
+        return false;
     }
     if(mesh->texcoord_count>1)
     {
@@ -324,9 +323,6 @@ void MeshFile::loadOBJ()
             hash |= ((size_t)index.p)<<32;
             hash |= ((size_t)index.t)<<48;
 
-            //switch to multiple buffers dude its hard this way
-
-
             auto pair = map.insert({hash, count});
             if(pair.second) // if this is a unique vertex
             {
@@ -357,17 +353,24 @@ void MeshFile::loadOBJ()
             }
             else
             {
-                ASSERT(hash != (*pair.first).second, "Fuck");
+                ASSERT(hash != (*pair.first).second);
                 indices.push_back((*pair.first).second);//push index of previous vertex
             }
         }
     }
     delete mesh;
     // copy vectors memory to storage
+
+    if(m_vertexData)
+        free(m_vertexData);
+    if(m_indexData)
+        free(m_indexData);
+
     m_vertexData = (float*)malloc(vertices.size()*sizeof(float));
     memcpy(m_vertexData, vertices.data(), vertices.size()*sizeof(float));
     m_indexData = (uint16*)malloc(indices.size()*sizeof(uint16));
     memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint16));
     m_indexCount = (uint)indices.size();
     m_vertexCount = (uint)vertices.size()/(m_stride/sizeof(float));
+    return true;
 }

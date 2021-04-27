@@ -1,17 +1,17 @@
 ﻿#include "renderable.h"
 //Well there is not much going on here but im sure something will come up
 
-Renderable::Renderable(const std::string &name, RenderableType type) : m_type(type), m_name(name)
+RenderSpec::RenderSpec(const std::string &name, RenderSpecType type) : m_type(type), m_name(name)
 {
 
 }
 
-void Renderable::addVertexBuffer(std::shared_ptr<VertexBuffer> vertexBuffer)
+void RenderSpec::addVertexBuffer(std::shared_ptr<VertexBuffer> vertexBuffer)
 {
     m_buffer = vertexBuffer;
 }
 
-void Renderable::setShader(std::shared_ptr<Shader> shader)
+void RenderSpec::setShader(std::shared_ptr<Shader> shader)
 {
     m_shader = shader;
 }
@@ -21,7 +21,7 @@ void Renderable::setShader(std::shared_ptr<Shader> shader)
 
 ////////////////////////////////////////////////////////////////////////////////////////
 TexturedQuad::TexturedQuad(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
-    : Renderable(name, RenderableType::texturedQuad)
+    : RenderSpec(name, RenderSpecType::texturedQuad)
 {
     BufferLayout layout = {
         {Shader::Float3, "a_Position"    },
@@ -78,8 +78,8 @@ int TexturedQuad::addTexture(std::shared_ptr<Texture> texture)
 
 
 ////////////////////////////////////////////////////////////////////////////////////////
-Mesh::Mesh(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
-    :Renderable(name, RenderableType::mesh)
+ColoredMesh::ColoredMesh(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBufferSize)
+    :RenderSpec(name, RenderSpecType::mesh)
 {
     BufferLayout layout = {
         {Shader::Float3, "a_Position"},
@@ -90,12 +90,12 @@ Mesh::Mesh(const std::string &name, std::shared_ptr<Shader> shader, uint maxVBuf
 
 }
 
-void Mesh::onBegin()
+void ColoredMesh::onBegin()
 {
     m_shader->bind();
 }
 
-void Mesh::onFlush()
+void ColoredMesh::onFlush()
 {
     m_shader->setUniform("u_Color", Shader::Float4, m_color);
     return;
