@@ -5,6 +5,7 @@
 #include "fast_obj.h"
 #include <unordered_set>
 #include <cstdlib> //calloc
+#include "../Renderer/buffer.h" // VAO
 
 Texture::Texture(uint width, uint height, GLenum formatInternal, uint samples, bool loadDebug)
     : m_width(width), m_height(height), m_samples(samples), m_formatInternal(formatInternal)
@@ -283,6 +284,19 @@ bool MeshFile::doReload()
     return loadOBJ();
 }
 
+void MeshFile::createVAO()
+{
+    ASSERT(m_vertexData && m_indexData);
+    auto iBuffer = std::make_shared<IndexBuffer>(m_indexCount, m_indexData);
+    BufferLayout layout = {
+        {Shader::Float3, "a_Position" },
+        {Shader::Float3, "a_Normal"   },
+        {Shader::Float2, "a_TexCoords"}
+    };
+    auto vBuffer = {std::make_shared<VertexBuffer>(layout, m_vertexCount, m_vertexData)};
+    m_vertexArray = std::make_shared<VertexArray>(vBuffer, iBuffer);
+}
+
 bool MeshFile::loadOBJ()
 {
     auto str = path.string();
@@ -293,26 +307,14 @@ bool MeshFile::loadOBJ()
         return false;
     }
 
-    uint vertexFlags = 1;
-    int componentCount = 3;
+    int componentCount = 8;
     fastObjMesh* mesh = fast_obj_read(c_str);
     if(mesh->position_count <= 1)
     {
         WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
         return false;
     }
-    if(mesh->texcoord_count>1)
-    {
-        vertexFlags |= VertexComponent::texcoord;
-        componentCount += 2;
-    }
-    if(mesh->normal_count>1)
-    {
-        vertexFlags |= VertexComponent::normal;
-        componentCount += 3;
-    }
     m_stride = componentCount*sizeof(float);
-    m_vertexComponentsFlags = vertexFlags;
 
     // We have to convert from obj indices to opengl indices,
     // we can only index full vertices not individual components
@@ -341,22 +343,34 @@ bool MeshFile::loadOBJ()
                 vertices.push_back(mesh->positions[indx+1]);
                 vertices.push_back(mesh->positions[indx+2]);
 
-                if(vertexFlags & VertexComponent::texcoord)
-                {
-                    //push 2 texture coordinates
-                    indx = index.t*2;
-                    vertices.push_back(mesh->texcoords[indx+0]);
-                    vertices.push_back(mesh->texcoords[indx+1]);
-                }
-
-                if(vertexFlags & VertexComponent::normal)
+                indx = index.n*3;
+                if(mesh->normal_count>1)
                 {
                     //push 3 normals
-                    indx = index.n*3;
                     vertices.push_back(mesh->normals[indx+0]);
                     vertices.push_back(mesh->normals[indx+1]);
                     vertices.push_back(mesh->normals[indx+2]);
                 }
+                else
+                {
+                    vertices.push_back(0);
+                    vertices.push_back(0);
+                    vertices.push_back(0);
+                }
+
+                indx = index.t*2;
+                if(mesh->texcoord_count>1)
+                {
+                    //push 2 texture coordinates
+                    vertices.push_back(mesh->texcoords[indx+0]);
+                    vertices.push_back(mesh->texcoords[indx+1]);
+                }
+                else
+                {
+                    vertices.push_back(0);
+                    vertices.push_back(0);
+                }
+
                 indices.push_back(count);//push index
                 count++;
             }

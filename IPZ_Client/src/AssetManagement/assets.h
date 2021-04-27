@@ -14,6 +14,7 @@ enum AssetType{
     meshFile,
 };
 
+class VertexArray;
 
 // TODO: make utility functions toTexture() etc to quickly cast
 class Asset{
@@ -87,16 +88,17 @@ private:
 
 class MeshFile : public Asset
 {
-    enum VertexComponent{
-        position = 1,
-        texcoord = 2,
-        normal   = 4
+    struct MeshVertex{
+        vec3 position;
+        vec3 normal;
+        vec2 texCoords;
     };
 
 public:
     MeshFile(const std::filesystem::path& path);
 
     virtual bool doReload() override;
+    void createVAO();
     float* vertices(){return m_vertexData;}
     uint vertexCount(){return m_vertexCount;}
     uint16* indices(){return m_indexData;}
@@ -104,7 +106,7 @@ public:
     uint stride(){return m_stride;}
 
 private:
-    uint m_vertexComponentsFlags = 0;
+    std::shared_ptr<VertexArray> m_vertexArray;
     uint m_stride = 0;
 
     float* m_vertexData = nullptr;
