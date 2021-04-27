@@ -83,21 +83,25 @@ private:
 class VertexArray{
 
 public:
+    VertexArray(std::initializer_list<std::shared_ptr<VertexBuffer>> vBuffers,
+                std::shared_ptr<IndexBuffer> iBuffer);
     VertexArray();
     ~VertexArray();
 
     void bind();
     void unbind();
 
-    void setVBuffer(std::shared_ptr<VertexBuffer> buffer);
+    void addVBuffer(std::shared_ptr<VertexBuffer> buffer);
     void setIBuffer(std::shared_ptr<IndexBuffer> buffer);
+    void clearVBuffers();
+    //TODO: removeVBuffer?
 
+    std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers(){return vBuffers;}
     std::shared_ptr<IndexBuffer> indexBuffer(){return iBuffer;}
-    std::shared_ptr<VertexBuffer> vertexBuffers(){return vBuffer;}
 
 private:
     uint id = 0;
-    std::shared_ptr<VertexBuffer> vBuffer;
+    std::vector<std::shared_ptr<VertexBuffer>> vBuffers;
     std::shared_ptr<IndexBuffer> iBuffer;
     uint vBufferIndex = 0;
 

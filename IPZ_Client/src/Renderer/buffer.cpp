@@ -1,4 +1,5 @@
 ﻿#include "buffer.h"
+#include "../Core/application.h"
 
 void BufferLayout::processElements()
 {
@@ -76,6 +77,15 @@ void IndexBuffer::setData(const uint16 *data, uint size)
 }
 
 
+VertexArray::VertexArray(std::initializer_list<std::shared_ptr<VertexBuffer>> vBuffers,
+                         std::shared_ptr<IndexBuffer> iBuffer)
+{
+    glCreateVertexArrays(1, &id);
+    for(auto& buffer : vBuffers)
+        addVBuffer(buffer);
+    setIBuffer(iBuffer);
+}
+
 VertexArray::VertexArray()
 {
     glCreateVertexArrays(1, &id);
@@ -96,7 +106,7 @@ void VertexArray::unbind()
     glBindVertexArray(0);
 }
 
-void VertexArray::setVBuffer(std::shared_ptr<VertexBuffer> buffer)
+void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
 {
     glBindVertexArray(id);
     buffer->bind();
@@ -141,8 +151,13 @@ void VertexArray::setVBuffer(std::shared_ptr<VertexBuffer> buffer)
         }
         }
     }
+    vBuffers.push_back(buffer);
+}
+
+void VertexArray::clearVBuffers()
+{
     vBufferIndex = 0;
-    vBuffer=buffer;
+    vBuffers.clear();
 }
 
 void VertexArray::setIBuffer(std::shared_ptr<IndexBuffer> buffer)
@@ -151,8 +166,6 @@ void VertexArray::setIBuffer(std::shared_ptr<IndexBuffer> buffer)
     buffer->bind();
     iBuffer = buffer;
 }
-
-
 
 
 FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAttachments,
@@ -173,6 +186,10 @@ void FrameBuffer::resize(uint width, uint height)
 
 void FrameBuffer::bind()    //binds all attachments
 {
+    // this shouldnt be here
+    auto size = App::getWindowSize();
+    if(size.x != width || size.y != height)
+        resize(size.x, size.y);
     glBindFramebuffer(GL_FRAMEBUFFER, id);
     glViewport(0, 0, width, height);
     if(colorAttachments.size() == 0)
@@ -198,6 +215,11 @@ void FrameBuffer::bind()    //binds all attachments
 
 void FrameBuffer::bind(std::vector<GLenum> attachments) //binds selected attachments
 {
+    // this shouldnt be here
+    auto size = App::getWindowSize();
+    if(size.x != width || size.y != height)
+        resize(size.x, size.y);
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glDrawBuffers(attachments.size(), attachments.data());
 }
