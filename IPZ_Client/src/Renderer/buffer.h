@@ -115,7 +115,7 @@ class FrameBuffer
     //TODO: fill out the functions, and remember to blit to screen for now
 public:
     FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
-                FrameBufferAttachment depthAttachment, uint samples = 1);
+                FrameBufferAttachment depthAttachment = {}, uint samples = 1);
     void resize(uint width, uint height);
     void bind();
     void bind(std::vector<GLenum> attachments);

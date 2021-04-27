@@ -16,9 +16,25 @@ int main(void)
 
 //    Test1 test = Test1();
 //    TestSlidingPuzzle test = TestSlidingPuzzle();
+
+    FrameBufferAttachment colorAtt;
+    colorAtt.type = GL_COLOR_ATTACHMENT0;
+    colorAtt.format = GL_RGBA8;
+    colorAtt.renderBuffer = true;
+
+    FrameBufferAttachment depthAtt;
+    depthAtt.type = GL_DEPTH_STENCIL_ATTACHMENT;
+    depthAtt.format = GL_DEPTH24_STENCIL8;
+    depthAtt.renderBuffer = true;
+
+    auto winSize = App::getWindowSize();
+    FrameBuffer fbo = FrameBuffer(winSize.x, winSize.y, std::vector<FrameBufferAttachment>{colorAtt}, depthAtt, 16);
     TestConnect4 test = TestConnect4();
     while (!App::shouldClose())
     {
+        App::clearAll();    //clear backbuffer
+        fbo.bind();
+        App::clearAll();    //clear fbo
         float dt = App::getTimeStep();
         dtSum+=dt;
         frameCount++;
@@ -37,7 +53,7 @@ int main(void)
 
         test.onUpdate(dt);
 
-
+        fbo.blitToFrontBuffer();
         App::submitFrame();
     }
 }

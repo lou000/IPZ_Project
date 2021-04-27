@@ -28,7 +28,8 @@ public:
     void operator=(App const&) = delete;
 
     static void init(uint width, uint height){getInstance().x_init(width, height);}
-    static void submitFrame()               {getInstance().x_submitFrame();}
+    static void submitFrame()                {getInstance().x_submitFrame();}
+    static void clearAll()                   {getInstance().x_clearAll();}
     static void quit()                       {getInstance().x_quit();}
 
     static void setVsync(uint interval)                  {getInstance().x_setVsync(interval);}
@@ -67,6 +68,7 @@ private:
 
     void x_init(uint width, uint height);
     void x_submitFrame();
+    void x_clearAll();
     void x_quit();
 
     void x_setVsync(uint interval);

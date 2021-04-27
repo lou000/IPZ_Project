@@ -209,7 +209,9 @@ void FrameBuffer::unbind()
 
 void FrameBuffer::blitToFrontBuffer()
 {
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBlitFramebuffer(0,0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    unbind();
 }
 
 void FrameBuffer::update()  // create/recreate framebuffer
@@ -237,9 +239,12 @@ void FrameBuffer::update()  // create/recreate framebuffer
                 glGenRenderbuffers(1, &rbo);
                 rboIds.push_back(rbo);
                 glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-                glRenderbufferStorage(GL_RENDERBUFFER, att.format, width, height);
-                glFramebufferRenderbuffer(GL_FRAMEBUFFER, att.type, GL_RENDERBUFFER, rbo);
+                if(samples>1)
+                    glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, att.format, width, height);
+                else
+                    glRenderbufferStorage(GL_RENDERBUFFER, att.format, width, height);
                 glBindRenderbuffer(GL_RENDERBUFFER, 0);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, att.type, GL_RENDERBUFFER, rbo);
             }
             else
             {
@@ -258,9 +263,12 @@ void FrameBuffer::update()  // create/recreate framebuffer
             glGenRenderbuffers(1, &rbo);
             rboIds.push_back(rbo);
             glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-            glRenderbufferStorage(GL_RENDERBUFFER, depthAttachment.format, width, height);
-            glFramebufferRenderbuffer(GL_FRAMEBUFFER, depthAttachment.type, GL_RENDERBUFFER, rbo);
+            if(samples>1)
+                glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples, depthAttachment.format, width, height);
+            else
+                glRenderbufferStorage(GL_RENDERBUFFER, depthAttachment.format, width, height);
             glBindRenderbuffer(GL_RENDERBUFFER, 0);
+            glFramebufferRenderbuffer(GL_FRAMEBUFFER, depthAttachment.type, GL_RENDERBUFFER, rbo);
         }
         else
         {
