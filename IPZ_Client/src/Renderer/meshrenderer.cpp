@@ -20,6 +20,7 @@ void MeshRenderer::x_DrawMesh(const mat4 &model, const std::shared_ptr<MeshFile>
     glDrawElements(GL_TRIANGLES, mesh->vertexArray()->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
     mesh->vertexArray()->unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
+    currentShader->unbind();
 }
 
 void MeshRenderer::x_DrawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color)

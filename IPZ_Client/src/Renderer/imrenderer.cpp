@@ -44,8 +44,8 @@ void ImRender::x_begin(const std::string& renderable)
 
 void ImRender::x_end()
 {
-    vertexArray->popVBuffer();
     flush();
+    vertexArray->popVBuffer();
 }
 
 void ImRender::startBatch()

@@ -16,6 +16,7 @@ int main(void)
 
 //    Test1 test = Test1();
 //    TestSlidingPuzzle test = TestSlidingPuzzle();
+    TestConnect4 test = TestConnect4();
 
     FrameBufferAttachment colorAtt;
     colorAtt.type = GL_COLOR_ATTACHMENT0;
@@ -29,7 +30,6 @@ int main(void)
 
     auto winSize = App::getWindowSize();
     FrameBuffer fbo = FrameBuffer(winSize.x, winSize.y, std::vector<FrameBufferAttachment>{colorAtt}, depthAtt, 16);
-    TestConnect4 test = TestConnect4();
     while (!App::shouldClose())
     {
         App::clearAll();    //clear backbuffer
