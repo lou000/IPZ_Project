@@ -44,18 +44,18 @@ class VertexBuffer{
     friend class VertexArray;
 
 public:
-    VertexBuffer(const BufferLayout& layout, uint size, void* data = nullptr);
+    VertexBuffer(const BufferLayout& layout, size_t size, void* data = nullptr);
     ~VertexBuffer();
 
     void bind();
     void unbind();
-    void setData(const void* data, uint size);
-    uint size(){return m_size;}
+    void setData(const void* data, size_t size);
+    size_t size(){return m_size;}
     BufferLayout layout(){return m_layout;}
 
 private:
     uint id = 0;
-    uint m_size = 0;
+    size_t m_size = 0;
     BufferLayout m_layout;
 
 };
@@ -65,17 +65,17 @@ private:
 class IndexBuffer{
 
 public:
-    IndexBuffer(uint size, uint16* indices = nullptr);
+    IndexBuffer(size_t size, uint16* indices = nullptr);
     ~IndexBuffer();
 
     void bind();
     void unbind();
     void setData(const uint16* data, uint size);
-    uint count(){return m_count;}
+    uint count(){return m_size;}
 
 private:
     uint id = 0;
-    uint m_count = 0;
+    uint m_size = 0;
 };
 
 

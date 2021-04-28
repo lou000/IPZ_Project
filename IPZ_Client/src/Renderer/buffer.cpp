@@ -13,7 +13,7 @@ void BufferLayout::processElements()
     }
 }
 
-VertexBuffer::VertexBuffer(const BufferLayout &layout, uint size, void *data)
+VertexBuffer::VertexBuffer(const BufferLayout &layout, size_t size, void *data)
     : m_size(size), m_layout(layout)
 {
     glCreateBuffers(1, &id);
@@ -39,14 +39,14 @@ void VertexBuffer::unbind()
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void VertexBuffer::setData(const void *data, uint size)
+void VertexBuffer::setData(const void *data, size_t size)
 {
     glBindBuffer(GL_ARRAY_BUFFER, id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 }
 
-IndexBuffer::IndexBuffer(uint size, uint16 *indices)
-    :m_count(size)
+IndexBuffer::IndexBuffer(size_t size, uint16 *indices)
+    :m_size(size)
 {
     glCreateBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
