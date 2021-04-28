@@ -287,13 +287,13 @@ bool MeshFile::doReload()
 void MeshFile::createVAO()
 {
     ASSERT(m_vertexData && m_indexData);
-    auto iBuffer = std::make_shared<IndexBuffer>(m_indexCount, m_indexData);
+    auto iBuffer = std::make_shared<IndexBuffer>(m_indexCount*sizeof(uint16), m_indexData);
     BufferLayout layout = {
         {Shader::Float3, "a_Position" },
         {Shader::Float3, "a_Normal"   },
         {Shader::Float2, "a_TexCoords"}
     };
-    auto vBuffer = {std::make_shared<VertexBuffer>(layout, m_vertexCount, m_vertexData)};
+    auto vBuffer = {std::make_shared<VertexBuffer>(layout, m_vertexCount*m_stride, m_vertexData)};
     m_vertexArray = std::make_shared<VertexArray>(vBuffer, iBuffer);
 }
 
@@ -395,5 +395,7 @@ bool MeshFile::loadOBJ()
     memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint16));
     m_indexCount = (uint)indices.size();
     m_vertexCount = (uint)vertices.size()/(m_stride/sizeof(float));
+
+    createVAO(); //TODO: stop caching data
     return true;
 }

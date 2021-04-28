@@ -46,6 +46,7 @@ void VertexBuffer::setData(const void *data, uint size)
 }
 
 IndexBuffer::IndexBuffer(uint size, uint16 *indices)
+    :m_count(size)
 {
     glCreateBuffers(1, &id);
     glBindBuffer(GL_ARRAY_BUFFER, id);
@@ -152,6 +153,20 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
         }
     }
     vBuffers.push_back(buffer);
+}
+
+void VertexArray::popVBuffer()
+{
+    // well i hope it works
+    auto buffer = vBuffers.back();
+    buffer->bind();
+    for(auto element : buffer->m_layout.elements)
+    {
+        UNUSED(element);
+        glDisableVertexAttribArray(vBufferIndex);
+        vBufferIndex--;
+    }
+    vBuffers.erase(vBuffers.end()-1);
 }
 
 void VertexArray::clearVBuffers()

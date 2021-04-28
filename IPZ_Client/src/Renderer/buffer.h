@@ -92,9 +92,9 @@ public:
     void unbind();
 
     void addVBuffer(std::shared_ptr<VertexBuffer> buffer);
+    void popVBuffer(); // remove last added vBuffer
     void setIBuffer(std::shared_ptr<IndexBuffer> buffer);
     void clearVBuffers();
-    //TODO: removeVBuffer?
 
     std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers(){return vBuffers;}
     std::shared_ptr<IndexBuffer> indexBuffer(){return iBuffer;}

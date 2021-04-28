@@ -98,12 +98,12 @@ public:
     MeshFile(const std::filesystem::path& path);
 
     virtual bool doReload() override;
-    void createVAO();
     float* vertices(){return m_vertexData;}
     uint vertexCount(){return m_vertexCount;}
     uint16* indices(){return m_indexData;}
     uint indexCount(){return m_indexCount;}
     uint stride(){return m_stride;}
+    std::shared_ptr<VertexArray> vertexArray(){return m_vertexArray;}
 
 private:
     std::shared_ptr<VertexArray> m_vertexArray;
@@ -112,9 +112,10 @@ private:
     float* m_vertexData = nullptr;
     uint m_vertexCount = 0;
 
-    uint16* m_indexData = nullptr;;
+    uint16* m_indexData = nullptr;
     uint m_indexCount = 0;
 
+    void createVAO();
     bool loadOBJ();
 
 };
