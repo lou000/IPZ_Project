@@ -99,9 +99,9 @@ public:
 
     virtual bool doReload() override;
     float* vertices(){return m_vertexData;}
-    uint vertexCount(){return m_vertexCount;}
+    size_t vertexCount(){return m_vertexCount;}
     uint16* indices(){return m_indexData;}
-    uint indexCount(){return m_indexCount;}
+    size_t indexCount(){return m_indexCount;}
     uint stride(){return m_stride;}
     std::shared_ptr<VertexArray> vertexArray(){return m_vertexArray;}
 
@@ -110,10 +110,10 @@ private:
     uint m_stride = 0;
 
     float* m_vertexData = nullptr;
-    uint m_vertexCount = 0;
+    size_t m_vertexCount = 0;
 
     uint16* m_indexData = nullptr;
-    uint m_indexCount = 0;
+    size_t m_indexCount = 0;
 
     void createVAO();
     bool loadOBJ();

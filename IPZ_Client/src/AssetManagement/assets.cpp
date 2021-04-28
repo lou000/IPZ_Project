@@ -308,13 +308,13 @@ bool MeshFile::loadOBJ()
     }
 
     int componentCount = 8;
+    m_stride = componentCount*sizeof(float);
     fastObjMesh* mesh = fast_obj_read(c_str);
     if(mesh->position_count <= 1)
     {
         WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
         return false;
     }
-    m_stride = componentCount*sizeof(float);
 
     // We have to convert from obj indices to opengl indices,
     // we can only index full vertices not individual components
@@ -393,8 +393,8 @@ bool MeshFile::loadOBJ()
     memcpy(m_vertexData, vertices.data(), vertices.size()*sizeof(float));
     m_indexData = (uint16*)malloc(indices.size()*sizeof(uint16));
     memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint16));
-    m_indexCount = (uint)indices.size();
-    m_vertexCount = (uint)vertices.size()/(m_stride/sizeof(float));
+    m_indexCount = indices.size();
+    m_vertexCount = vertices.size()/(m_stride/sizeof(float));
 
     createVAO(); //TODO: stop caching data
     return true;
