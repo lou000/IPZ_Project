@@ -64,6 +64,7 @@ public:
     struct MeshVertex{
         vec3 position;
         vec3 normals;
+        vec2 texCoords;
     };
     ColoredMesh(const std::string& name, std::shared_ptr<Shader> shader, uint maxVBufferSize);
     virtual void onBegin() override;

@@ -82,8 +82,9 @@ ColoredMesh::ColoredMesh(const std::string &name, std::shared_ptr<Shader> shader
     :RenderSpec(name, RenderSpecType::mesh)
 {
     BufferLayout layout = {
-        {Shader::Float3, "a_Position"},
-        {Shader::Float3, "a_Normal"  }
+        {Shader::Float3, "a_Position" },
+        {Shader::Float3, "a_Normal"   },
+        {Shader::Float2, "a_TexCoords"}
     };
     m_buffer = std::make_shared<VertexBuffer>(layout, maxVBufferSize);
     m_shader = shader;

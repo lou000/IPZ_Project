@@ -34,7 +34,7 @@ int main(void)
     {
         App::clearAll();    //clear backbuffer
         fbo.bind();
-        App::clearAll();    //clear fbo
+        App::clearAll();
         float dt = App::getTimeStep();
         dtSum+=dt;
         frameCount++;

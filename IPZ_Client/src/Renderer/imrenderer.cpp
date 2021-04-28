@@ -15,7 +15,6 @@ void ImRender::x_init()
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LEQUAL);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
     vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
@@ -32,7 +31,7 @@ void ImRender::x_begin(const std::string& renderable)
     currentRenderable = renderables[renderable];
     ASSERT(currentRenderable, "Renderer: Couldnt find renderable with name %s.", renderable.c_str());
     currentRenderable->onBegin();
-    vertexArray->setVBuffer(currentRenderable->buffer());
+    vertexArray->addVBuffer(currentRenderable->buffer());
     // it doesnt really belong here but we can always check by type later
     currentRenderable->shader()->setUniform("u_ViewProjection", Shader::Mat4, m_camera->getViewProjectionMatrix());
     if(currentRenderable->type() == RenderSpecType::mesh)
@@ -45,6 +44,7 @@ void ImRender::x_begin(const std::string& renderable)
 
 void ImRender::x_end()
 {
+    vertexArray->popVBuffer();
     flush();
 }
 
