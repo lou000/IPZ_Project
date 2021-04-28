@@ -17,7 +17,7 @@ void MeshRenderer::x_DrawMesh(const mat4 &model, const std::shared_ptr<MeshFile>
     currentShader->setUniform("u_LightPosition", Shader::Float3, vec3{2.3, 3, 3});
 
     mesh->vertexArray()->bind();
-    glDrawElements(GL_TRIANGLES, mesh->vertexArray()->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
+    glDrawElements(GL_TRIANGLES, mesh->indexCount(), GL_UNSIGNED_SHORT, nullptr);
     mesh->vertexArray()->unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
     currentShader->unbind();
