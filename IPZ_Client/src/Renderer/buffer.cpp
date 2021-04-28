@@ -189,6 +189,13 @@ FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachm
 {
     glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAttachments);
     ASSERT((GLint)colorAttachments.size()<=maxAttachments);
+    int maxSamples = 0;
+    glGetIntegerv (GL_MAX_SAMPLES, &maxSamples);
+    if(samples>(uint)maxSamples)
+    {
+        this->samples = maxSamples;
+        WARN("OpenGL: Framebuffer samples exceed GL_MAX_SAMPLES, setting to max value of %d.", maxSamples);
+    }
     update();
 }
 
