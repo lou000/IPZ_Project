@@ -7,7 +7,7 @@ using namespace glm;
 
 
 
-// do instanced rendering
+// do instanced rendering, setup queu of meshes and models, render them at "end"
 // https://learnopengl.com/Advanced-OpenGL/Instancing
 // https://www.informit.com/articles/article.aspx?p=2033340&seqNum=5 normal matrix from model matrix!!
 class MeshRenderer
@@ -22,6 +22,8 @@ public:
     void operator=(MeshRenderer const&) = delete;
 
     static void init(){getInstance().x_init();}
+    static void begin(){getInstance().x_begin();}
+    static void end(){getInstance().x_end();}
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
     static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}
 
@@ -37,6 +39,8 @@ private:
     std::shared_ptr<Camera> currentCamera = nullptr;
 
     void x_init();
+    void x_begin();
+    void x_end();
     void x_setShader(std::shared_ptr<Shader> shader) {currentShader = shader;}
     void x_setCamera(std::shared_ptr<Camera> camera) {currentCamera = camera;}
 
