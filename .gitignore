@@ -4,7 +4,6 @@ CMakeSettings.json
 *.autosave
 *.obj
 *.filters
-*.vs
 *.sln
 *.vcxproj
 
