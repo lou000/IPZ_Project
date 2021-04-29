@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "../Core/utilities.h"
-#include "../Renderer/renderspec.h"
+#include "../AssetManagement/assets.h"
 #define MAX_ENTITIES 2000
 using namespace glm;
 
@@ -23,7 +23,6 @@ private:
     uint type;
     vec3 pos;
     quat rotation;
-    std::shared_ptr<RenderSpec> renderSpec;
     std::shared_ptr<Asset> asset;
 };
 
@@ -37,7 +36,6 @@ public:
 private:
     std::unordered_map<uint, std::shared_ptr<Entity>> entitiesByID;
     std::unordered_map<uint, std::vector<std::shared_ptr<Entity>>> entitiesByType;
-    std::unordered_map<std::shared_ptr<RenderSpec>, std::vector<std::shared_ptr<Entity>>> entitiesByRenderSpec;
     std::unordered_set<std::shared_ptr<Entity>> availableMemory;
     Entity* entities;
 };

@@ -2,7 +2,7 @@
 #include <chrono>
 #include "../AssetManagement/asset_manager.h"
 #include "../Renderer/shader.h"
-#include "../Renderer/imrenderer.h"
+#include "../Renderer/batchrenderer.h"
 #include "../Renderer/meshrenderer.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
@@ -69,7 +69,7 @@ private:
 
     void x_init(uint width, uint height);
     void x_submitFrame(); //this obviously shouldnt be here
-    void x_clearAll();  //this obviously shouldnt be here
+    void x_clearAll();    //this obviously shouldnt be here
     void x_quit();
 
     void x_setVsync(uint interval);

@@ -154,8 +154,7 @@ void App::x_init(uint width, uint height)
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
 
-    ImRender::setViewPort({0,0}, {width, height});
-    ImRender::setClearColor({0.302, 0.345, 0.388, 1});
+    glClearColor(0.302f, 0.345f, 0.388f, 1.f);// this shouldnt be here
 
     glfwSwapInterval(1);
 }
@@ -271,8 +270,7 @@ void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
     UNUSED(window);
     m_windowWidth = width;
     m_windowHeight = height;
-    ImRender::setViewPort({0,0}, {width, height});
-    ImRender::getCamera()->setAspectRatio((float)width/(float)height);
+    BatchRenderer::getCamera()->setAspectRatio((float)width/(float)height);
 }
 
 void App::x_setVsync(uint interval)
