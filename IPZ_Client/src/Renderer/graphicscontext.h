@@ -2,6 +2,9 @@
 #include "camera.h"
 
 //TODO: here be things that are shared by both renderers
+// initialize renderers from here, manage the camera
+// add common render commands
+// resize viewport from here
 class GraphicsContext
 {
 public:
