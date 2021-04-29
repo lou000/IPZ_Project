@@ -268,7 +268,7 @@ void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     //this might be called before we initialize the Renderer
     UNUSED(window);
-    m_windowWidth = width;
+    m_windowWidth  = width;
     m_windowHeight = height;
     BatchRenderer::getCamera()->setAspectRatio((float)width/(float)height);
 }
