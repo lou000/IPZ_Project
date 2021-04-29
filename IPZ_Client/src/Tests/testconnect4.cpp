@@ -57,36 +57,34 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(mesh2);
     AssetManager::addAsset(mesh3);
     std::vector<std::filesystem::path> shaderSrcs2 = {
-        "../assets/shaders/mesh_frag.glsl",
-        "../assets/shaders/mesh_vert.glsl"
+        "../assets/shaders/default_mesh.fs",
+        "../assets/shaders/default_mesh.vs"
     };
-    AssetManager::addShader(std::make_shared<Shader>("testMesh", shaderSrcs2));
+    AssetManager::addShader(std::make_shared<Shader>("mesh", shaderSrcs2));
 
     std::vector<std::filesystem::path> shaderSrcs = {
-        "../assets/shaders/test_frag.glsl",
-        "../assets/shaders/test_vert.glsl"
+        "../assets/shaders/default_batch.fs",
+        "../assets/shaders/default_batch.vs"
     };
-    AssetManager::addShader(std::make_shared<Shader>("test", shaderSrcs));
+    AssetManager::addShader(std::make_shared<Shader>("batch", shaderSrcs));
 
     auto winSize = App::getWindowSize();
-    auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-
-
+    camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     camera->setPosition({0, 7, 20});
     camera->setFocusPoint({0,6,0});
     camera->pointAt({0,6,0});
-    ImRender::setCamera(camera);
-    auto renderable = std::make_shared<TexturedQuad>("BasicQuad", AssetManager::getShader("test"), MAX_VERTEX_BUFFER_SIZE);
-    ImRender::addRenderable(renderable);
-    auto renderable2 = std::make_shared<ColoredMesh>("MeshTest", AssetManager::getShader("testMesh"), MAX_VERTEX_BUFFER_SIZE);
-    ImRender::addRenderable(renderable2);
+
+    BatchRenderer::setCamera(camera);
+    BatchRenderer::setShader(AssetManager::getShader("batch"));
+    MeshRenderer::setCamera(camera);
+    MeshRenderer::setShader(AssetManager::getShader("mesh"));
+
+
+
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
     for(int i=0;i<6; i++)
         vPositions[i] = top      - i*vOffset;
-
-    MeshRenderer::setShader(AssetManager::getShader("testMesh"));
-    MeshRenderer::setCamera(camera);
 
     c4 = new Connect4(7, 6);
     searcher = new alpha_beta_searcher<Move, true>(3,true);
@@ -95,11 +93,11 @@ TestConnect4::TestConnect4()
 
 void TestConnect4::onUpdate(float dt)
 {
-    auto mouseRay = ImRender::getCamera()->getMouseRay();
-    auto cameraPos = ImRender::getCamera()->getPos();
+    auto mouseRay  = camera->getMouseRay();
+    auto cameraPos = camera->getPos();
     vec3 intersection = {};
 
-
+    MeshRenderer::begin();
     if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && c4->userTurn && c4->is_terminal() == std::nullopt)
     {
         if(intersectPlane({0, 0, -1}, {0,0,0.45}, cameraPos, mouseRay, intersection))
@@ -158,9 +156,10 @@ void TestConnect4::onUpdate(float dt)
     MeshRenderer::DrawMesh({0,0,0}, {1,1,1}, mesh1, {0.165, 0.349, 1.000,1});
     MeshRenderer::DrawMesh({1,0,3}, {1,1,1}, mesh2, {0.882, 0.192, 0.161,1});
     MeshRenderer::DrawMesh({-1,0,3}, {1,1,1}, mesh3, {0.906, 0.878, 0.302,1});
+    MeshRenderer::end();
 
-    ImRender::begin("BasicQuad");
-    ImRender::DrawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
-    ImRender::end();
+    BatchRenderer::begin();
+    BatchRenderer::DrawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
+    BatchRenderer::end();
 
 }

@@ -10,7 +10,7 @@ public:
 
 private:
     std::shared_ptr<MeshFile> mesh1, mesh2, mesh3;
-    std::shared_ptr<FrameBuffer> fbo;
+    std::shared_ptr<Camera> camera;
     float length = 11.9f;
     float top = 9.1;
     float leftSlot = -5.0f;
