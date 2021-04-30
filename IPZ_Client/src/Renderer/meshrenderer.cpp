@@ -1,4 +1,5 @@
 ﻿#include "meshrenderer.h"
+#include "graphicscontext.h"
 #include "buffer.h"
 
 void MeshRenderer::x_init()
@@ -8,6 +9,7 @@ void MeshRenderer::x_init()
 
 void MeshRenderer::x_begin()
 {
+    auto currentCamera = GraphicsContext::getCamera();
     currentShader->bind();
     currentShader->setUniform("u_View", Shader::Mat4, currentCamera->getViewMatrix());
     currentShader->setUniform("u_Projection", Shader::Mat4, currentCamera->getProjMatrix());

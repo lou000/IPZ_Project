@@ -1,4 +1,5 @@
 ﻿#include "batchrenderer.h"
+#include "graphicscontext.h"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
@@ -7,16 +8,6 @@ _declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;
 
 void BatchRenderer::x_init()
 {
-    // this below should go to some global gl init function
-    glEnable(GL_MULTISAMPLE);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable(GL_BLEND);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
-
     // get max texture count and setup storage
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureSlots);
     ASSERT(maxTextureSlots>0);
@@ -52,9 +43,10 @@ void BatchRenderer::x_init()
 void BatchRenderer::x_begin()
 {
     // bind all uniforms
+    auto camera = GraphicsContext::getCamera();
     m_currentShader->bind();
     m_currentShader->setUniformArray("u_Textures", Shader::Int, texSamplers, maxTextureSlots);
-    m_currentShader->setUniform("u_ViewProjection", Shader::Mat4, m_camera->getViewProjectionMatrix());
+    m_currentShader->setUniform("u_ViewProjection", Shader::Mat4, camera->getViewProjectionMatrix());
 
     vertexArray->bind();
     startBatch();

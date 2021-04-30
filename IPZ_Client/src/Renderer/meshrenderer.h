@@ -36,7 +36,6 @@ public:
 private:
 
     std::shared_ptr<Shader> currentShader = nullptr;
-    std::shared_ptr<Camera> currentCamera = nullptr;
 
     void x_init();
     void x_begin();

@@ -46,8 +46,6 @@ public:
     static void DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_DrawQuad(pos, size, tintColor);}
 
-    static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}
-    static std::shared_ptr<Camera> getCamera(){return getInstance().x_getCamera();}
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
 private:
@@ -68,7 +66,6 @@ private:
     int maxTextureSlots = 0;
     int textureCount    = 1;
 
-    std::shared_ptr<Camera> m_camera        = nullptr;
     std::shared_ptr<Shader> m_currentShader = nullptr;
     std::vector<std::shared_ptr<Texture>> textureSlots;
     std::shared_ptr<Texture> whiteTex;
@@ -84,10 +81,7 @@ private:
                    float tilingFactor, const vec4 &tintColor);
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
 
-
     void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
-    void x_setCamera(std::shared_ptr<Camera> camera){m_camera = camera;}
-    std::shared_ptr<Camera> x_getCamera(){return m_camera;}
 
     int addTexture(const std::shared_ptr<Texture>& texture);
     void startBatch();
