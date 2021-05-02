@@ -4,6 +4,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "buffer.h"
+#include "graphicscontext.h"
 #define MAX_VERTEX_BUFFER_SIZE 0xFFFFFF
 #define MAX_INDEX_BUFFER_SIZE 0xFFFE //this is max for uint16 which we use
 
@@ -45,6 +46,8 @@ public:
     {getInstance().x_DrawQuad(pos, size, texture, tilingFactor, tintColor);}
     static void DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_DrawQuad(pos, size, tintColor);}
+    static void drawLine3d(const vec3& posStart, const vec3& posEnd, float width, const vec4& color)
+    {getInstance().x_drawLine3d(posStart, posEnd, width, color);}
 
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
@@ -80,6 +83,9 @@ private:
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
     void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
+
+    void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
+    void x_drawLine3d(const vec3& posStart, const vec3& posEnd, float width, const vec4& color);
 
     void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
 

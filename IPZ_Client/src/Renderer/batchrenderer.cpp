@@ -1,5 +1,5 @@
 ﻿#include "batchrenderer.h"
-#include "graphicscontext.h"
+#include "gtx/vector_angle.hpp"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
@@ -183,6 +183,71 @@ void BatchRenderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Text
     indexBufferPtr[3] = elementCount + 2;
     indexBufferPtr[4] = elementCount + 3;
     indexBufferPtr[5] = elementCount + 0;
+
+    indexBufferPtr+=6;
+
+    indexCount += 6;
+    elementCount+=4;
+}
+
+void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float width, const vec4& color)
+{
+
+}
+
+void BatchRenderer::x_drawLine3d(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
+{
+    auto lineVec = posStart-posEnd;
+    auto crossP = cross({0,1,0}, normalize(lineVec));
+    auto cameraForward = GraphicsContext::getCamera()->forward();
+    auto angleCR = angle(crossP, cameraForward);
+    quat rotation;
+    if(cameraForward.y > 0)
+        rotation = angleAxis(radians(90.f)+angleCR, normalize(lineVec));
+    else
+        rotation = angleAxis(radians(90.f)-angleCR, normalize(lineVec));
+
+    LOG("cameraForward.z: %f,  angle: %f", cameraForward.y,degrees(angleCR));
+    auto offset = crossP*(width/2);
+    auto p0 = vec3(posStart.x, posStart.y, posStart.z) + offset;
+    auto p1 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   + offset;
+    auto p2 = vec3(posStart.x, posStart.y, posStart.z) - offset;
+    auto p3 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   - offset;
+    auto center = vec4(posStart - lineVec/2.f, 1);
+    const vec4 lineVertexPos[4] =
+    {
+        vec4(p0, 1),
+        vec4(p1, 1),
+        vec4(p2, 1),
+        vec4(p3, 1),
+    };
+
+    constexpr vec2 textureCoords[] = {
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f}
+    };
+
+    auto bPtr = (QuadVertex*) vertexBufferPtr;
+    for (size_t i = 0; i < 4; i++)
+    {
+        bPtr->position =center - rotation * (lineVertexPos[i]-center);
+        bPtr->color = color;
+        bPtr->texCoord = textureCoords[i];
+        bPtr->texIndex = 0;
+        bPtr->tilingFactor = 1;
+        bPtr++;
+    }
+    vertexBufferPtr = (byte*)bPtr;
+
+    indexBufferPtr[0] = elementCount + 0;
+    indexBufferPtr[1] = elementCount + 1;
+    indexBufferPtr[2] = elementCount + 2;
+
+    indexBufferPtr[3] = elementCount + 3;
+    indexBufferPtr[4] = elementCount + 2;
+    indexBufferPtr[5] = elementCount + 1;
 
     indexBufferPtr+=6;
 
