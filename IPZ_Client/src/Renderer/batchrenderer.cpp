@@ -198,24 +198,21 @@ void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float w
 
 void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
 {
+    //Line always faces camera
     auto lineVec = normalize(posStart-posEnd);
     auto cameraForward = GraphicsContext::getCamera()->forward();
     auto crossP = cross(cameraForward, lineVec);
-
     auto offset = crossP*(width/2);
-    auto p0 = vec3(posStart.x, posStart.y, posStart.z) - offset;
-    auto p1 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   - offset;
-    auto p2 = vec3(posStart.x, posStart.y, posStart.z) + offset;
-    auto p3 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   + offset;
 
     const vec4 lineVertexPos[4] =
     {
-        vec4(p0, 1),
-        vec4(p1, 1),
-        vec4(p2, 1),
-        vec4(p3, 1),
+        vec4(posStart.x, posStart.y, posStart.z - offset, 1),
+        vec4(posEnd.x,   posEnd.y,   posEnd.z   - offset, 1),
+        vec4(posStart.x, posStart.y, posStart.z + offset, 1),
+        vec4(posEnd.x,   posEnd.y,   posEnd.z   + offset, 1),
     };
 
+    //The rest of it is the quad
     constexpr vec2 textureCoords[] = {
         {0.0f, 0.0f},
         {1.0f, 0.0f},
