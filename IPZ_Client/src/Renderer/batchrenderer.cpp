@@ -43,6 +43,7 @@ void BatchRenderer::x_init()
 void BatchRenderer::x_begin()
 {
     // bind all uniforms
+//    glDisable(GL_CULL_FACE);
     auto camera = GraphicsContext::getCamera();
     m_currentShader->bind();
     m_currentShader->setUniformArray("u_Textures", Shader::Int, texSamplers, maxTextureSlots);
@@ -197,23 +198,16 @@ void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float w
 
 void BatchRenderer::x_drawLine3d(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
 {
-    auto lineVec = posStart-posEnd;
-    auto crossP = cross({0,1,0}, normalize(lineVec));
+    auto lineVec = normalize(posStart-posEnd);
     auto cameraForward = GraphicsContext::getCamera()->forward();
-    auto angleCR = angle(crossP, cameraForward);
-    quat rotation;
-    if(cameraForward.y > 0)
-        rotation = angleAxis(radians(90.f)+angleCR, normalize(lineVec));
-    else
-        rotation = angleAxis(radians(90.f)-angleCR, normalize(lineVec));
+    auto crossP = cross(cameraForward, lineVec);
 
-    LOG("cameraForward.z: %f,  angle: %f", cameraForward.y,degrees(angleCR));
     auto offset = crossP*(width/2);
-    auto p0 = vec3(posStart.x, posStart.y, posStart.z) + offset;
-    auto p1 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   + offset;
-    auto p2 = vec3(posStart.x, posStart.y, posStart.z) - offset;
-    auto p3 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   - offset;
-    auto center = vec4(posStart - lineVec/2.f, 1);
+    auto p0 = vec3(posStart.x, posStart.y, posStart.z) - offset;
+    auto p1 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   - offset;
+    auto p2 = vec3(posStart.x, posStart.y, posStart.z) + offset;
+    auto p3 = vec3(posEnd.x,   posEnd.y,   posEnd.z)   + offset;
+
     const vec4 lineVertexPos[4] =
     {
         vec4(p0, 1),
@@ -232,7 +226,7 @@ void BatchRenderer::x_drawLine3d(const vec3 &posStart, const vec3 &posEnd, float
     auto bPtr = (QuadVertex*) vertexBufferPtr;
     for (size_t i = 0; i < 4; i++)
     {
-        bPtr->position =center - rotation * (lineVertexPos[i]-center);
+        bPtr->position = lineVertexPos[i];
         bPtr->color = color;
         bPtr->texCoord = textureCoords[i];
         bPtr->texIndex = 0;
