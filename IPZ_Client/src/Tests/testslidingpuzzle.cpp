@@ -13,7 +13,7 @@ TestSlidingPuzzle::TestSlidingPuzzle()
 
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    BatchRenderer::setCamera(camera);
+    GraphicsContext::setCamera(camera);
     BatchRenderer::setShader(AssetManager::getShader("Batch"));
 
     n = 5;

@@ -1,6 +1,4 @@
 ﻿#include "meshrenderer.h"
-#include "graphicscontext.h"
-#include "buffer.h"
 
 void MeshRenderer::x_init()
 {

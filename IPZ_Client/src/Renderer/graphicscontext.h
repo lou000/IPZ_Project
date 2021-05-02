@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "camera.h"
 
 //TODO: here be things that are shared by both renderers
@@ -13,9 +13,10 @@ class GraphicsContext
         return instance;
     }
 public:
-    GraphicsContext(GraphicsContext const&)   = delete;
+    GraphicsContext(GraphicsContext const&)= delete;
     void operator=(GraphicsContext const&) = delete;
 
+    static void init(){getInstance().x_init();}
     static void setClearColor(vec4 color);
     static void clear(GLbitfield buffers);
     static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}

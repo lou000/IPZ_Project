@@ -1,5 +1,6 @@
 ﻿#include "utilities.h"
 #include "application.h"
+#include "../Renderer/graphicscontext.h"
 
 static void error_callback(int error, const char* description)
 {
@@ -150,11 +151,7 @@ void App::x_init(uint width, uint height)
     glEnable(GL_DEBUG_OUTPUT);
     glDebugMessageCallback(glErrorCallback, 0);
 
-    //This below is for RGB formats, if we stop supporting we can remove this.
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-
-    glClearColor(0.302f, 0.345f, 0.388f, 1.f);// this shouldnt be here
+    GraphicsContext::init();
 
     glfwSwapInterval(1);
 }
@@ -270,7 +267,7 @@ void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
     UNUSED(window);
     m_windowWidth  = width;
     m_windowHeight = height;
-    BatchRenderer::getCamera()->setAspectRatio((float)width/(float)height);
+    GraphicsContext::resizeViewPort(width, height);
 }
 
 void App::x_setVsync(uint interval)

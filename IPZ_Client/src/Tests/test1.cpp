@@ -12,7 +12,7 @@ Test1::Test1()
     AssetManager::addShader(std::make_shared<Shader>("Batch", shaderSrcs));
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    BatchRenderer::setCamera(camera);
+    GraphicsContext::setCamera(camera);
     BatchRenderer::setShader(AssetManager::getShader("Batch"));
     camera->setPosition({0,5.4,0});
 
