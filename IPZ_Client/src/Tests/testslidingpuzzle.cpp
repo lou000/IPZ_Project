@@ -88,7 +88,7 @@ void TestSlidingPuzzle::onUpdate(float dt)
     }
 
     BatchRenderer::begin();
-    BatchRenderer::DrawQuad({center,-0.001,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
+    BatchRenderer::drawQuad({center,-0.001,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
     for(int i=0; i<size; i++)
     {
         float x = 0.4f+i%n;
@@ -102,11 +102,11 @@ void TestSlidingPuzzle::onUpdate(float dt)
         if(i == movingFromIndx)
         {
             pos += movDir * animProgress;
-            BatchRenderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
+            BatchRenderer::drawQuad(pos, {0.8f, 0.8f}, tileText);
             animProgress+=animationSpeed*dt;
         }
         else if( grid[i]!= 0)
-            BatchRenderer::DrawQuad(pos, {0.8f, 0.8f}, tileText);
+            BatchRenderer::drawQuad(pos, {0.8f, 0.8f}, tileText);
     }
     BatchRenderer::end();
 }

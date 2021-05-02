@@ -38,16 +38,16 @@ public:
     static void init(){getInstance().x_init();}
     static void begin(){getInstance().x_begin();}
     static void end(){getInstance().x_end();}
-    static void DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
+    static void drawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
-    {getInstance().x_DrawQuad(transform, texture, tilingFactor, tintColor);}
-    static void DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture = nullptr,
+    {getInstance().x_drawQuad(transform, texture, tilingFactor, tintColor);}
+    static void drawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture = nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
-    {getInstance().x_DrawQuad(pos, size, texture, tilingFactor, tintColor);}
-    static void DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
-    {getInstance().x_DrawQuad(pos, size, tintColor);}
-    static void drawLine3d(const vec3& posStart, const vec3& posEnd, float width, const vec4& color)
-    {getInstance().x_drawLine3d(posStart, posEnd, width, color);}
+    {getInstance().x_drawQuad(pos, size, texture, tilingFactor, tintColor);}
+    static void drawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
+    {getInstance().x_drawQuad(pos, size, tintColor);}
+    static void drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color)
+    {getInstance().x_drawLine(posStart, posEnd, width, color);}
 
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
@@ -78,14 +78,14 @@ private:
     void x_end();
 
 
-    void x_DrawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
+    void x_drawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
-    void x_DrawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
+    void x_drawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
-    void x_DrawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
+    void x_drawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
 
     void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
-    void x_drawLine3d(const vec3& posStart, const vec3& posEnd, float width, const vec4& color);
+    void x_drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color);
 
     void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
 

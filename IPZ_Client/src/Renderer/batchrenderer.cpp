@@ -119,24 +119,24 @@ void BatchRenderer::flush()
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void BatchRenderer::x_DrawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
+void BatchRenderer::x_drawQuad(const vec3& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
 
     mat4 transform = translate(mat4(1.0f), pos)
                      * scale(mat4(1.0f), {size.x, 0, size.y});
-    x_DrawQuad(transform, texture, tilingFactor, tintColor);
+    x_drawQuad(transform, texture, tilingFactor, tintColor);
 }
 
-void BatchRenderer::x_DrawQuad(const vec3& pos, const vec2& size, const vec4& tintColor)
+void BatchRenderer::x_drawQuad(const vec3& pos, const vec2& size, const vec4& tintColor)
 {
 
     mat4 transform = translate(mat4(1.0f), pos)
                      * scale(mat4(1.0f), {size.x, 0, size.y});
-    x_DrawQuad(transform, nullptr, 1, tintColor);
+    x_drawQuad(transform, nullptr, 1, tintColor);
 }
 
-void BatchRenderer::x_DrawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
+void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
     // if we would go outside the bounds of the buffers do the next batch
@@ -196,7 +196,7 @@ void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float w
 
 }
 
-void BatchRenderer::x_drawLine3d(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
+void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
 {
     auto lineVec = normalize(posStart-posEnd);
     auto cameraForward = GraphicsContext::getCamera()->forward();
