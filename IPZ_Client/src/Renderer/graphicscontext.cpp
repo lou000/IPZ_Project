@@ -40,6 +40,9 @@ void GraphicsContext::x_setCamera(std::shared_ptr<Camera> camera)
 
 void GraphicsContext::x_resizeViewPort(int width, int height)
 {
-    glViewport(0,0, width, height);
-    m_currentCamera->setAspectRatio((float)width/(float)height);
+    if(width>0 && height>0)
+    {
+        glViewport(0,0, width, height);
+        m_currentCamera->setAspectRatio((float)width/(float)height);
+    }
 }

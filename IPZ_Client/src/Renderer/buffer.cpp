@@ -201,9 +201,12 @@ FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachm
 
 void FrameBuffer::resize(uint width, uint height)
 {
-    this->width = width;
-    this->height = height;
-    update();
+    if(width>0 && height>0)
+    {
+        this->width = width;
+        this->height = height;
+        update();
+    }
 }
 
 void FrameBuffer::bind()    //binds all attachments
