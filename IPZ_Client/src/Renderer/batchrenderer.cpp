@@ -206,10 +206,10 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
 
     const vec4 lineVertexPos[4] =
     {
-        vec4(posStart.x, posStart.y, posStart.z - offset, 1),
-        vec4(posEnd.x,   posEnd.y,   posEnd.z   - offset, 1),
-        vec4(posStart.x, posStart.y, posStart.z + offset, 1),
-        vec4(posEnd.x,   posEnd.y,   posEnd.z   + offset, 1),
+        vec4(posStart - offset, 1),
+        vec4(posEnd   - offset, 1),
+        vec4(posStart + offset, 1),
+        vec4(posEnd   + offset, 1),
     };
 
     //The rest of it is the quad
