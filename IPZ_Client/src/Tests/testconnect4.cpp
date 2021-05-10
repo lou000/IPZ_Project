@@ -159,7 +159,8 @@ void TestConnect4::onUpdate(float dt)
 
     BatchRenderer::begin();
     BatchRenderer::drawLine({-1,0,3}, {leftSlot,top,0}, .02f, {0.882, 0.192, 0.161,1});
-    BatchRenderer::drawLine({0.f, 0.f},{100.f, 100.f},1.f, {1,1,1,1});
+    BatchRenderer::drawLine({0.f, 0.f},{100.f, 100.f},5.f, {1,1,1,1});
+    BatchRenderer::drawLine({0.f, 0.f},{300.f, 300.f},5.f, {1,0,1,1});
     BatchRenderer::drawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
     BatchRenderer::end();
 

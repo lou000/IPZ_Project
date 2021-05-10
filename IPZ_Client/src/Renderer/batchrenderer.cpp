@@ -198,6 +198,7 @@ void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Text
     elementCount+=4;
 }
 
+// TODO: make draw quad function that takes vertices and abstract all the repeating code
 void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float width, const vec4& color)
 {
     //Line always faces camera
@@ -207,10 +208,10 @@ void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float w
 
         const vec4 lineVertexPos[4] =
             {
-                vec4(posStart - offset, 0, 1),
-                vec4(posStart + offset, 0, 1),
-                vec4(posEnd   + offset, 0, 1),
-                vec4(posEnd   - offset, 0, 1),
+                vec4(posStart - offset, 1, 1),
+                vec4(posStart + offset, 1, 1),
+                vec4(posEnd   + offset, 1, 1),
+                vec4(posEnd   - offset, 1, 1),
             };
 
     //The rest of it is the quad
