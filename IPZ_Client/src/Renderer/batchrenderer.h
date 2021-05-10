@@ -18,7 +18,7 @@ TODO: This will become implicit batch renderer for debug/2d rendering.
 ----------------------------------------------------------------------- */
 class BatchRenderer{
     struct QuadVertex{
-        vec3 position;
+        vec4 position;
         vec4 color;
         vec2 texCoord;
         float texIndex;
@@ -46,12 +46,17 @@ public:
     {getInstance().x_drawQuad(pos, size, texture, tilingFactor, tintColor);}
     static void drawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_drawQuad(pos, size, tintColor);}
+    static void drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color)
+    {getInstance().x_drawLine(posStart, posEnd, width, color);}
     static void drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color)
     {getInstance().x_drawLine(posStart, posEnd, width, color);}
 
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
 private:
+    mat4 viewProj3d;
+    mat4 viewProjOrtho;
+
     std::shared_ptr<VertexArray> vertexArray = nullptr;
 
     int* texSamplers     = nullptr;
@@ -86,6 +91,7 @@ private:
 
     void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
     void x_drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color);
+    void x_drawLine_internal(const mat4 proj, const vec3 &posStart, const vec3 &posEnd, float width, const vec4 &color);
 
     void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
 

@@ -29,7 +29,7 @@ void BatchRenderer::x_init()
     indexBufferEnd  = indexBuffer + MAX_INDEX_BUFFER_SIZE/sizeof(uint16);
 
     BufferLayout layout = {
-        {Shader::Float3, "a_Position"    },
+        {Shader::Float4, "a_Position"    },
         {Shader::Float4, "a_Color"       },
         {Shader::Float2, "a_TexCoord"    },
         {Shader::Float , "a_TexIndex"    },
@@ -44,10 +44,14 @@ void BatchRenderer::x_begin()
 {
     // bind all uniforms
 //    glDisable(GL_CULL_FACE);
-    auto camera = GraphicsContext::getCamera();
     m_currentShader->bind();
     m_currentShader->setUniformArray("u_Textures", Shader::Int, texSamplers, maxTextureSlots);
-    m_currentShader->setUniform("u_ViewProjection", Shader::Mat4, camera->getViewProjectionMatrix());
+
+    // setup projections
+    viewProj3d = GraphicsContext::getCamera()->getViewProjectionMatrix();
+    m_currentShader->setUniform("u_ViewProjection", Shader::Mat4, viewProj3d);
+    auto viewSize = GraphicsContext::getViewPortSize();
+    viewProjOrtho = glm::ortho(0.f, (float)viewSize.x, (float)viewSize.y, 0.f, -1.f, 1.f)*glm::lookAt(vec3(0,0,1),vec3(0,0,0),vec3(0,1,0));
 
     vertexArray->bind();
     startBatch();
@@ -165,9 +169,12 @@ void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Text
         {-0.5f,  0.0f, -0.5f, 1.0f}
     };
     auto bPtr = (QuadVertex*) vertexBufferPtr;
+
+    auto mvp = viewProj3d * transform;
+
     for (size_t i = 0; i < 4; i++)
     {
-        bPtr->position = transform * quadVertexPos[i];
+        bPtr->position = mvp * quadVertexPos[i];
         bPtr->color = tintColor;
         bPtr->texCoord = textureCoords[i];
         bPtr->texIndex = (float)textureIndex;
@@ -193,10 +200,59 @@ void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Text
 
 void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float width, const vec4& color)
 {
+    //Line always faces camera
+    auto lineVec = normalize(posStart-posEnd);
+    auto perpVec = normalize(vec2(lineVec.y, -lineVec.x));
+    auto offset = perpVec*(width/2);
 
+        const vec4 lineVertexPos[4] =
+            {
+                vec4(posStart - offset, 0, 1),
+                vec4(posStart + offset, 0, 1),
+                vec4(posEnd   + offset, 0, 1),
+                vec4(posEnd   - offset, 0, 1),
+            };
+
+    //The rest of it is the quad
+    constexpr vec2 textureCoords[] = {
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f}
+    };
+
+    auto bPtr = (QuadVertex*) vertexBufferPtr;
+    for (size_t i = 0; i < 4; i++)
+    {
+        bPtr->position = viewProjOrtho * lineVertexPos[i];
+        bPtr->color = color;
+        bPtr->texCoord = textureCoords[i];
+        bPtr->texIndex = 0;
+        bPtr->tilingFactor = 1;
+        bPtr++;
+    }
+    vertexBufferPtr = (byte*)bPtr;
+
+    indexBufferPtr[0] = elementCount + 0;
+    indexBufferPtr[1] = elementCount + 1;
+    indexBufferPtr[2] = elementCount + 3;
+
+    indexBufferPtr[3] = elementCount + 3;
+    indexBufferPtr[4] = elementCount + 1;
+    indexBufferPtr[5] = elementCount + 2;
+
+    indexBufferPtr+=6;
+
+    indexCount += 6;
+    elementCount+=4;
 }
 
 void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
+{
+    x_drawLine_internal(viewProj3d, posStart, posEnd, width, color);
+}
+
+void BatchRenderer::x_drawLine_internal(const mat4 proj, const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
 {
     //Line always faces camera
     auto lineVec = normalize(posStart-posEnd);
@@ -206,9 +262,9 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
 
     const vec4 lineVertexPos[4] =
     {
+        vec4(posStart + offset, 1),
         vec4(posStart - offset, 1),
         vec4(posEnd   - offset, 1),
-        vec4(posStart + offset, 1),
         vec4(posEnd   + offset, 1),
     };
 
@@ -223,7 +279,7 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
     auto bPtr = (QuadVertex*) vertexBufferPtr;
     for (size_t i = 0; i < 4; i++)
     {
-        bPtr->position = lineVertexPos[i];
+        bPtr->position = proj * lineVertexPos[i];
         bPtr->color = color;
         bPtr->texCoord = textureCoords[i];
         bPtr->texIndex = 0;
@@ -234,11 +290,11 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
 
     indexBufferPtr[0] = elementCount + 0;
     indexBufferPtr[1] = elementCount + 1;
-    indexBufferPtr[2] = elementCount + 2;
+    indexBufferPtr[2] = elementCount + 3;
 
     indexBufferPtr[3] = elementCount + 3;
-    indexBufferPtr[4] = elementCount + 2;
-    indexBufferPtr[5] = elementCount + 1;
+    indexBufferPtr[4] = elementCount + 1;
+    indexBufferPtr[5] = elementCount + 2;
 
     indexBufferPtr+=6;
 
