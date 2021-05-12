@@ -91,7 +91,6 @@ private:
 
     void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
     void x_drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color);
-    void x_drawLine_internal(const mat4 proj, const vec3 &posStart, const vec3 &posEnd, float width, const vec4 &color);
 
     void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
 
@@ -100,6 +99,7 @@ private:
     void nextBatch();
     void flush();
 
+    void x_drawQuad_internal(const vec4 *vertices, const std::shared_ptr<Texture> &texture, float tilingFactor, const vec4 &color);
 };
 
 

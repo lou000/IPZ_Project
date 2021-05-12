@@ -147,55 +147,17 @@ void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Text
     if (indexBufferPtr+6 >= indexBufferEnd || vertexBufferPtr + 64 >= vertexBufferEnd)
         nextBatch();
 
-    constexpr vec2 textureCoords[] = {
-        {0.0f, 0.0f},
-        {1.0f, 0.0f},
-        {1.0f, 1.0f},
-        {0.0f, 1.0f}
-    };
-
-    int textureIndex = 0;
-    if(texture == nullptr)
-        textureIndex = 0;                   // use white texture
-    else
-        textureIndex = addTexture(texture); // add new texture
-
     //VERTICES
+    auto mvp = viewProj3d * transform;
     const vec4 quadVertexPos[4] =
     {
-        {-0.5f,  0.0f,  0.5f, 1.0f},
-        { 0.5f,  0.0f,  0.5f, 1.0f},
-        { 0.5f,  0.0f, -0.5f, 1.0f},
-        {-0.5f,  0.0f, -0.5f, 1.0f}
+        mvp * vec4(-0.5f,  0.0f,  0.5f, 1.0f),
+        mvp * vec4( 0.5f,  0.0f,  0.5f, 1.0f),
+        mvp * vec4( 0.5f,  0.0f, -0.5f, 1.0f),
+        mvp * vec4(-0.5f,  0.0f, -0.5f, 1.0f),
     };
-    auto bPtr = (QuadVertex*) vertexBufferPtr;
 
-    auto mvp = viewProj3d * transform;
-
-    for (size_t i = 0; i < 4; i++)
-    {
-        bPtr->position = mvp * quadVertexPos[i];
-        bPtr->color = tintColor;
-        bPtr->texCoord = textureCoords[i];
-        bPtr->texIndex = (float)textureIndex;
-        bPtr->tilingFactor = tilingFactor;
-        bPtr++;
-    }
-    vertexBufferPtr = (byte*)bPtr;
-
-    //INDICES
-    indexBufferPtr[0] = elementCount + 0;
-    indexBufferPtr[1] = elementCount + 1;
-    indexBufferPtr[2] = elementCount + 2;
-
-    indexBufferPtr[3] = elementCount + 2;
-    indexBufferPtr[4] = elementCount + 3;
-    indexBufferPtr[5] = elementCount + 0;
-
-    indexBufferPtr+=6;
-
-    indexCount += 6;
-    elementCount+=4;
+    x_drawQuad_internal(quadVertexPos, texture, tilingFactor, tintColor);
 }
 
 // TODO: make draw quad function that takes vertices and abstract all the repeating code
@@ -208,52 +170,16 @@ void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float w
 
         const vec4 lineVertexPos[4] =
             {
-                vec4(posStart - offset, 1, 1),
-                vec4(posStart + offset, 1, 1),
-                vec4(posEnd   + offset, 1, 1),
-                vec4(posEnd   - offset, 1, 1),
+                viewProjOrtho * vec4(posStart - offset, 1, 1),
+                viewProjOrtho * vec4(posStart + offset, 1, 1),
+                viewProjOrtho * vec4(posEnd   + offset, 1, 1),
+                viewProjOrtho * vec4(posEnd   - offset, 1, 1),
             };
 
-    //The rest of it is the quad
-    constexpr vec2 textureCoords[] = {
-        {0.0f, 0.0f},
-        {1.0f, 0.0f},
-        {1.0f, 1.0f},
-        {0.0f, 1.0f}
-    };
-
-    auto bPtr = (QuadVertex*) vertexBufferPtr;
-    for (size_t i = 0; i < 4; i++)
-    {
-        bPtr->position = viewProjOrtho * lineVertexPos[i];
-        bPtr->color = color;
-        bPtr->texCoord = textureCoords[i];
-        bPtr->texIndex = 0;
-        bPtr->tilingFactor = 1;
-        bPtr++;
-    }
-    vertexBufferPtr = (byte*)bPtr;
-
-    indexBufferPtr[0] = elementCount + 0;
-    indexBufferPtr[1] = elementCount + 1;
-    indexBufferPtr[2] = elementCount + 3;
-
-    indexBufferPtr[3] = elementCount + 3;
-    indexBufferPtr[4] = elementCount + 1;
-    indexBufferPtr[5] = elementCount + 2;
-
-    indexBufferPtr+=6;
-
-    indexCount += 6;
-    elementCount+=4;
+    x_drawQuad_internal(lineVertexPos, nullptr, 1, color);
 }
 
 void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
-{
-    x_drawLine_internal(viewProj3d, posStart, posEnd, width, color);
-}
-
-void BatchRenderer::x_drawLine_internal(const mat4 proj, const vec3 &posStart, const vec3 &posEnd, float width, const vec4& color)
 {
     //Line always faces camera
     auto lineVec = normalize(posStart-posEnd);
@@ -263,13 +189,24 @@ void BatchRenderer::x_drawLine_internal(const mat4 proj, const vec3 &posStart, c
 
     const vec4 lineVertexPos[4] =
     {
-        vec4(posStart + offset, 1),
-        vec4(posStart - offset, 1),
-        vec4(posEnd   - offset, 1),
-        vec4(posEnd   + offset, 1),
+        viewProj3d * vec4(posStart + offset, 1),
+        viewProj3d * vec4(posStart - offset, 1),
+        viewProj3d * vec4(posEnd   - offset, 1),
+        viewProj3d * vec4(posEnd   + offset, 1),
     };
 
-    //The rest of it is the quad
+    x_drawQuad_internal(lineVertexPos, nullptr, 1, color);
+
+}
+
+void BatchRenderer::x_drawQuad_internal(const vec4* vertices, const std::shared_ptr<Texture>& texture, float tilingFactor, const vec4& color)
+{
+    int textureIndex = 0;
+    if(texture == nullptr)
+        textureIndex = 0;                   // use white texture
+    else
+        textureIndex = addTexture(texture); // add new texture
+
     constexpr vec2 textureCoords[] = {
         {0.0f, 0.0f},
         {1.0f, 0.0f},
@@ -280,11 +217,11 @@ void BatchRenderer::x_drawLine_internal(const mat4 proj, const vec3 &posStart, c
     auto bPtr = (QuadVertex*) vertexBufferPtr;
     for (size_t i = 0; i < 4; i++)
     {
-        bPtr->position = proj * lineVertexPos[i];
+        bPtr->position = vertices[i];
         bPtr->color = color;
         bPtr->texCoord = textureCoords[i];
-        bPtr->texIndex = 0;
-        bPtr->tilingFactor = 1;
+        bPtr->texIndex = (float)textureIndex;
+        bPtr->tilingFactor = tilingFactor;
         bPtr++;
     }
     vertexBufferPtr = (byte*)bPtr;
@@ -302,3 +239,4 @@ void BatchRenderer::x_drawLine_internal(const mat4 proj, const vec3 &posStart, c
     indexCount += 6;
     elementCount+=4;
 }
+
