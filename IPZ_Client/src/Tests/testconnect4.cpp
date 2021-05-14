@@ -158,10 +158,11 @@ void TestConnect4::onUpdate(float dt)
     MeshRenderer::end();
 
     BatchRenderer::begin();
-    BatchRenderer::drawLine({-1,0,3}, {leftSlot,top,0}, .02f, {0.882, 0.192, 0.161,1});
-    BatchRenderer::drawLine({0.f, 0.f},{100.f, 100.f},5.f, {1,1,1,1});
-    BatchRenderer::drawLine({0.f, 0.f},{300.f, 300.f},5.f, {1,0,1,1});
-    BatchRenderer::drawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1});
+    BatchRenderer::drawQuad({100,100}, {300,300}, {1,1,0,1}); //2d quad
+    BatchRenderer::drawLine({100,100}, {400,400}, 5.f, {1,0,1,1}); // 2d line
+    BatchRenderer::drawCircle({400, 400}, 5, 10, {1,0,0,1}); // 2d circle
+    BatchRenderer::drawLine({-1,0,3}, {leftSlot,top,0}, .02f, {0.882, 0.192, 0.161,1}); //3d line
+    BatchRenderer::drawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1}); // 3d quad
     BatchRenderer::end();
 
 }

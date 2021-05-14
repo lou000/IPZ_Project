@@ -46,10 +46,16 @@ public:
     {getInstance().x_drawQuad(pos, size, texture, tilingFactor, tintColor);}
     static void drawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_drawQuad(pos, size, tintColor);}
+    static void drawQuad(const vec2 &pos, const vec2 &size, const vec4 &tintColor)
+    {getInstance().x_drawQuad(pos, size, tintColor);}
+
     static void drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color)
     {getInstance().x_drawLine(posStart, posEnd, width, color);}
     static void drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color)
     {getInstance().x_drawLine(posStart, posEnd, width, color);}
+    static void drawCircle(const vec2& pos, float radius, int triangles, const vec4& color)
+    {getInstance().x_drawCircle(pos, radius, triangles, color);}
+
 
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
@@ -88,9 +94,11 @@ private:
     void x_drawQuad(const vec3 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
                    float tilingFactor, const vec4 &tintColor);
     void x_drawQuad(const vec3 &pos, const vec2 &size, const vec4 &tintColor);
+    void x_drawQuad(const vec2 &pos, const vec2 &size, const vec4 &tintColor);
 
     void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
     void x_drawLine(const vec3& posStart, const vec3& posEnd, float width, const vec4& color);
+    void x_drawCircle(const vec2& pos, float radius, int triangles, const vec4& color);
 
     void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
 

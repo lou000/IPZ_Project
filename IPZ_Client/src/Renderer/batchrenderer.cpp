@@ -140,14 +140,22 @@ void BatchRenderer::x_drawQuad(const vec3& pos, const vec2& size, const vec4& ti
     x_drawQuad(transform, nullptr, 1, tintColor);
 }
 
+void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const vec4& tintColor)
+{
+    const vec4 quadVertexPos[4] =
+    {
+        viewProjOrtho * vec4(pos.x,        pos.y+size.y, 1, 1),
+        viewProjOrtho * vec4(pos.x+size.x, pos.y+size.y, 1, 1),
+        viewProjOrtho * vec4(pos.x+size.x, pos.y,        1, 1),
+        viewProjOrtho * vec4(pos.x,        pos.y,        1, 1),
+    };
+    x_drawQuad_internal(quadVertexPos, nullptr, 1, tintColor);
+}
+
 void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {
-    // if we would go outside the bounds of the buffers do the next batch
-    if (indexBufferPtr+6 >= indexBufferEnd || vertexBufferPtr + 64 >= vertexBufferEnd)
-        nextBatch();
 
-    //VERTICES
     auto mvp = viewProj3d * transform;
     const vec4 quadVertexPos[4] =
     {
@@ -160,21 +168,19 @@ void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Text
     x_drawQuad_internal(quadVertexPos, texture, tilingFactor, tintColor);
 }
 
-// TODO: make draw quad function that takes vertices and abstract all the repeating code
 void BatchRenderer::x_drawLine(const vec2 &posStart, const vec2 &posEnd, float width, const vec4& color)
 {
-    //Line always faces camera
     auto lineVec = normalize(posStart-posEnd);
     auto perpVec = normalize(vec2(lineVec.y, -lineVec.x));
     auto offset = perpVec*(width/2);
 
-        const vec4 lineVertexPos[4] =
-            {
-                viewProjOrtho * vec4(posStart - offset, 1, 1),
-                viewProjOrtho * vec4(posStart + offset, 1, 1),
-                viewProjOrtho * vec4(posEnd   + offset, 1, 1),
-                viewProjOrtho * vec4(posEnd   - offset, 1, 1),
-            };
+    const vec4 lineVertexPos[4] =
+    {
+        viewProjOrtho * vec4(posStart - offset, 1, 1),
+        viewProjOrtho * vec4(posStart + offset, 1, 1),
+        viewProjOrtho * vec4(posEnd   + offset, 1, 1),
+        viewProjOrtho * vec4(posEnd   - offset, 1, 1),
+    };
 
     x_drawQuad_internal(lineVertexPos, nullptr, 1, color);
 }
@@ -199,8 +205,67 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
 
 }
 
+void BatchRenderer::x_drawCircle(const vec2 &pos, float radius, int triangles, const vec4 &color)
+{
+    // if we would go outside the bounds of the buffers do the next batch
+    if (indexBufferPtr+(triangles+1)*3 >= indexBufferEnd || vertexBufferPtr + (triangles+1)*sizeof(QuadVertex) >= vertexBufferEnd)
+        nextBatch();
+
+    constexpr vec2 textureCoords[] = {
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f}
+    };
+
+
+    auto bPtr = (QuadVertex*) vertexBufferPtr;
+    float angle = 0.f;
+    float increment = 2.0f * glm::pi<float>() / triangles;
+
+    for(size_t i=0; i<(size_t)triangles+1; i++)
+    {
+        vec4 vPos;
+        if(i==0)
+        {
+            vPos = viewProjOrtho*vec4{pos.x, pos.y, 1, 1};
+        }
+        else
+        {
+            vPos = viewProjOrtho*vec4(radius*cos(angle)+pos.x, radius*sin(angle)+ pos.y, 1, 1);
+            angle += increment;
+        }
+        bPtr->position = vPos;
+        bPtr->color = color;
+        bPtr->texCoord = textureCoords[i];
+        bPtr->texIndex = 0;
+        bPtr->tilingFactor = 1;
+        bPtr++;
+    }
+    vertexBufferPtr = (byte*)bPtr;
+
+    for(int i=0; i<triangles; i++)
+    {
+        indexBufferPtr[0] = elementCount + 0;
+        indexBufferPtr[1] = elementCount + i+1;
+        indexBufferPtr[2] = elementCount + i;
+        indexBufferPtr += 3;
+    }
+    indexBufferPtr[0] = elementCount + 0;
+    indexBufferPtr[1] = elementCount + 1;
+    indexBufferPtr[2] = elementCount + triangles;
+    indexBufferPtr += 3;
+
+    indexCount   += (triangles+1)*3;
+    elementCount += triangles+1;
+}
+
 void BatchRenderer::x_drawQuad_internal(const vec4* vertices, const std::shared_ptr<Texture>& texture, float tilingFactor, const vec4& color)
 {
+    // if we would go outside the bounds of the buffers do the next batch
+    if (indexBufferPtr+6 >= indexBufferEnd || vertexBufferPtr + 4*sizeof(QuadVertex) >= vertexBufferEnd)
+        nextBatch();
+
     int textureIndex = 0;
     if(texture == nullptr)
         textureIndex = 0;                   // use white texture
