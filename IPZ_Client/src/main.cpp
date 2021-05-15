@@ -2,12 +2,13 @@
 #include "Tests/test1.h"
 #include "Tests/testslidingpuzzle.h"
 #include "Tests/testconnect4.h"
+#include "Tests/testrosenblat.h"
 
 int main(void)
 {
     //TODO: add initialization tests everywhere and setup some defaults like camera etc
-    App::init(800, 800);
-    App::setVsync(1);
+    App::init(1200, 800);
+    App::setVsync(0);
 
     // FPS counter should go to App
     float dtSum = 0;
@@ -15,7 +16,9 @@ int main(void)
 
 //    Test1 test = Test1();
 //    TestSlidingPuzzle test = TestSlidingPuzzle();
-    TestConnect4 test = TestConnect4();
+//    TestConnect4 test = TestConnect4();
+    TestRosenblat test = TestRosenblat();
+
 
     FrameBufferAttachment colorAtt;
     colorAtt.type = GL_COLOR_ATTACHMENT0;
