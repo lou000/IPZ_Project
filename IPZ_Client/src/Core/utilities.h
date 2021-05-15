@@ -93,6 +93,12 @@ inline void rndSeed(uint32_t s)
     ___seed = s;
 }
 
+template<typename tVal>
+inline tVal mapToRange(glm::vec<2,tVal> startRange, glm::vec<2,tVal> finalRange, tVal value)
+{
+    return (value-startRange.x)/(startRange.y-startRange.x)*(finalRange.y-finalRange.x)+finalRange.x;
+}
+
 inline GLenum textureSizedFormatToFormat(GLenum internalFormat)
 {
     switch(internalFormat)
