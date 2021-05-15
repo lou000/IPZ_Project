@@ -1,11 +1,13 @@
 ﻿#pragma once
 #include "../Core/application.h"
+#include "../Core/scene.h"
 #include "Connect4/connect4.h"
 
-class TestConnect4
+class TestConnect4 : public Scene
 {
 public:
     TestConnect4();
+    ~TestConnect4(){/*dontcare*/};
     void onUpdate(float dt);
 
 private:

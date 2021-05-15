@@ -1,8 +1,9 @@
 ﻿#pragma once
 #include "../Core/application.h"
+#include "../Core/scene.h"
 
 
-class TestRosenblat
+class TestRosenblat : public Scene
 {
     struct Point{
         vec2 pos;
@@ -11,6 +12,7 @@ class TestRosenblat
 
 public:
     TestRosenblat();
+    ~TestRosenblat(){/*dontcare*/};
     void onUpdate(float dt);
 
 private:

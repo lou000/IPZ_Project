@@ -1,11 +1,13 @@
 ﻿#pragma once
 #include "SlidingPuzzle/slidepuzzle.h"
 #include "../Core/application.h"
+#include "../Core/scene.h"
 
-class TestSlidingPuzzle
+class TestSlidingPuzzle : public Scene
 {
 public:
     TestSlidingPuzzle();
+    ~TestSlidingPuzzle(){/*dontcare*/};
     void onUpdate(float dt);
 private:
     int n, size;
