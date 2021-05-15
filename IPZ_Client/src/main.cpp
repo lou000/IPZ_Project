@@ -1,4 +1,5 @@
 ﻿#include "Core/application.h"
+#include "Core/scene.h"
 #include "Tests/test1.h"
 #include "Tests/testslidingpuzzle.h"
 #include "Tests/testconnect4.h"
@@ -8,16 +9,18 @@ int main(void)
 {
     //TODO: add initialization tests everywhere and setup some defaults like camera etc
     App::init(1200, 800);
-    App::setVsync(0);
+    App::setVsync(1);
 
     // FPS counter should go to App
     float dtSum = 0;
     int frameCount = 0;
 
-//    Test1 test = Test1();
-//    TestSlidingPuzzle test = TestSlidingPuzzle();
-//    TestConnect4 test = TestConnect4();
-    TestRosenblat test = TestRosenblat();
+    Scene* test1 = new Test1();
+    Scene* test2 = new TestSlidingPuzzle();
+    Scene* test3 = new TestConnect4();
+    Scene* test4 = new TestRosenblat();
+
+    Scene* currentTest = test4;
 
 
     FrameBufferAttachment colorAtt;
@@ -52,10 +55,22 @@ int main(void)
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
 
+        if(App::getKeyOnce(GLFW_KEY_F1))
+            currentTest = test1;
+        if(App::getKeyOnce(GLFW_KEY_F2))
+            currentTest = test2;
+        if(App::getKeyOnce(GLFW_KEY_F3))
+            currentTest = test3;
+        if(App::getKeyOnce(GLFW_KEY_F4))
+            currentTest = test4;
 
-        test.onUpdate(dt);
+        currentTest->onUpdate(dt);
 
         fbo.blitToFrontBuffer();
         App::submitFrame();
     }
+    delete test1;
+    delete test2;
+    delete test3;
+    delete test4;
 }
