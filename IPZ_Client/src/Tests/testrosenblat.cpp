@@ -1,5 +1,6 @@
 ﻿#include "testrosenblat.h"
 #include "gtc/random.hpp"
+#include <mutex>
 
 
 TestRosenblat::TestRosenblat()
@@ -16,6 +17,7 @@ TestRosenblat::TestRosenblat()
 
 
     // random points
+    points = (Point*)malloc(nPoints * sizeof(Point));
     for(int i=0; i<nPoints; i++)
     {
         Point p;
@@ -27,24 +29,22 @@ TestRosenblat::TestRosenblat()
             p.val =  1;
         p.pos.x = mapToRange(rangeX, {-1,1}, p.pos.x);
         p.pos.y = mapToRange(rangeY, {-1,1}, p.pos.y);
-        points.push_back(p);
+        points[i] = p;
     }
 
 
     // random centers
+    centers = (vec2*)malloc(nCenters * sizeof(vec2));
     for(int i=0; i<nCenters; i++)
-    {
-        vec2 c = {glm::linearRand(-1.f, 1.f), glm::linearRand(-1.f, 1.f)};
-        centers.push_back(c);
-    }
+        centers[i] = {glm::linearRand(-1.f, 1.f), glm::linearRand(-1.f, 1.f)};
 
     // features
     int count = 0;
     features = (float*) malloc(nPoints * nCenters * sizeof(float));
-    for(auto p : points)
-        for(auto c : centers)
+    for(int i=0; i<nPoints; i++)
+        for(int j=0; j<nCenters; j++)
         {
-            features[count] = calcFeature(p.pos, c);
+            features[count] = calcFeature(points[i].pos, centers[j], fi);
             count++;
         }
 
@@ -54,19 +54,19 @@ TestRosenblat::TestRosenblat()
         weights[i] = glm::linearRand(0.f, 1.f);
 
     // mesh grid
-    int x = (int)2/meshStep;
-    for(int i=0; i<x; i++)
-        for(int j=0; j<x; j++)
+    meshGrid = (Point*)malloc(meshSize*sizeof(Point));
+    for(int i=0; i<meshX; i++)
+        for(int j=0; j<meshX; j++)
         {
             Point p;
             p.pos.x = -1+i*meshStep;
             p.pos.y = -1+j*meshStep;
             p.val = 0;
-            meshGrid.push_back(p);
+            meshGrid[i*meshX+j] = p;
         }
 }
 
-float TestRosenblat::calcFeature(vec2 point, vec2 center)
+float TestRosenblat::calcFeature(vec2 point, vec2 center, float fi)
 {
     float sx = point.x - center.x;
     float sy = point.y - center.y;
@@ -77,37 +77,51 @@ float TestRosenblat::calcFeature(vec2 point, vec2 center)
 void TestRosenblat::countour()
 {
 
-    // check all points and if there is a sign diff on bottom or right draw countour there
+    // calculate values of grid
 
-    meshGrid[0].val = checkPoint(meshGrid[0]);
-    for(size_t i=1; i<meshGrid.size()-1; i++)
+    auto meshGridPtr = meshGrid;
+    auto nThreads = tPool.get_thread_count();
+
+    int count = meshSize/nThreads;
+
+    for(uint i=0; i<nThreads; i++)
+    {
+        if(i == nThreads-1)
+            count = meshSize-count*(nThreads-1);
+        tPool.submit([=](){
+            for(int i=0; i<count; i++)
+            {
+                float sum = 0;
+
+                for(int j=0; j<nCenters; j++)
+                {
+                    sum += calcFeature((meshGridPtr+i)->pos, centers[j], fi)*weights[j];
+                }
+                sum += weights[nCenters];
+                (meshGridPtr+i)->val = (float)(sum>0 ? 1:-1);
+            }
+            return;
+        });
+        meshGridPtr+=count;
+    }
+    tPool.wait_for_tasks();
+
+    for(int i=1; i<meshSize-1; i++)
     {
 
-        int width = (int)2/meshStep;
+        int width = (int)(2/meshStep);
         auto& cell   = meshGrid[i];
         auto prevCell = meshGrid[i-1];
         vec2 pos = {mapToRange({-1,1}, {left, right}, cell.pos.x),
                                 mapToRange({-1,1}, {bottom, top}, cell.pos.y)};
-        cell.val = checkPoint(cell);
         if((i-1)%width != 0)
         {
             if(cell.val != prevCell.val)
                 BatchRenderer::drawCircle(pos, 4, 10, {0.629, 1.000, 0.688, 1});
         }
     }
-
 }
 
-float TestRosenblat::checkPoint(const Point& p)
-{
-    float sum = 0;
-    for(int i=0; i<nCenters; i++)
-    {
-        sum += calcFeature(p.pos, centers[i])*weights[i];
-    }
-    sum += weights[nCenters];
-    return sum>0 ? 1 : -1;
-}
 
 int TestRosenblat::train(uint times) // returns number of incorrect results
 {
@@ -129,11 +143,11 @@ int TestRosenblat::train(uint times) // returns number of incorrect results
             sum += weights[nCenters];
 
             float out = sum>0 ? 1.0f : -1.0f;
-            if(out != points.at(i).val)
+            if(out != points[i].val)
             {
                 // this below is extremely dumb
                 memcpy(badResults+brCount*(nCenters+1), features+i*nCenters, nCenters*sizeof(float));
-                badResults[brCount*(nCenters+1)+nCenters] = points.at(i).val;
+                badResults[brCount*(nCenters+1)+nCenters] = points[i].val;
                 brCount++;
             }
         }
@@ -153,6 +167,7 @@ int TestRosenblat::train(uint times) // returns number of incorrect results
 
 void TestRosenblat::onUpdate(float dt)
 {
+    tPool.sleep_duration = 0;
     winSize = App::getWindowSize();
     margin = winSize.y /10;
     gridSpacing = winSize.y / 10;
@@ -165,8 +180,8 @@ void TestRosenblat::onUpdate(float dt)
     vec2 bottomRight = {right, bottom};
     vec2 bottomLeft  = {left, bottom};
 
-    BatchRenderer::begin();
 
+    BatchRenderer::begin();
     // Draw background
     BatchRenderer::drawQuad({0,0}, winSize, {0.051, 0.067, 0.090, 1});
 
@@ -181,11 +196,12 @@ void TestRosenblat::onUpdate(float dt)
         BatchRenderer::drawLine({left, i}, {right, i}, 2.f, {0.788, 0.820, 0.851, 0.5});
 
     // Draw points
-    for(auto p : points)
+    for(int i=0; i<nPoints; i++)
     {
+        auto p = points[i];
         vec2 pos = {mapToRange({-1,1}, {left, right}, p.pos.x),
                     mapToRange({-1,1}, {bottom, top}, p.pos.y)};
-        vec4 color = p.val == -1 ? vec4(1.000, 0.502, 0.529, 1) : vec4(0.529, 0.682, 1.000, 1);
+        vec4 color = points[i].val == -1 ? vec4(1.000, 0.502, 0.529, 1) : vec4(0.529, 0.682, 1.000, 1);
         BatchRenderer::drawCircle(pos, 3, 10, color);
     }
 
@@ -218,4 +234,5 @@ void TestRosenblat::onUpdate(float dt)
     countour();
 
     BatchRenderer::end();
+    tPool.sleep_duration = 1000;
 }

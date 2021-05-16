@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../Core/application.h"
 #include "../Core/scene.h"
+#include "thread_pool.hpp"
 
 
 class TestRosenblat : public Scene
@@ -29,18 +30,20 @@ private:
     int k = 1;
     int maxK = 5000;
     float meshStep = 0.01f;
+    int meshX = (int)(2/meshStep);
+    int meshSize = meshX*meshX;
     float fi = 0.2f;
     float learnFactor = 0.05f;
     int trainPerFrame = 1;
-    std::vector<Point> meshGrid;
-    std::vector<Point> points;
-    std::vector<vec2> centers;
+    Point* points;
+    Point* meshGrid;
+    thread_pool tPool = thread_pool(std::thread::hardware_concurrency()-1);
+    vec2* centers;
     float* features;
     float* weights;
     vec2 rangeX, rangeY;
 
     void countour();
-    float checkPoint(const Point &p);
-    float calcFeature(vec2 point, vec2 center);
     int train(uint times);
+    static float calcFeature(vec2 point, vec2 center, float fi);
 };

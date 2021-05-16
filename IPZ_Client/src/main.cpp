@@ -9,7 +9,7 @@ int main(void)
 {
     //TODO: add initialization tests everywhere and setup some defaults like camera etc
     App::init(1200, 800);
-    App::setVsync(1);
+    App::setVsync(0);
 
     // FPS counter should go to App
     float dtSum = 0;

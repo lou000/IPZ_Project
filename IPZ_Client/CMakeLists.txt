@@ -18,6 +18,7 @@ set(client_INCLUDE_DIRS
     external/colorwin/src
     external/SIplusplus_wchar
     external/fast_obj
+    external/thread_pool
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
