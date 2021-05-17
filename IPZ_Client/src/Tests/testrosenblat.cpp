@@ -6,11 +6,6 @@
 
 TestRosenblat::TestRosenblat()
 {
-    std::vector<std::filesystem::path> shaderSrcs = {
-        "../assets/shaders/default_batch.fs",
-        "../assets/shaders/default_batch.vs"
-    };
-    AssetManager::addShader(std::make_shared<Shader>("batch", shaderSrcs));
     BatchRenderer::setShader(AssetManager::getShader("batch"));
 
     rangeX = {0, 2*glm::pi<float>()};
@@ -225,7 +220,6 @@ int TestRosenblat::train(uint times) // returns number of incorrect results
 
 void TestRosenblat::onUpdate(float dt)
 {
-    tPool.sleep_duration = 0;
     winSize = App::getWindowSize();
     margin = winSize.y /10;
     gridSpacing = winSize.y / 10;
@@ -292,5 +286,4 @@ void TestRosenblat::onUpdate(float dt)
     countour();
 
     BatchRenderer::end();
-    tPool.sleep_duration = 1000;
 }

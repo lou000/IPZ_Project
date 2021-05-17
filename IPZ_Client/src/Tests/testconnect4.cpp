@@ -56,17 +56,6 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(mesh1);
     AssetManager::addAsset(mesh2);
     AssetManager::addAsset(mesh3);
-    std::vector<std::filesystem::path> shaderSrcs2 = {
-        "../assets/shaders/default_mesh.fs",
-        "../assets/shaders/default_mesh.vs"
-    };
-    AssetManager::addShader(std::make_shared<Shader>("mesh", shaderSrcs2));
-
-    std::vector<std::filesystem::path> shaderSrcs = {
-        "../assets/shaders/default_batch.fs",
-        "../assets/shaders/default_batch.vs"
-    };
-    AssetManager::addShader(std::make_shared<Shader>("batch", shaderSrcs));
 
     auto winSize = App::getWindowSize();
     camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);

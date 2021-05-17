@@ -5,15 +5,11 @@ Test1::Test1()
     texture2 = std::make_shared<Texture>("../assets/img/bomb.png");
     AssetManager::addAsset(texture);
     AssetManager::addAsset(texture2);
-    std::vector<std::filesystem::path> shaderSrcs = {
-        "../assets/shaders/default_batch.fs",
-        "../assets/shaders/default_batch.vs"
-    };
-    AssetManager::addShader(std::make_shared<Shader>("Batch", shaderSrcs));
+
     auto winSize = App::getWindowSize();
     auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     GraphicsContext::setCamera(camera);
-    BatchRenderer::setShader(AssetManager::getShader("Batch"));
+    BatchRenderer::setShader(AssetManager::getShader("batch"));
     camera->setPosition({0,5.4,0});
 
     for(int i=0; i<1000; i++)

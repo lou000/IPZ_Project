@@ -15,6 +15,18 @@ int main(void)
     float dtSum = 0;
     int frameCount = 0;
 
+    std::vector<std::filesystem::path> shaderSrcs2 = {
+        "../assets/shaders/default_mesh.fs",
+        "../assets/shaders/default_mesh.vs"
+    };
+    AssetManager::addShader(std::make_shared<Shader>("mesh", shaderSrcs2));
+
+    std::vector<std::filesystem::path> shaderSrcs = {
+        "../assets/shaders/default_batch.fs",
+        "../assets/shaders/default_batch.vs"
+    };
+    AssetManager::addShader(std::make_shared<Shader>("batch", shaderSrcs));
+
     Scene* test1 = new Test1();
     Scene* test2 = new TestSlidingPuzzle();
     Scene* test3 = new TestConnect4();
