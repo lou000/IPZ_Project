@@ -33,7 +33,7 @@ private:
     int meshX = (int)(2/meshStep);
     int meshSize = meshX*meshX;
     float fi = 0.2f;
-    float learnFactor = 0.05f;
+    float learnFactor = 0.1f;
     int trainPerFrame = 1;
     Point* points;
     Point* meshGrid;

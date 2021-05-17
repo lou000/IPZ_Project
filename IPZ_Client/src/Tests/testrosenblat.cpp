@@ -59,8 +59,8 @@ TestRosenblat::TestRosenblat()
         for(int j=0; j<meshX; j++)
         {
             Point p;
-            p.pos.x = -1+i*meshStep;
-            p.pos.y = -1+j*meshStep;
+            p.pos.y = -1+i*meshStep;
+            p.pos.x = -1+j*meshStep;
             p.val = 0;
             meshGrid[i*meshX+j] = p;
         }
@@ -98,7 +98,7 @@ void TestRosenblat::countour()
                     sum += calcFeature((meshGridPtr+i)->pos, centers[j], fi)*weights[j];
                 }
                 sum += weights[nCenters];
-                (meshGridPtr+i)->val = (float)(sum>0 ? 1:-1);
+                (meshGridPtr+i)->val = sum;
             }
             return;
         });
@@ -106,18 +106,69 @@ void TestRosenblat::countour()
     }
     tPool.wait_for_tasks();
 
-    for(int i=1; i<meshSize-1; i++)
-    {
 
-        int width = (int)(2/meshStep);
-        auto& cell   = meshGrid[i];
-        auto prevCell = meshGrid[i-1];
-        vec2 pos = {mapToRange({-1,1}, {left, right}, cell.pos.x),
-                                mapToRange({-1,1}, {bottom, top}, cell.pos.y)};
-        if((i-1)%width != 0)
+    // very simple marching sqares solution to draw the outline
+    vec2 offset = {mapToRange({0,2}, {0, winSize.x-margin*2}, meshStep),
+                   mapToRange({0,2}, {0, winSize.y-margin*2}, meshStep)};
+    vec2 halfOffset = offset/2.f;
+    float lwidth = 2;
+    vec4 color = {0.629, 1.000, 0.688, 1};
+    for(int i=0; i<meshX-1; i++)
+    {
+        for(int j=0; j<meshX-1; j++)
         {
-            if(cell.val != prevCell.val)
-                BatchRenderer::drawCircle(pos, 4, 10, {0.629, 1.000, 0.688, 1});
+            int vIndex = 0;
+            int val0 = meshGrid[(i+1)*meshX+j].val  >0;
+            int val1 = meshGrid[(i+1)*meshX+j+1].val>0;
+            int val2 = meshGrid[i*meshX+j+1].val    >0;
+            int val3 = meshGrid[i*meshX+j].val      >0;
+
+            vec2 p0 = {left+offset.x*j+halfOffset.x, top+offset.y*(i+1)};
+            vec2 p1 = {left+offset.x*(j+1),          top+offset.y*i+halfOffset.y};
+            vec2 p2 = {left+offset.x*j+halfOffset.x, top+offset.y*i};
+            vec2 p3 = {left+offset.x*j,              top+offset.y*i+halfOffset.y};
+
+            vIndex |= val0;
+            vIndex |= val1<<1;
+            vIndex |= val2<<2;
+            vIndex |= val3<<3;
+
+            switch(vIndex) {
+            case 0:
+                break;
+            case 1:
+                BatchRenderer::drawLine(p0, p3, lwidth, color);break;
+            case 2:
+                BatchRenderer::drawLine(p0, p1, lwidth, color);break;
+            case 3:
+                BatchRenderer::drawLine(p1, p3, lwidth, color);break;
+            case 4:
+                BatchRenderer::drawLine(p1, p2, lwidth, color);break;
+            case 5:
+                BatchRenderer::drawLine(p0, p1, lwidth, color);break;
+                BatchRenderer::drawLine(p2, p3, lwidth, color);break;
+            case 6:
+                BatchRenderer::drawLine(p0, p2, lwidth, color);break;
+            case 7:
+                BatchRenderer::drawLine(p2, p3, lwidth, color);break;
+            case 8:
+                BatchRenderer::drawLine(p2, p3, lwidth, color);break;
+            case 9:
+                BatchRenderer::drawLine(p0, p2, lwidth, color);break;
+            case 10:
+                BatchRenderer::drawLine(p1, p2, lwidth, color);break;
+                BatchRenderer::drawLine(p0, p3, lwidth, color);break;
+            case 11:
+                BatchRenderer::drawLine(p1, p2, lwidth, color);break;
+            case 12:
+                BatchRenderer::drawLine(p1, p3, lwidth, color);break;
+            case 13:
+                BatchRenderer::drawLine(p0, p1, lwidth, color);break;
+            case 14:
+                BatchRenderer::drawLine(p0, p3, lwidth, color);break;
+            case 15:
+                break;
+            }
         }
     }
 }
@@ -200,7 +251,7 @@ void TestRosenblat::onUpdate(float dt)
     {
         auto p = points[i];
         vec2 pos = {mapToRange({-1,1}, {left, right}, p.pos.x),
-                    mapToRange({-1,1}, {bottom, top}, p.pos.y)};
+                    mapToRange({-1,1}, {top, bottom}, p.pos.y)};
         vec4 color = points[i].val == -1 ? vec4(1.000, 0.502, 0.529, 1) : vec4(0.529, 0.682, 1.000, 1);
         BatchRenderer::drawCircle(pos, 3, 10, color);
     }
