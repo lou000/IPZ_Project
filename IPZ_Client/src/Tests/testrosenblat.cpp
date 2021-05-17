@@ -1,5 +1,6 @@
 ﻿#include "testrosenblat.h"
 #include "gtc/random.hpp"
+#include "gtx/compatibility.hpp"
 #include <mutex>
 
 
@@ -110,7 +111,6 @@ void TestRosenblat::countour()
     // very simple marching sqares solution to draw the outline
     vec2 offset = {mapToRange({0,2}, {0, winSize.x-margin*2}, meshStep),
                    mapToRange({0,2}, {0, winSize.y-margin*2}, meshStep)};
-    vec2 halfOffset = offset/2.f;
     float lwidth = 2;
     vec4 color = {0.629, 1.000, 0.688, 1};
     for(int i=0; i<meshX-1; i++)
@@ -118,54 +118,61 @@ void TestRosenblat::countour()
         for(int j=0; j<meshX-1; j++)
         {
             int vIndex = 0;
-            int val0 = meshGrid[(i+1)*meshX+j].val  >0;
-            int val1 = meshGrid[(i+1)*meshX+j+1].val>0;
-            int val2 = meshGrid[i*meshX+j+1].val    >0;
-            int val3 = meshGrid[i*meshX+j].val      >0;
+            auto cell0 = meshGrid[(i+1)*meshX+j];
+            auto cell1 = meshGrid[(i+1)*meshX+j+1];
+            auto cell2 = meshGrid[i*meshX+j+1];
+            auto cell3 = meshGrid[i*meshX+j];
 
-            vec2 p0 = {left+offset.x*j+halfOffset.x, top+offset.y*(i+1)};
-            vec2 p1 = {left+offset.x*(j+1),          top+offset.y*i+halfOffset.y};
-            vec2 p2 = {left+offset.x*j+halfOffset.x, top+offset.y*i};
-            vec2 p3 = {left+offset.x*j,              top+offset.y*i+halfOffset.y};
+            // positions of sqaure vertices
+            vec2 p0 = {left+offset.x*j,     top+offset.y*(i+1)};
+            vec2 p1 = {left+offset.x*(j+1), top+offset.y*(i+1)};
+            vec2 p2 = {left+offset.x*(j+1), top+offset.y*i};
+            vec2 p3 = {left+offset.x*j,     top+offset.y*i};
 
-            vIndex |= val0;
-            vIndex |= val1<<1;
-            vIndex |= val2<<2;
-            vIndex |= val3<<3;
+            // points between vertices where value should be 0
+            vec2 q0 = lerp(p0, p1, abs(cell0.val)/(abs(cell0.val)+abs(cell1.val)));
+            vec2 q1 = lerp(p1, p2, abs(cell1.val)/(abs(cell1.val)+abs(cell2.val)));
+            vec2 q2 = lerp(p2, p3, abs(cell2.val)/(abs(cell2.val)+abs(cell3.val)));
+            vec2 q3 = lerp(p3, p0, abs(cell3.val)/(abs(cell3.val)+abs(cell0.val)));
+
+            vIndex |= (cell0.val>0);
+            vIndex |= (cell1.val>0)<<1;
+            vIndex |= (cell2.val>0)<<2;
+            vIndex |= (cell3.val>0)<<3;
 
             switch(vIndex) {
             case 0:
                 break;
             case 1:
-                BatchRenderer::drawLine(p0, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q3, lwidth, color);break;
             case 2:
-                BatchRenderer::drawLine(p0, p1, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q1, lwidth, color);break;
             case 3:
-                BatchRenderer::drawLine(p1, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q1, q3, lwidth, color);break;
             case 4:
-                BatchRenderer::drawLine(p1, p2, lwidth, color);break;
+                BatchRenderer::drawLine(q1, q2, lwidth, color);break;
             case 5:
-                BatchRenderer::drawLine(p0, p1, lwidth, color);break;
-                BatchRenderer::drawLine(p2, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q1, lwidth, color);break;
+                BatchRenderer::drawLine(q2, q3, lwidth, color);break;
             case 6:
-                BatchRenderer::drawLine(p0, p2, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q2, lwidth, color);break;
             case 7:
-                BatchRenderer::drawLine(p2, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q2, q3, lwidth, color);break;
             case 8:
-                BatchRenderer::drawLine(p2, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q2, q3, lwidth, color);break;
             case 9:
-                BatchRenderer::drawLine(p0, p2, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q2, lwidth, color);break;
             case 10:
-                BatchRenderer::drawLine(p1, p2, lwidth, color);break;
-                BatchRenderer::drawLine(p0, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q1, q2, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q3, lwidth, color);break;
             case 11:
-                BatchRenderer::drawLine(p1, p2, lwidth, color);break;
+                BatchRenderer::drawLine(q1, q2, lwidth, color);break;
             case 12:
-                BatchRenderer::drawLine(p1, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q1, q3, lwidth, color);break;
             case 13:
-                BatchRenderer::drawLine(p0, p1, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q1, lwidth, color);break;
             case 14:
-                BatchRenderer::drawLine(p0, p3, lwidth, color);break;
+                BatchRenderer::drawLine(q0, q3, lwidth, color);break;
             case 15:
                 break;
             }

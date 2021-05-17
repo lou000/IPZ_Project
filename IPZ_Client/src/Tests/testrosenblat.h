@@ -28,12 +28,12 @@ private:
     int nCenters = 100;
     int nPoints  = 1000;
     int k = 1;
-    int maxK = 5000;
+    int maxK = 8000;
     float meshStep = 0.01f;
     int meshX = (int)(2/meshStep);
     int meshSize = meshX*meshX;
     float fi = 0.2f;
-    float learnFactor = 0.1f;
+    float learnFactor = 0.01f;
     int trainPerFrame = 1;
     Point* points;
     Point* meshGrid;
