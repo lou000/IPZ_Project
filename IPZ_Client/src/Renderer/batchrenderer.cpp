@@ -140,6 +140,8 @@ void BatchRenderer::x_drawQuad(const vec3& pos, const vec2& size, const vec4& ti
     x_drawQuad(transform, nullptr, 1, tintColor);
 }
 
+
+
 void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const vec4& tintColor)
 {
     const vec4 quadVertexPos[4] =
@@ -190,7 +192,7 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
     //Line always faces camera
     auto lineVec = normalize(posStart-posEnd);
     auto cameraForward = GraphicsContext::getCamera()->forward();
-    auto crossP = cross(cameraForward, lineVec);
+    auto crossP = normalize(cross(cameraForward, lineVec));
     auto offset = crossP*(width/2);
 
     const vec4 lineVertexPos[4] =
@@ -203,6 +205,13 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
 
     x_drawQuad_internal(lineVertexPos, nullptr, 1, color);
 
+}
+
+void BatchRenderer::x_drawPoint(const vec3 &pos, float lWidth, float lLen, const vec4 &color)
+{
+    BatchRenderer::drawLine(pos-vec3(lLen/2, 0, 0), pos+vec3(lLen/2, 0, 0), lWidth, color);
+    BatchRenderer::drawLine(pos-vec3(0, lLen/2, 0), pos+vec3(0, lLen/2, 0), lWidth, color);
+    BatchRenderer::drawLine(pos-vec3(0, 0, lLen/2), pos+vec3(0, 0, lLen/2), lWidth, color);
 }
 
 void BatchRenderer::x_drawCircle(const vec2 &pos, float radius, int triangles, const vec4 &color)
@@ -301,7 +310,7 @@ void BatchRenderer::x_drawQuad_internal(const vec4* vertices, const std::shared_
 
     indexBufferPtr+=6;
 
-    indexCount += 6;
-    elementCount+=4;
+    indexCount   += 6;
+    elementCount += 4;
 }
 
