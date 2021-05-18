@@ -1,17 +1,73 @@
 ﻿#pragma once
-#include "shader.h"
+#include <glm.hpp>
+#include "glad/glad.h"
+#include <vector>
+#include <memory>
+
+using namespace glm;
 
 class BufferElement{
     friend class BufferLayout;
     friend class VertexArray;
 
 public:
-    BufferElement(Shader::DataType type, const char* name, bool normalized = false)
+    enum DataType{
+        Int,
+        Float,
+        Float2,
+        Float3,
+        Float4,
+        Mat3,
+        Mat4,
+        };
+
+    BufferElement(DataType type, const char* name, bool normalized = false)
         : name(name), type(type), normalized(normalized){}
+
+    inline static uint typeComponentCount(DataType type){
+        switch (type)
+        {
+        case Int:    return 1;
+        case Float:  return 1;
+        case Float2: return 2;
+        case Float3: return 3;
+        case Float4: return 4;
+        case Mat3:   return 3;
+        case Mat4:   return 4;
+        }
+        return 0;
+    }
+    inline static uint typeComponentSize(DataType type){
+        switch (type)
+        {
+        case Int:    return 4;
+        case Float:  return 4;
+        case Float2: return 4*2;
+        case Float3: return 4*3;
+        case Float4: return 4*4;
+        case Mat3:   return 4*9;
+        case Mat4:   return 4*16;
+        }
+        return 0;
+    }
+
+    inline static uint typeToNative(DataType type){
+        switch (type)
+        {
+        case Int:    return GL_INT;
+        case Float:
+        case Float2:
+        case Float3:
+        case Float4:
+        case Mat3:
+        case Mat4:   return GL_FLOAT;
+        }
+        return 0;
+    }
 
 private:
     const char* name;
-    const Shader::DataType type;
+    const DataType type;
     uint size = 0;
     uint offset = 0;
     bool normalized = false;
@@ -114,6 +170,8 @@ struct FrameBufferAttachment
     bool renderBuffer = true;
 };
 
+
+class Texture;
 class FrameBuffer
 {
     //TODO: fill out the functions, and remember to blit to screen for now

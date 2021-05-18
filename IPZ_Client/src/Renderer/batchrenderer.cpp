@@ -1,5 +1,6 @@
 ﻿#include "batchrenderer.h"
 #include "gtx/vector_angle.hpp"
+#include "../AssetManagement/assets.h"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
@@ -29,11 +30,11 @@ void BatchRenderer::x_init()
     indexBufferEnd  = indexBuffer + MAX_INDEX_BUFFER_SIZE/sizeof(uint16);
 
     BufferLayout layout = {
-        {Shader::Float4, "a_Position"    },
-        {Shader::Float4, "a_Color"       },
-        {Shader::Float2, "a_TexCoord"    },
-        {Shader::Float , "a_TexIndex"    },
-        {Shader::Float , "a_TilingFactor"}
+        {BufferElement::Float4, "a_Position"    },
+        {BufferElement::Float4, "a_Color"       },
+        {BufferElement::Float2, "a_TexCoord"    },
+        {BufferElement::Float , "a_TexIndex"    },
+        {BufferElement::Float , "a_TilingFactor"}
     };
     auto iBuffer = std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE);
     auto vBuffer = {std::make_shared<VertexBuffer>(layout, MAX_VERTEX_BUFFER_SIZE)};
@@ -45,11 +46,11 @@ void BatchRenderer::x_begin()
     // bind all uniforms
 //    glDisable(GL_CULL_FACE);
     m_currentShader->bind();
-    m_currentShader->setUniformArray("u_Textures", Shader::Int, texSamplers, maxTextureSlots);
+    m_currentShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
 
     // setup projections
     viewProj3d = GraphicsContext::getCamera()->getViewProjectionMatrix();
-    m_currentShader->setUniform("u_ViewProjection", Shader::Mat4, viewProj3d);
+    m_currentShader->setUniform("u_ViewProjection", BufferElement::Mat4, viewProj3d);
     auto viewSize = GraphicsContext::getViewPortSize();
     viewProjOrtho = glm::ortho(0.f, (float)viewSize.x, (float)viewSize.y, 0.f, -1.f, 1.f)*glm::lookAt(vec3(0,0,1),vec3(0,0,0),vec3(0,1,0));
 

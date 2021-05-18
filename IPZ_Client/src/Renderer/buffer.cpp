@@ -6,7 +6,7 @@ void BufferLayout::processElements()
     uint offset = 0;
     for(auto& element : elements)
     {
-        element.size = Shader::typeComponentSize(element.type);
+        element.size = BufferElement::typeComponentSize(element.type);
         element.offset = offset;
         offset += element.size;
         m_stride += element.size;
@@ -115,35 +115,35 @@ void VertexArray::addVBuffer(std::shared_ptr<VertexBuffer> buffer)
     {
         switch (element.type) {
 
-        case Shader::Int:
+        case BufferElement::Int:
         {
             glEnableVertexAttribArray(vBufferIndex);
-            glVertexAttribIPointer(vBufferIndex, Shader::typeComponentCount(element.type), Shader::typeToNative(element.type),
+            glVertexAttribIPointer(vBufferIndex, BufferElement::typeComponentCount(element.type), BufferElement::typeToNative(element.type),
                                    buffer->m_layout.m_stride, (const void*)(size_t)element.offset);
 
             vBufferIndex++;
             break;
         }
-        case Shader::Float:
-        case Shader::Float2:
-        case Shader::Float3:
-        case Shader::Float4:
+        case BufferElement::Float:
+        case BufferElement::Float2:
+        case BufferElement::Float3:
+        case BufferElement::Float4:
         {
             glEnableVertexAttribArray(vBufferIndex);
-            glVertexAttribPointer(vBufferIndex, Shader::typeComponentCount(element.type),Shader::typeToNative(element.type),
+            glVertexAttribPointer(vBufferIndex, BufferElement::typeComponentCount(element.type),BufferElement::typeToNative(element.type),
                                   element.normalized, buffer->m_layout.m_stride, (const void*)(size_t)element.offset);
 
             vBufferIndex++;
             break;
         }
-        case Shader::Mat3:
-        case Shader::Mat4:
+        case BufferElement::Mat3:
+        case BufferElement::Mat4:
         {
-            int count = Shader::typeComponentCount(element.type);
+            int count = BufferElement::typeComponentCount(element.type);
             for(int i=0; i<count; i++)
             {
                 glEnableVertexAttribArray(vBufferIndex);
-                glVertexAttribPointer(vBufferIndex, count, Shader::typeToNative(element.type),
+                glVertexAttribPointer(vBufferIndex, count, BufferElement::typeToNative(element.type),
                                       element.normalized, buffer->m_layout.m_stride, (const void*)(element.offset + sizeof(float) * count * i));
                 glVertexAttribDivisor(vBufferIndex, 1);
                 vBufferIndex++;

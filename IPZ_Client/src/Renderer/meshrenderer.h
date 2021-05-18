@@ -12,14 +12,7 @@ using namespace glm;
 // do instanced rendering, setup queu of meshes and models, render them at "end"
 // https://learnopengl.com/Advanced-OpenGL/Instancing
 // https://www.informit.com/articles/article.aspx?p=2033340&seqNum=5 normal matrix from model matrix!!
-struct ColoredMesh{
-    vec3* posV;
-    vec3* normals;
-    vec4* colors;
-    uint16* indices;
-    uint indexCount;
-    uint16 vertexCount;
-};
+
 class MeshRenderer
 {
     MeshRenderer() = default;
@@ -36,12 +29,12 @@ public:
     static void end(){getInstance().x_end();}
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
-    static void drawMesh(const mat4& model, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+    static void drawMesh(const mat4& model, const std::shared_ptr<Mesh> &mesh, const vec4 &color)
     {getInstance().x_drawMesh(model, mesh, color);}
-    static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<MeshFile>& mesh, const vec4& color)
+    static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh>& mesh, const vec4& color)
     {getInstance().x_drawMesh(pos, size, mesh, color);}
-    static ColoredMesh generateCubeSphere(int vPerEdge);
 
+    static std::shared_ptr<Mesh> generateCubeSphere(int vPerEdge);
 
 private:
 
@@ -52,7 +45,7 @@ private:
     void x_end();
     void x_setShader(std::shared_ptr<Shader> shader) {currentShader = shader;}
 
-    void x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color);
-    void x_drawMesh(const mat4& model, const std::shared_ptr<MeshFile> &mesh, const vec4 &color);
+    void x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh, const vec4& color);
+    void x_drawMesh(const mat4& model, const std::shared_ptr<Mesh> &mesh, const vec4 &color);
 };
 

@@ -1,4 +1,5 @@
 ﻿#include "meshrenderer.h"
+#include "shader.h"
 
 void MeshRenderer::x_init()
 {
@@ -9,10 +10,10 @@ void MeshRenderer::x_begin()
 {
     auto currentCamera = GraphicsContext::getCamera();
     currentShader->bind();
-    currentShader->setUniform("u_View", Shader::Mat4, currentCamera->getViewMatrix());
-    currentShader->setUniform("u_Projection", Shader::Mat4, currentCamera->getProjMatrix());
-    currentShader->setUniform("u_CameraPosition", Shader::Float3, currentCamera->getPos());
-    currentShader->setUniform("u_LightPosition", Shader::Float3, vec3{2.3, 3, 3});
+    currentShader->setUniform("u_View", BufferElement::Mat4, currentCamera->getViewMatrix());
+    currentShader->setUniform("u_Projection", BufferElement::Mat4, currentCamera->getProjMatrix());
+    currentShader->setUniform("u_CameraPosition", BufferElement::Float3, currentCamera->getPos());
+    currentShader->setUniform("u_LightPosition", BufferElement::Float3, vec3{2.3, 3, 3});
 }
 
 void MeshRenderer::x_end()
@@ -20,24 +21,24 @@ void MeshRenderer::x_end()
     currentShader->unbind();
 }
 
-void MeshRenderer::x_drawMesh(const mat4 &model, const std::shared_ptr<MeshFile> &mesh, const vec4 &color)
+void MeshRenderer::x_drawMesh(const mat4 &model, const std::shared_ptr<Mesh> &mesh, const vec4 &color)
 {
-    currentShader->setUniform("u_Model", Shader::Mat4, model);
-    currentShader->setUniform("u_Color", Shader::Float4, color);
+    currentShader->setUniform("u_Model", BufferElement::Mat4, model);
+    currentShader->setUniform("u_Color", BufferElement::Float4, color);
 
-    mesh->vertexArray()->bind();
-    glDrawElements(GL_TRIANGLES, mesh->indexCount(), GL_UNSIGNED_SHORT, nullptr);
-    mesh->vertexArray()->unbind();
+    mesh->vao()->bind();
+    glDrawElements(GL_TRIANGLES, (GLsizei)mesh->vao()->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
+    mesh->vao()->unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<MeshFile> &mesh, const vec4& color)
+void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh, const vec4& color)
 {
     auto model = translate(mat4(1.0f), pos) * scale(mat4(1.0f), size);
     x_drawMesh(model, mesh, color);
 }
 
-ColoredMesh MeshRenderer::generateCubeSphere(int vPerEdge)
+std::shared_ptr<Mesh> MeshRenderer::generateCubeSphere(int vPerEdge)
 {
     ASSERT(vPerEdge>=2);
 
@@ -45,43 +46,43 @@ ColoredMesh MeshRenderer::generateCubeSphere(int vPerEdge)
     int cornerVertices = 8;
     int edgeVertices = (vPerEdge-2) * 12;
     int faceVertices = (vPerEdge-2)*(vPerEdge-2)*6;
-    size_t vCount = cornerVertices + edgeVertices + faceVertices;
-    vec3* posVerts = (vec3*)malloc(vCount*sizeof(vec3));
+    uint vCount = cornerVertices + edgeVertices + faceVertices;
+    MeshVertex* vertices = (MeshVertex*)alloca(vCount*sizeof(MeshVertex));
 
     size_t v = 0;
     for(int y = 0; y<vPerEdge; y++)
     {
         // front row
         for (int i = 0; i < vPerEdge; i++)
-            posVerts[v++] = vec3(-0.5+i*offset, -0.5+y*offset, 0.5);
+            vertices[v++].position = vec3(-0.5+i*offset, -0.5+y*offset, 0.5);
 
         // right row
         for (int i = 1; i < vPerEdge; i++)
-            posVerts[v++] = vec3(0.5, -0.5+y*offset, 0.5-i*offset);
+            vertices[v++].position = vec3(0.5, -0.5+y*offset, 0.5-i*offset);
 
         // back row
         for (int i = 1; i < vPerEdge; i++)
-            posVerts[v++] = vec3(0.5-i*offset, -0.5+y*offset, -0.5);
+            vertices[v++].position = vec3(0.5-i*offset, -0.5+y*offset, -0.5);
 
         // left row
         for (int i = 1; i < vPerEdge-1; i++)
-            posVerts[v++] = vec3(-0.5, -0.5+y*offset, -0.5+i*offset);
+            vertices[v++].position = vec3(-0.5, -0.5+y*offset, -0.5+i*offset);
     }
     // top face
-    int topStart = v;
+    int topStart = (int)v;
     for (int z = 1; z < vPerEdge-1; z++)
         for (int x = 1; x < vPerEdge-1; x++)
-            posVerts[v++] = vec3(-0.5+x*offset,  0.5, 0.5-z*offset);
+            vertices[v++].position = vec3(-0.5+x*offset,  0.5, 0.5-z*offset);
 
     // bottom face
-    int bottomStart = v;
+    int bottomStart = (int)v;
     for (int z = 1; z < vPerEdge-1; z++)
         for (int x = 1; x < vPerEdge-1; x++)
-            posVerts[v++] = vec3(-0.5+x*offset, -0.5, 0.5-z*offset);
+            vertices[v++].position = vec3(-0.5+x*offset, -0.5, 0.5-z*offset);
 
     // INDICES
     int iCount = 6*(vPerEdge-1)*(vPerEdge-1)*2*3; //six faces of (vPerEdge-1)^2 quads 2 tris per quad 3 indices per tri
-    uint16* indices = (uint16*)malloc(iCount*sizeof(uint16));
+    uint16* indices = (uint16*)alloca(iCount*sizeof(uint16));
     size_t ind = 0;
 
 
@@ -89,9 +90,11 @@ ColoredMesh MeshRenderer::generateCubeSphere(int vPerEdge)
         indices[ind+0] = p0;
         indices[ind+1] = p1;
         indices[ind+2] = p3;
-        indices[ind+3] = p1;
-        indices[ind+4] = p3;
+
+        indices[ind+3] = p3;
+        indices[ind+4] = p1;
         indices[ind+5] = p2;
+
         ind+=6;
     };
 
@@ -140,8 +143,9 @@ ColoredMesh MeshRenderer::generateCubeSphere(int vPerEdge)
         indices[ind+0] = p3;
         indices[ind+1] = p2;
         indices[ind+2] = p0;
-        indices[ind+3] = p2;
-        indices[ind+4] = p0;
+
+        indices[ind+3] = p0;
+        indices[ind+4] = p2;
         indices[ind+5] = p1;
         ind+=6;
     };
@@ -174,6 +178,13 @@ ColoredMesh MeshRenderer::generateCubeSphere(int vPerEdge)
     indexQuadInv(bottomStart+topRowW*topRowW-1, topRight-1, topRight, topRight+1);
 
     // do the spherification and normals
+    for(uint i=0; i<vCount; i++)
+    {
+        auto normal = normalize(vertices[i].position);
+        vertices[i].position = normal;
+        vertices[i].normal   = normal;
+        //tex coords maybe here
+    }
 
-    return ColoredMesh{};
+    return std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
 }

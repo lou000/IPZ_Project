@@ -1,4 +1,5 @@
 ﻿#include "asset_manager.h"
+#include "../Renderer/shader.h"
 #include "ctime"
 
 void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)

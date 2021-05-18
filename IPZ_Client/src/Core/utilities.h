@@ -8,6 +8,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <gtc/matrix_transform.hpp>
+#include <gtx/compatibility.hpp>
 #include <gtc/type_ptr.hpp>
 #define LOGGING_ENABLED
 
