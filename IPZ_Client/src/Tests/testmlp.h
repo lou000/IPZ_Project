@@ -9,6 +9,10 @@ public:
     TestMLP();
     ~TestMLP(){/*dontcare*/};
     void onUpdate(float dt);
-    static void graph3d(vec3 pos, vec3* points, size_t count, bool surface, bool smooth = false);
+    void graph3d(vec3 pos, vec3* points, size_t count, bool surface, bool smooth = false);
+
+private:
+    std::shared_ptr<Mesh> sphere;
+    vec3* points;
 };
 
