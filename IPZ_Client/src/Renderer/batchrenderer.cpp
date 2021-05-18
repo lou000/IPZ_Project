@@ -215,6 +215,20 @@ void BatchRenderer::x_drawPoint(const vec3 &pos, float lWidth, float lLen, const
     BatchRenderer::drawLine(pos-vec3(0, 0, lLen/2), pos+vec3(0, 0, lLen/2), lWidth, color);
 }
 
+void BatchRenderer::x_drawTris(vec3 *verts, uint16 *indices, uint iCount, float lWidth, const vec4 &color)
+{
+    for(size_t i=0; i<iCount; i+=6)
+    {
+        BatchRenderer::drawLine(verts[indices[i]],   verts[indices[i+1]], lWidth, color);
+        BatchRenderer::drawLine(verts[indices[i+1]], verts[indices[i+2]], lWidth, color);
+        BatchRenderer::drawLine(verts[indices[i+2]], verts[indices[i+0]], lWidth, color);
+
+        BatchRenderer::drawLine(verts[indices[i+3]], verts[indices[i+4]], lWidth, color);
+        BatchRenderer::drawLine(verts[indices[i+4]], verts[indices[i+5]], lWidth, color);
+        BatchRenderer::drawLine(verts[indices[i+5]], verts[indices[i+3]], lWidth, color);
+    }
+}
+
 void BatchRenderer::x_drawCircle(const vec2 &pos, float radius, int triangles, const vec4 &color)
 {
     // if we would go outside the bounds of the buffers do the next batch
