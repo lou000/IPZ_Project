@@ -33,8 +33,12 @@ public:
     {getInstance().x_drawMesh(model, mesh, color);}
     static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh>& mesh, const vec4& color)
     {getInstance().x_drawMesh(pos, size, mesh, color);}
+    static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh>& mesh)
+    {getInstance().x_drawMesh(pos, size, mesh);}
 
-    static std::shared_ptr<Mesh> generateCubeSphere(int vPerEdge);
+    static std::shared_ptr<Mesh> createCubeSphere(int vPerEdge);
+    static std::shared_ptr<Mesh> createMeshGrid(vec3* points, vec4* colorData, uint xSize, uint zSize);
+    static std::shared_ptr<Mesh> createMeshGridSmooth(vec3* points, vec4* colorData, uint xSize, uint zSize);
 
 private:
 
@@ -47,5 +51,6 @@ private:
 
     void x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh, const vec4& color);
     void x_drawMesh(const mat4& model, const std::shared_ptr<Mesh> &mesh, const vec4 &color);
+    void x_drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh> &mesh);
 };
 

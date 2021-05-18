@@ -13,7 +13,7 @@ void MeshRenderer::x_begin()
     currentShader->setUniform("u_View", BufferElement::Mat4, currentCamera->getViewMatrix());
     currentShader->setUniform("u_Projection", BufferElement::Mat4, currentCamera->getProjMatrix());
     currentShader->setUniform("u_CameraPosition", BufferElement::Float3, currentCamera->getPos());
-    currentShader->setUniform("u_LightPosition", BufferElement::Float3, vec3{2.3, 3, 3});
+    currentShader->setUniform("u_LightPosition", BufferElement::Float3, vec3{20, 25, 25});
 }
 
 void MeshRenderer::x_end()
@@ -38,7 +38,13 @@ void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shar
     x_drawMesh(model, mesh, color);
 }
 
-std::shared_ptr<Mesh> MeshRenderer::generateCubeSphere(int vPerEdge)
+void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh)
+{
+    auto model = translate(mat4(1.0f), pos) * scale(mat4(1.0f), size);
+    x_drawMesh(model, mesh, {1,1,1,1});
+}
+
+std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
 {
     ASSERT(vPerEdge>=2);
 
@@ -187,4 +193,116 @@ std::shared_ptr<Mesh> MeshRenderer::generateCubeSphere(int vPerEdge)
     }
 
     return std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
+}
+
+std::shared_ptr<Mesh> MeshRenderer::createMeshGrid(vec3 *points, vec4* colorData, uint xSize, uint zSize) //left to right, top to bottom
+{
+    uint vCount = xSize*zSize;
+    uint iCount = (xSize-1)*(zSize-1)*2*3;
+    MeshVertex* vertices = (MeshVertex*)calloc(vCount, sizeof(MeshVertex));
+    uint16* indices      = (uint16*)malloc(iCount*sizeof(uint16));
+
+    size_t ind = 0;
+    auto indexQuad = [&](uint16 p0, uint16 p1, uint16 p2, uint16 p3){
+        indices[ind+0] = p0;
+        indices[ind+1] = p1;
+        indices[ind+2] = p3;
+
+        indices[ind+3] = p3;
+        indices[ind+4] = p1;
+        indices[ind+5] = p2;
+
+        ind+=6;
+    };
+
+    for(uint z=0; z<zSize-1; z++)
+    {
+        for(uint x=0; x<xSize-1; x++)
+        {
+            uint i = z*xSize+x;
+            uint i0 = i+xSize;
+            uint i1 = i+xSize+1;
+            uint i2 = i+1;
+            uint i3 = i;
+
+            indexQuad(i0, i1, i2, i3);
+            vec3 normal1 = cross(points[i0]-points[i1], points[i0]-points[i3]);
+            vec3 normal2 = cross(points[i2]-points[i3], points[i2]-points[i1]);
+
+            vertices[i0].position = points[i0];
+            vertices[i1].position = points[i1];
+            vertices[i2].position = points[i2];
+            vertices[i3].position = points[i3];
+
+            vertices[i0].normal += normal1;
+            vertices[i1].normal += normal1+normal2;
+            vertices[i2].normal += normal2;
+            vertices[i3].normal += normal1+normal2;
+        }
+    }
+    for(uint i=0; i<xSize*zSize; i++)
+        vertices[i].normal = normalize(vertices[i].normal);
+
+    auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
+    free(vertices);
+    free(indices);
+    BufferLayout layout = {{BufferElement::Float4, "a_Color" }};
+    m->vao()->addVBuffer(std::make_shared<VertexBuffer>(layout, vCount*sizeof(vec4), colorData));
+    return m;
+}
+
+std::shared_ptr<Mesh> MeshRenderer::createMeshGridSmooth(vec3 *points, vec4* colorData, uint xSize, uint zSize) //left to right, top to bottom
+{
+    uint vCount = xSize*zSize;
+    uint iCount = (xSize-1)*(zSize-1)*2*3;
+    MeshVertex* vertices = (MeshVertex*)calloc(vCount, sizeof(MeshVertex));
+    uint16* indices      = (uint16*)malloc(iCount*sizeof(uint16));
+
+    size_t ind = 0;
+    auto indexQuad = [&](uint16 p0, uint16 p1, uint16 p2, uint16 p3){
+        indices[ind+0] = p0;
+        indices[ind+1] = p1;
+        indices[ind+2] = p3;
+
+        indices[ind+3] = p3;
+        indices[ind+4] = p1;
+        indices[ind+5] = p2;
+
+        ind+=6;
+    };
+
+    for(uint z=0; z<zSize-1; z++)
+    {
+        for(uint x=0; x<xSize-1; x++)
+        {
+            uint i = z*xSize+x;
+            uint i0 = i+xSize;
+            uint i1 = i+xSize+1;
+            uint i2 = i+1;
+            uint i3 = i;
+
+            indexQuad(i0, i1, i2, i3);
+            vec3 normal1 = cross(points[i0]-points[i1], points[i0]-points[i3]);
+            vec3 normal2 = cross(points[i2]-points[i3], points[i2]-points[i1]);
+
+            vertices[i0].position = points[i0];
+            vertices[i1].position = points[i1];
+            vertices[i2].position = points[i2];
+            vertices[i3].position = points[i3];
+
+            vertices[i0].normal += normal1;
+            vertices[i1].normal += normal1+normal2;
+            vertices[i2].normal += normal2;
+            vertices[i3].normal += normal1+normal2;
+        }
+    }
+    for(uint i=0; i<xSize*zSize; i++)
+        vertices[i].normal = normalize(vertices[i].normal);
+
+    auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
+    free(vertices);
+    free(indices);
+    BufferLayout layout = {{BufferElement::Float4, "a_Color" }};
+    m->vao()->addVBuffer(std::make_shared<VertexBuffer>(layout, vCount*sizeof(vec4), colorData));
+    return m;
 }
