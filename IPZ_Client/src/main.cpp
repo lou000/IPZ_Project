@@ -4,6 +4,7 @@
 #include "Tests/testslidingpuzzle.h"
 #include "Tests/testconnect4.h"
 #include "Tests/testrosenblat.h"
+#include "Tests/testmlp.h"
 
 int main(void)
 {
@@ -31,8 +32,9 @@ int main(void)
     Scene* test2 = new TestSlidingPuzzle();
     Scene* test3 = new TestConnect4();
     Scene* test4 = new TestRosenblat();
+    Scene* test5 = new TestMLP();
 
-    Scene* currentTest = test4;
+    Scene* currentTest = test5;
 
 
     FrameBufferAttachment colorAtt;
@@ -75,6 +77,8 @@ int main(void)
             currentTest = test3;
         if(App::getKeyOnce(GLFW_KEY_F4))
             currentTest = test4;
+        if(App::getKeyOnce(GLFW_KEY_F5))
+            currentTest = test5;
 
         currentTest->onUpdate(dt);
 
