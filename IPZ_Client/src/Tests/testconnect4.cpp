@@ -97,7 +97,7 @@ void TestConnect4::onUpdate(float dt)
                     if(currentMove.h_grade>=0)
                     {
                         auto model = translate(mat4(1.0f), {hPositions[i],11,-0.45}) * rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f });
-                        MeshRenderer::drawMesh(model, mesh3, {0.906, 0.878, 0.302,0.2});
+                        MeshRenderer::drawMesh(model, mesh3->mesh(), {0.906, 0.878, 0.302,0.2});
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
                             animating = true;
                     }
@@ -118,9 +118,9 @@ void TestConnect4::onUpdate(float dt)
         yPos -= ySpeed*dt;
         auto model = translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45})*rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f });
         if(c4->userTurn)
-            MeshRenderer::drawMesh(model, mesh3, {0.906, 0.878, 0.302,1});
+            MeshRenderer::drawMesh(model, mesh3->mesh(), {0.906, 0.878, 0.302,1});
         else
-            MeshRenderer::drawMesh(model, mesh2, {0.882, 0.192, 0.161,1});
+            MeshRenderer::drawMesh(model, mesh2->mesh(), {0.882, 0.192, 0.161,1});
 
         if(yPos<=vPositions[currentMove.y])
         {
@@ -137,13 +137,13 @@ void TestConnect4::onUpdate(float dt)
         uint y = i/c4->width;
         auto model = translate(mat4(1.0f), {hPositions[x], vPositions[y],-0.45})*rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f });
         if(c4->grid[i] == 'O')
-            MeshRenderer::drawMesh(model, mesh3, {0.906, 0.878, 0.302,1});
+            MeshRenderer::drawMesh(model, mesh3->mesh(), {0.906, 0.878, 0.302,1});
         else if(c4->grid[i] == 'X')
-            MeshRenderer::drawMesh(model, mesh2, {0.882, 0.192, 0.161,1});
+            MeshRenderer::drawMesh(model, mesh2->mesh(), {0.882, 0.192, 0.161,1});
     }
-    MeshRenderer::drawMesh({0,0,0}, {1,1,1}, mesh1, {0.165, 0.349, 1.000,1});
-    MeshRenderer::drawMesh({1,0,3}, {1,1,1}, mesh2, {0.882, 0.192, 0.161,1});
-    MeshRenderer::drawMesh({-1,0,3}, {1,1,1}, mesh3, {0.906, 0.878, 0.302,1});
+    MeshRenderer::drawMesh({0,0,0}, {1,1,1}, mesh1->mesh(), {0.165, 0.349, 1.000,1});
+    MeshRenderer::drawMesh({1,0,3}, {1,1,1}, mesh2->mesh(), {0.882, 0.192, 0.161,1});
+    MeshRenderer::drawMesh({-1,0,3}, {1,1,1}, mesh3->mesh(), {0.906, 0.878, 0.302,1});
     MeshRenderer::end();
 
     BatchRenderer::begin();

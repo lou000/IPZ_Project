@@ -284,19 +284,6 @@ bool MeshFile::doReload()
     return loadOBJ();
 }
 
-void MeshFile::createVAO()
-{
-    ASSERT(m_vertexData && m_indexData);
-    auto iBuffer = std::make_shared<IndexBuffer>(m_indexCount*sizeof(uint16), m_indexData);
-    BufferLayout layout = {
-        {Shader::Float3, "a_Position" },
-        {Shader::Float3, "a_Normal"   },
-        {Shader::Float2, "a_TexCoords"}
-    };
-    auto vBuffer = {std::make_shared<VertexBuffer>(layout, m_vertexCount*m_stride, m_vertexData)};
-    m_vertexArray = std::make_shared<VertexArray>(vBuffer, iBuffer);
-}
-
 bool MeshFile::loadOBJ()
 {
     auto str = path.string();
@@ -307,10 +294,8 @@ bool MeshFile::loadOBJ()
         return false;
     }
 
-    int componentCount = 8;
-    m_stride = componentCount*sizeof(float);
-    fastObjMesh* mesh = fast_obj_read(c_str);
-    if(mesh->position_count <= 1)
+    fastObjMesh* meshImp = fast_obj_read(c_str);
+    if(meshImp->position_count <= 1)
     {
         WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
         return false;
@@ -323,11 +308,11 @@ bool MeshFile::loadOBJ()
     std::vector<float> vertices;
     int count = 0;
     int globalCount = 0;
-    for(uint i=0; i<mesh->face_count; i++)
+    for(uint i=0; i<meshImp->face_count; i++)
     {
-        for(uint j=0; j<mesh->face_vertices[i]; j++)
+        for(uint j=0; j<meshImp->face_vertices[i]; j++)
         {
-            auto index = mesh->indices[globalCount];
+            auto index = meshImp->indices[globalCount];
             globalCount++;
             size_t hash = 0;
             hash |= ((size_t)index.n)<<16;
@@ -339,17 +324,17 @@ bool MeshFile::loadOBJ()
             {
                 // push 3 positions
                 int indx = index.p*3;
-                vertices.push_back(mesh->positions[indx+0]);
-                vertices.push_back(mesh->positions[indx+1]);
-                vertices.push_back(mesh->positions[indx+2]);
+                vertices.push_back(meshImp->positions[indx+0]);
+                vertices.push_back(meshImp->positions[indx+1]);
+                vertices.push_back(meshImp->positions[indx+2]);
 
                 indx = index.n*3;
-                if(mesh->normal_count>1)
+                if(meshImp->normal_count>1)
                 {
                     //push 3 normals
-                    vertices.push_back(mesh->normals[indx+0]);
-                    vertices.push_back(mesh->normals[indx+1]);
-                    vertices.push_back(mesh->normals[indx+2]);
+                    vertices.push_back(meshImp->normals[indx+0]);
+                    vertices.push_back(meshImp->normals[indx+1]);
+                    vertices.push_back(meshImp->normals[indx+2]);
                 }
                 else
                 {
@@ -359,11 +344,11 @@ bool MeshFile::loadOBJ()
                 }
 
                 indx = index.t*2;
-                if(mesh->texcoord_count>1)
+                if(meshImp->texcoord_count>1)
                 {
                     //push 2 texture coordinates
-                    vertices.push_back(mesh->texcoords[indx+0]);
-                    vertices.push_back(mesh->texcoords[indx+1]);
+                    vertices.push_back(meshImp->texcoords[indx+0]);
+                    vertices.push_back(meshImp->texcoords[indx+1]);
                 }
                 else
                 {
@@ -381,21 +366,8 @@ bool MeshFile::loadOBJ()
             }
         }
     }
-    delete mesh;
-    // copy vectors memory to storage
+    delete meshImp;
 
-    if(m_vertexData)
-        free(m_vertexData);
-    if(m_indexData)
-        free(m_indexData);
-
-    m_vertexData = (float*)malloc(vertices.size()*sizeof(float));
-    memcpy(m_vertexData, vertices.data(), vertices.size()*sizeof(float));
-    m_indexData = (uint16*)malloc(indices.size()*sizeof(uint16));
-    memcpy(m_indexData, indices.data(), indices.size()*sizeof(uint16));
-    m_indexCount = indices.size();
-    m_vertexCount = vertices.size()/(m_stride/sizeof(float));
-
-    createVAO(); //TODO: stop caching data
+    m_mesh = std::make_shared<Mesh>(vertices.data(), vertices.size()/(sizeof(MeshVertex)/sizeof(float)), indices.data(), indices.size());
     return true;
 }

@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <iostream>
 #include "../Core/utilities.h"
-#include "../Renderer/shader.h"
+#include "../Renderer/mesh.h"
 
 
 using namespace glm;
@@ -98,24 +98,10 @@ public:
     MeshFile(const std::filesystem::path& path);
 
     virtual bool doReload() override;
-    float* vertices(){return m_vertexData;}
-    size_t vertexCount(){return m_vertexCount;}
-    uint16* indices(){return m_indexData;}
-    size_t indexCount(){return m_indexCount;}
-    uint stride(){return m_stride;}
-    std::shared_ptr<VertexArray> vertexArray(){return m_vertexArray;}
+    std::shared_ptr<Mesh> mesh(){return m_mesh;}
 
 private:
-    std::shared_ptr<VertexArray> m_vertexArray;
-    uint m_stride = 0;
-
-    float* m_vertexData = nullptr;
-    size_t m_vertexCount = 0;
-
-    uint16* m_indexData = nullptr;
-    size_t m_indexCount = 0;
-
-    void createVAO();
+    std::shared_ptr<Mesh> m_mesh;
     bool loadOBJ();
 
 };
