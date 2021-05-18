@@ -14,5 +14,9 @@ public:
 private:
     std::shared_ptr<Mesh> sphere;
     vec3* points;
+    vec3* meshGrid;
+    vec4* colorData;
+    uint meshX = 100;
+    std::shared_ptr<Mesh> originalMesh;
 };
 

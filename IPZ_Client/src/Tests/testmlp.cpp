@@ -5,9 +5,11 @@ TestMLP::TestMLP()
 {
     BatchRenderer::setShader(AssetManager::getShader("batch"));
     MeshRenderer::setShader(AssetManager::getShader("mesh"));
-    sphere = MeshRenderer::generateCubeSphere(4);
+    sphere = MeshRenderer::createCubeSphere(4);
     points = (vec3*)malloc(1000*sizeof(vec3));
     vec2 range = {0.f, glm::pi<float>()};
+
+    // points
     for(int i=0; i<1000; i++)
     {
         auto& p = points[i];
@@ -18,6 +20,27 @@ TestMLP::TestMLP()
         p.x = mapToRange(range, {0,10}, p.x);
         p.z = mapToRange(range, {0,10}, p.z);
     }
+
+    // mesh grid
+    meshGrid = (vec3*)malloc(meshX*meshX*sizeof(vec3));
+    colorData = (vec4*)malloc(meshX*meshX*sizeof(vec4));
+
+    float step = (float)glm::pi<float>()/meshX;
+    for(uint i=0; i<meshX; i++)
+        for(uint j=0; j<meshX; j++)
+        {
+            auto& p = meshGrid[i*meshX+j];
+            p.x = j*step;
+            p.z = i*step;
+            p.y = mapToRange({-1,1}, {0, 10}, cos(p.x*p.z)*cos(2*p.x));
+
+            int index = (int)mapToRange({0, 10}, {0, 249}, p.y);
+            colorData[i*meshX+j] = prettyColors[index];
+
+            p.x = mapToRange(range, {0,10}, p.x);
+            p.z = mapToRange(range, {0,10}, p.z);
+        }
+    originalMesh = MeshRenderer::createMeshGridSmooth(meshGrid, colorData, meshX, meshX);
 }
 
 void TestMLP::onUpdate(float dt)
@@ -69,29 +92,21 @@ void TestMLP::graph3d(vec3 pos, vec3 *points, size_t count, bool surface, bool s
     BatchRenderer::drawLine(pos+vec3(6, 0, 0), pos+vec3(6, 0, 10), 0.01f, {0.788, 0.820, 0.851, 0.5});
     BatchRenderer::drawLine(pos+vec3(8, 0, 0), pos+vec3(8, 0, 10), 0.01f, {0.788, 0.820, 0.851, 0.5});
 
-
-    // Draw points
-    if(!surface)
-    {
-        for(size_t i=0; i<count; i++)
-        {
-            auto p = points[i];
-            BatchRenderer::drawLine({p.x,0,p.z}, p, 0.01f, {1,0,0,1});
-        }
-    }
-
     BatchRenderer::end();
+
+
 
 
     MeshRenderer::begin();
     // Draw points
-    if(!surface)
+    for(size_t i=0; i<count; i++)
     {
-        for(size_t i=0; i<count; i++)
-        {
-            auto p = points[i];
-            MeshRenderer::drawMesh(p, vec3(0.1f), sphere, {1,0,0,1});
-        }
+        auto p = points[i];
+        MeshRenderer::drawMesh(p, vec3(0.1f), sphere, {0,0,0.6f,1});
     }
+    glDisable(GL_CULL_FACE);
+    MeshRenderer::drawMesh(vec3(0.f), vec3(1.f), originalMesh, {1,1,1,1});
+    glEnable(GL_CULL_FACE);
+
     MeshRenderer::end();
 }
