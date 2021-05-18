@@ -71,7 +71,7 @@ public:
     void bind();
     void unbind();
     void setData(const uint16* data, uint size);
-    uint count(){return m_size;}
+    uint count(){return m_size/sizeof(uint16);}
 
 private:
     uint id = 0;
