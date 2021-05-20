@@ -40,7 +40,7 @@ TestMLP::TestMLP()
             p.x = mapToRange(range, {0,10}, p.x);
             p.z = mapToRange(range, {0,10}, p.z);
         }
-    originalMesh = MeshRenderer::createMeshGridSmooth(meshGrid, colorData, meshX, meshX);
+    originalMesh = MeshRenderer::createMeshGridQuad(meshGrid, meshX, meshX);
 }
 
 void TestMLP::onUpdate(float dt)
@@ -102,10 +102,10 @@ void TestMLP::graph3d(vec3 pos, vec3 *points, size_t count, bool surface, bool s
     for(size_t i=0; i<count; i++)
     {
         auto p = points[i];
-        MeshRenderer::drawMesh(p, vec3(0.1f), sphere, {0,0,0.6f,1});
+        MeshRenderer::drawMesh(p, vec3(0.1f), sphere, {0.2f,0.2f,0.6f,1});
     }
     glDisable(GL_CULL_FACE);
-    MeshRenderer::drawMesh(vec3(0.f), vec3(1.f), originalMesh, {1,1,1,1});
+    MeshRenderer::drawMesh(vec3(0.f), vec3(1.f), originalMesh);
     glEnable(GL_CULL_FACE);
 
     MeshRenderer::end();

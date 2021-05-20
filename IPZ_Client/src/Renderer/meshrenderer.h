@@ -29,16 +29,14 @@ public:
     static void end(){getInstance().x_end();}
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
-    static void drawMesh(const mat4& model, const std::shared_ptr<Mesh> &mesh, const vec4 &color)
+    static void drawMesh(const mat4& model, const std::shared_ptr<Mesh> &mesh, const vec4 &color = {1.f,1.f,1.f,1.f})
     {getInstance().x_drawMesh(model, mesh, color);}
-    static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh>& mesh, const vec4& color)
+    static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh>& mesh, const vec4& color = {1.f,1.f,1.f,1.f})
     {getInstance().x_drawMesh(pos, size, mesh, color);}
-    static void drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh>& mesh)
-    {getInstance().x_drawMesh(pos, size, mesh);}
 
     static std::shared_ptr<Mesh> createCubeSphere(int vPerEdge);
-    static std::shared_ptr<Mesh> createMeshGrid(vec3* points, vec4* colorData, uint xSize, uint zSize);
-    static std::shared_ptr<Mesh> createMeshGridSmooth(vec3* points, vec4* colorData, uint xSize, uint zSize);
+    static std::shared_ptr<Mesh> createMeshGridQuad(vec3* points, uint xSize, uint zSize);
+    static std::shared_ptr<Mesh> createMeshGridTris(vec3* points, vec4* colorData, uint xSize, uint zSize);
 
 private:
 
@@ -51,6 +49,5 @@ private:
 
     void x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh, const vec4& color);
     void x_drawMesh(const mat4& model, const std::shared_ptr<Mesh> &mesh, const vec4 &color);
-    void x_drawMesh(const vec3 &pos, const vec3 &size, const std::shared_ptr<Mesh> &mesh);
 };
 

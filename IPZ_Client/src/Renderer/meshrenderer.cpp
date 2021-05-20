@@ -27,6 +27,10 @@ void MeshRenderer::x_drawMesh(const mat4 &model, const std::shared_ptr<Mesh> &me
     currentShader->setUniform("u_Color", BufferElement::Float4, color);
 
     mesh->vao()->bind();
+    if(mesh->vao()->vertexBuffers().size() == 1)
+    {
+        glVertexAttrib4f(3, 1.f, 1.f, 1.f, 1.f); // if we dont have per vertex mesh colors specified set them to white
+    }
     glDrawElements(GL_TRIANGLES, (GLsizei)mesh->vao()->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
     mesh->vao()->unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -36,12 +40,6 @@ void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shar
 {
     auto model = translate(mat4(1.0f), pos) * scale(mat4(1.0f), size);
     x_drawMesh(model, mesh, color);
-}
-
-void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh)
-{
-    auto model = translate(mat4(1.0f), pos) * scale(mat4(1.0f), size);
-    x_drawMesh(model, mesh, {1,1,1,1});
 }
 
 std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
@@ -195,9 +193,9 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
     return std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createMeshGrid(vec3 *points, vec4* colorData, uint xSize, uint zSize) //left to right, top to bottom
+std::shared_ptr<Mesh> MeshRenderer::createMeshGridQuad(vec3 *points, uint xSize, uint zSize)
 {
-    uint vCount = xSize*zSize;
+    uint vCount = (xSize-1)*(zSize-1)*4; // num of quads
     uint iCount = (xSize-1)*(zSize-1)*2*3;
     MeshVertex* vertices = (MeshVertex*)calloc(vCount, sizeof(MeshVertex));
     uint16* indices      = (uint16*)malloc(iCount*sizeof(uint16));
@@ -217,41 +215,46 @@ std::shared_ptr<Mesh> MeshRenderer::createMeshGrid(vec3 *points, vec4* colorData
 
     for(uint z=0; z<zSize-1; z++)
     {
-        for(uint x=0; x<xSize-1; x++)
+        for(uint x=0; x<xSize; x++)
         {
-            uint i = z*xSize+x;
+            uint i  = z*xSize+x;
             uint i0 = i+xSize;
             uint i1 = i+xSize+1;
             uint i2 = i+1;
             uint i3 = i;
 
-            indexQuad(i0, i1, i2, i3);
+            uint offset = x+z*xSize*2;
+            uint j0 = i0+offset+(xSize-1)*2;
+            uint j1 = i1+offset+(xSize-1)*2;
+            uint j2 = i2+offset;
+            uint j3 = i3+offset;
+
+
+            indexQuad(j0, j1, j2, j3);
             vec3 normal1 = cross(points[i0]-points[i1], points[i0]-points[i3]);
             vec3 normal2 = cross(points[i2]-points[i3], points[i2]-points[i1]);
 
-            vertices[i0].position = points[i0];
-            vertices[i1].position = points[i1];
-            vertices[i2].position = points[i2];
-            vertices[i3].position = points[i3];
+            vertices[j0].position = points[i0];
+            vertices[j1].position = points[i1];
+            vertices[j2].position = points[i2];
+            vertices[j3].position = points[i3];
 
-            vertices[i0].normal += normal1;
-            vertices[i1].normal += normal1+normal2;
-            vertices[i2].normal += normal2;
-            vertices[i3].normal += normal1+normal2;
+            vertices[j0].normal = normal1;
+            vertices[j1].normal = normalize(normal1+normal2);
+            vertices[j2].normal = normal2;
+            vertices[j3].normal = normalize(normal1+normal2);
         }
     }
-    for(uint i=0; i<xSize*zSize; i++)
-        vertices[i].normal = normalize(vertices[i].normal);
 
     auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
     free(vertices);
     free(indices);
-    BufferLayout layout = {{BufferElement::Float4, "a_Color" }};
-    m->vao()->addVBuffer(std::make_shared<VertexBuffer>(layout, vCount*sizeof(vec4), colorData));
+//    BufferLayout layout = {{BufferElement::Float4, "a_Color" }};
+//    m->vao()->addVBuffer(std::make_shared<VertexBuffer>(layout, vCount*sizeof(vec4), colorData));
     return m;
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createMeshGridSmooth(vec3 *points, vec4* colorData, uint xSize, uint zSize) //left to right, top to bottom
+std::shared_ptr<Mesh> MeshRenderer::createMeshGridTris(vec3 *points, vec4* colorData, uint xSize, uint zSize) //left to right, top to bottom
 {
     uint vCount = xSize*zSize;
     uint iCount = (xSize-1)*(zSize-1)*2*3;
