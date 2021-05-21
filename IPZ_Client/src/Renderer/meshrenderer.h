@@ -35,8 +35,8 @@ public:
     {getInstance().x_drawMesh(pos, size, mesh, color);}
 
     static std::shared_ptr<Mesh> createCubeSphere(int vPerEdge);
-    static std::shared_ptr<Mesh> createMeshGridQuad(vec3* points, uint xSize, uint zSize);
-    static std::shared_ptr<Mesh> createMeshGridTris(vec3* points, vec4* colorData, uint xSize, uint zSize);
+    static std::shared_ptr<Mesh> createQuadMeshGrid(vec3* points, uint xSize, uint zSize);
+    static std::shared_ptr<Mesh> createSmoothMeshGrid(vec3* points, uint xSize, uint zSize);
 
 private:
 

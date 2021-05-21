@@ -23,31 +23,30 @@ TestMLP::TestMLP()
 
     // mesh grid
     meshGrid = (vec3*)malloc(meshX*meshX*sizeof(vec3));
-    colorData = (vec4*)malloc(meshX*meshX*sizeof(vec4));
 
-    float step = (float)glm::pi<float>()/meshX;
+    float step = (float)10/(meshX-1);
     for(uint i=0; i<meshX; i++)
         for(uint j=0; j<meshX; j++)
         {
             auto& p = meshGrid[i*meshX+j];
             p.x = j*step;
             p.z = i*step;
-            p.y = mapToRange({-1,1}, {0, 10}, cos(p.x*p.z)*cos(2*p.x));
-
-            int index = (int)mapToRange({0, 10}, {0, 249}, p.y);
-            colorData[i*meshX+j] = prettyColors[index];
-
-            p.x = mapToRange(range, {0,10}, p.x);
-            p.z = mapToRange(range, {0,10}, p.z);
         }
-    originalMesh = MeshRenderer::createMeshGridQuad(meshGrid, meshX, meshX);
 }
 
 void TestMLP::onUpdate(float dt)
 {
     GraphicsContext::getCamera()->pointAt({5,5,5});
     GraphicsContext::getCamera()->setFocusPoint({5,5,5});
+    accum+=dt/2;
 
+    for(uint i=0; i<meshX*meshX; i++)
+    {
+        auto& p = meshGrid[i];
+        float x1 = mapToRange({0, 10}, {0.f, glm::pi<float>()}, p.x);
+        float x2 = mapToRange({0, 10}, {0.f, glm::pi<float>()}, p.z);
+        p.y = mapToRange({-1,1}, {0, 10}, cos(x1*x2+accum)*cos(2*x1+accum));
+    }
 
     graph3d({0,0,0}, points, 1000, false);
 }
@@ -105,6 +104,7 @@ void TestMLP::graph3d(vec3 pos, vec3 *points, size_t count, bool surface, bool s
         MeshRenderer::drawMesh(p, vec3(0.1f), sphere, {0.2f,0.2f,0.6f,1});
     }
     glDisable(GL_CULL_FACE);
+    originalMesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshX);
     MeshRenderer::drawMesh(vec3(0.f), vec3(1.f), originalMesh);
     glEnable(GL_CULL_FACE);
 

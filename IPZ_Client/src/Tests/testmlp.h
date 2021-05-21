@@ -16,7 +16,8 @@ private:
     vec3* points;
     vec3* meshGrid;
     vec4* colorData;
-    uint meshX = 100;
+    uint meshX = 50;
+    float accum = 0;
     std::shared_ptr<Mesh> originalMesh;
 };
 
