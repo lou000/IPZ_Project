@@ -17,6 +17,12 @@ MLP<inputs, size>::MLP(float learnFactor, std::function<float (float)> activatio
     m_learnFactor = learnFactor;
     m_activationFunc = activationFunc;
 
+    reset();
+}
+
+template<uint inputs, uint size>
+void MLP<inputs, size>::reset()
+{
     for(uint i=0; i<size; i++)
     {
         for(uint j=0; j<inputs+1; j++)
@@ -32,9 +38,8 @@ MLP<inputs, size>::MLP(float learnFactor, std::function<float (float)> activatio
 }
 
 template<uint inputs, uint size>
-float MLP<inputs, size>::predict(const float* in, uint inSize)
+float MLP<inputs, size>::predict(std::array<float, inputs> in)
 {
-    ASSERT(inSize/sizeof(float) == inputs);
     // First layer
     std::array<float, size> firstLayerSums;
     firstLayerSums.fill(0);
@@ -56,53 +61,39 @@ float MLP<inputs, size>::predict(const float* in, uint inSize)
 }
 
 template<uint inputs, uint size>
-uint MLP<inputs, size>::train(float* dataPoints, uint dataSize)
+void MLP<inputs, size>::train(std::array<float, inputs+1> in)
 {
-    ASSERT((dataSize/sizeof(float)) % (inputs+1) == 0);
-    uint pointCount = (dataSize/(inputs+1))/sizeof(float);
-
-    std::vector<std::pair<float, float*>> wrongOutputs;
-    for(uint i=0; i<pointCount; i++)
-    {
-        uint offset = i*(inputs+1);
-        float prediction = predict(dataPoints+offset, inputs*sizeof(float));
-        float label      = (dataPoints+offset)[inputs];
-        float diff = prediction - label;
-        if(abs(diff) > 0.001)
-            wrongOutputs.push_back({diff, dataPoints+offset});
-    }
-
-
-    auto randOut = wrongOutputs[glm::linearRand<uint>(0, (uint)wrongOutputs.size()-1)];
-    float randDiff   = randOut.first;
-    float* randInput = randOut.second;
-
-    // Recalculate and correct layers... maybe cache them?
     std::array<float, size> firstLayerSums;
     firstLayerSums.fill(0);
     for(uint n=0; n<size; n++)
     {
         auto nWeights = weightsV[n];
         for(uint i=0; i<inputs; i++)
-            firstLayerSums[n]+=randInput[i]*nWeights[i];
+            firstLayerSums[n]+=in[i]*nWeights[i];
         firstLayerSums[n]+=nWeights[inputs];
         firstLayerSums[n] = m_activationFunc(firstLayerSums[n]);
     }
+
+    float prediction = 0;
+    for(uint n=0; n<size; n++)
+        prediction += firstLayerSums[n]*weightsW[n];
+    prediction += weightsW[size];
+
+    float label      = in[inputs];
+    float diff = prediction - label;
 
     for(uint n=0; n<size; n++)
     {
         auto& nWeights = weightsV[n];
         auto s = firstLayerSums[n];
         for(uint i=0; i<inputs; i++)
-            nWeights[i]  -= m_learnFactor*randDiff*weightsW[n]*s*(1-s)*randInput[i];
-        nWeights[inputs] -= m_learnFactor*randDiff*weightsW[n]*s*(1-s);
+            nWeights[i]  -= m_learnFactor*diff*weightsW[n]*s*(1-s)*in[i];
+        nWeights[inputs] -= m_learnFactor*diff*weightsW[n]*s*(1-s);
     }
 
     for(uint n=0; n<size; n++)
-        weightsW[n] -= m_learnFactor*randDiff*firstLayerSums[n];
-    weightsW[size]   -= m_learnFactor*randDiff;
-
-    return (uint) wrongOutputs.size();
+        weightsW[n] -= m_learnFactor*diff*firstLayerSums[n];
+    weightsW[size]   -= m_learnFactor*diff;
 }
 
 
@@ -121,12 +112,12 @@ TestMLP::TestMLP()
         p.z = glm::linearRand(rangeXZ.x, rangeXZ.y);
         p.y = cos(p.x*p.z)*cos(2*p.x);
     }
-    pointsNormalized = (float*)malloc(POINT_COUNT*3*sizeof(float));
+    pointsNormalized = (vec3*)malloc(POINT_COUNT*sizeof(vec3));
     for(uint i=0; i<POINT_COUNT; i++)
     {
-        pointsNormalized[i*3+0] = mapToRange(rangeXZ, {-1,1}, points[i].x);
-        pointsNormalized[i*3+1] = mapToRange(rangeXZ, {-1,1}, points[i].z);
-        pointsNormalized[i*3+2] = points[i].y;
+        pointsNormalized[i].x = mapToRange(rangeXZ, {-1,1}, points[i].x);
+        pointsNormalized[i].z = mapToRange(rangeXZ, {-1,1}, points[i].z);
+        pointsNormalized[i].y = points[i].y;
     }
 
 
@@ -143,20 +134,31 @@ TestMLP::TestMLP()
 void TestMLP::onUpdate(float dt)
 {
     GraphicsContext::getCamera()->setFocusPoint({12.5f,5,5});
+    if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
+        trainLoopsPerAnim -= 10;
+    if(App::getKeyOnce(GLFW_KEY_KP_ADD))
+        trainLoopsPerAnim += 10;
+    if(App::getKeyOnce(GLFW_KEY_SPACE))
+        mlp.reset();
 
-    if(trainingThread.get_tasks_running() == 0)
+    float animSpeed = 1.0f;//(float)prevMs/1000;
+    if(trainingThread.get_tasks_running() == 0 && !graphMLP.animating())
     {
         graphMLP.animateTo([=](const vec2& p){
-            vec2 temp = {mapToRange(rangeXZ, {-1,1}, p.x), mapToRange(rangeXZ, {-1,1}, p.y)};
-            return mlp.predict(glm::value_ptr(temp), sizeof(vec2));
-        }, (float)prevMs/1000);
+            float x = mapToRange(rangeXZ, {-1,1}, p.x);
+            float z = mapToRange(rangeXZ, {-1,1}, p.y);
+            return mlp.predict({x, z});
+        }, animSpeed);
         trainingThread.submit([&](){
             timer t;
             t.start();
-            for(uint i=0; i<500; i++)
+            for(uint x=0; x<trainLoopsPerAnim; x++)
             {
-                mlp.train(pointsNormalized, POINT_COUNT*3*sizeof (float));
-                trainCount++;
+                for(uint i=0; i<POINT_COUNT; i++)
+                {
+                    mlp.train({pointsNormalized[i].x, pointsNormalized[i].z, pointsNormalized[i].y});
+                    trainCount++;
+                }
             }
             t.stop();
             prevMs = t.ms();

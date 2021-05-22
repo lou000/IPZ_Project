@@ -10,8 +10,9 @@ class MLP
 {
 public:
     MLP(float learnFactor, std::function<float(float)> activationFunc);
-    float predict(const float *in, uint inSize);
-    uint train(float* dataPoints, uint dataSize);
+    void reset();
+    float predict(std::array<float, inputs> in);
+    void train(std::array<float, inputs+1> in);
 
 private:
     float m_learnFactor;
@@ -30,11 +31,12 @@ public:
 
 private:
     vec3* points;
-    float* pointsNormalized;
+    vec3* pointsNormalized;
     float accum = 0;
     size_t prevMs = 1;
     uint trainCount = 0;
     thread_pool trainingThread = thread_pool(1);
+    uint trainLoopsPerAnim = 10;
 
     vec2 rangeXZ = {0.f, glm::pi<float>()};
     MLP<2, 80> mlp;
