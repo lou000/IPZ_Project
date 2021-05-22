@@ -20,7 +20,7 @@ public:
     void addRotationX(float degree);
     void addRotationY(float degree);
     void addRotationZ(float degree);
-    void setFocusPoint(vec3 point){m_focusPoint = point;}
+    void setFocusPoint(vec3 point){m_focusPoint = point; pointAt(point);}
     void pointAt(vec3 pos);
 
     vec3 getPos()          {return m_pos;}

@@ -1,31 +1,24 @@
 ﻿#pragma once
 #include "../Core/application.h"
 #include "../Core/scene.h"
+#include "../Renderer/graph.h"
+#include "thread_pool.hpp"
 #include <functional>
 
-class Graph3d
+template<uint inputs, uint size>
+class MLP
 {
 public:
-    Graph3d(vec2 rangeX, vec2 rangeY, vec2 rangeZ, float scale);
-    void setMesh(uint sizeX, uint sizeZ, bool smooth);
-    void setPoints(vec3* points, uint count);
-    void updateMesh(std::function<float(const vec2&)> func);
-    void draw(const vec3& pos);
+    MLP(float learnFactor, std::function<float(float)> activationFunc);
+    float predict(const float *in, uint inSize);
+    uint train(float* dataPoints, uint dataSize);
 
 private:
-    vec3* meshGrid = nullptr;
-    uint meshX = 0;
-    uint meshZ = 0;
-    vec3* points   = nullptr;
-    uint nPoints   = 0;
-    std::shared_ptr<Mesh> mesh;
-    std::shared_ptr<Mesh> sphere;
-    vec2 m_rangeX;
-    vec2 m_rangeY;
-    vec2 m_rangeZ;
-    float m_scale;
-    bool m_smooth;
-    void drawGrid(const vec3 &pos);
+    float m_learnFactor;
+    std::function<float(float)> m_activationFunc;
+    std::array<std::array<float, inputs+1>, size> weightsV;
+    std::array<float, size+1> weightsW;
+    thread_pool tPool = thread_pool();
 };
 
 class TestMLP : public Scene
@@ -37,10 +30,17 @@ public:
 
 private:
     vec3* points;
-    uint pointCount = 1000;
-    uint meshX = 50;
+    float* pointsNormalized;
     float accum = 0;
+    size_t prevMs = 1;
+    uint trainCount = 0;
+    thread_pool trainingThread = thread_pool(1);
+
     vec2 rangeXZ = {0.f, glm::pi<float>()};
-    Graph3d graph = Graph3d(rangeXZ, {-1, 1}, rangeXZ, 10);
+    MLP<2, 80> mlp;
+    Graph3d graphOrig = Graph3d(rangeXZ, {-1, 1}, rangeXZ, 10);
+    Graph3d graphMLP  = Graph3d(rangeXZ, {-1, 1}, rangeXZ, 10);
 };
+
+
 

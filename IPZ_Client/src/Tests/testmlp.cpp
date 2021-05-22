@@ -1,162 +1,170 @@
 ﻿#include "testmlp.h"
 #include "gtc/random.hpp"
+#define MESH_X 40
+#define POINT_COUNT 1000
+#define START_TIMED_BLOCK() \
+    timer __t;   \
+    __t.start()  \
+
+#define STOP_TIMED_BLOCK(x) \
+    __t.stop(); \
+    LOG("%s : %lld ms", x, __t.ms()) \
+
+
+template<uint inputs, uint size>
+MLP<inputs, size>::MLP(float learnFactor, std::function<float (float)> activationFunc)
+{
+    m_learnFactor = learnFactor;
+    m_activationFunc = activationFunc;
+
+    for(uint i=0; i<size; i++)
+    {
+        for(uint j=0; j<inputs+1; j++)
+        {
+            weightsV[i][j] = glm::linearRand(-0.001f, 0.001f);
+        }
+    }
+
+    for(uint j=0; j<size+1; j++)
+    {
+        weightsW[j] = glm::linearRand(-0.001f, 0.001f);
+    }
+}
+
+template<uint inputs, uint size>
+float MLP<inputs, size>::predict(const float* in, uint inSize)
+{
+    ASSERT(inSize/sizeof(float) == inputs);
+    // First layer
+    std::array<float, size> firstLayerSums;
+    firstLayerSums.fill(0);
+    for(uint n=0; n<size; n++)
+    {
+        auto nWeights = weightsV[n];
+        for(uint i=0; i<inputs; i++)
+            firstLayerSums[n]+=in[i]*nWeights[i];
+        firstLayerSums[n]+=nWeights[inputs];
+        firstLayerSums[n] = m_activationFunc(firstLayerSums[n]);
+    }
+
+    // Second layer
+    float output = 0;
+    for(uint n=0; n<size; n++)
+        output += firstLayerSums[n]*weightsW[n];
+    output += weightsW[size];
+    return output;
+}
+
+template<uint inputs, uint size>
+uint MLP<inputs, size>::train(float* dataPoints, uint dataSize)
+{
+    ASSERT((dataSize/sizeof(float)) % (inputs+1) == 0);
+    uint pointCount = (dataSize/(inputs+1))/sizeof(float);
+
+    std::vector<std::pair<float, float*>> wrongOutputs;
+    for(uint i=0; i<pointCount; i++)
+    {
+        uint offset = i*(inputs+1);
+        float prediction = predict(dataPoints+offset, inputs*sizeof(float));
+        float label      = (dataPoints+offset)[inputs];
+        float diff = prediction - label;
+        if(abs(diff) > 0.001)
+            wrongOutputs.push_back({diff, dataPoints+offset});
+    }
+
+
+    auto randOut = wrongOutputs[glm::linearRand<uint>(0, (uint)wrongOutputs.size()-1)];
+    float randDiff   = randOut.first;
+    float* randInput = randOut.second;
+
+    // Recalculate and correct layers... maybe cache them?
+    std::array<float, size> firstLayerSums;
+    firstLayerSums.fill(0);
+    for(uint n=0; n<size; n++)
+    {
+        auto nWeights = weightsV[n];
+        for(uint i=0; i<inputs; i++)
+            firstLayerSums[n]+=randInput[i]*nWeights[i];
+        firstLayerSums[n]+=nWeights[inputs];
+        firstLayerSums[n] = m_activationFunc(firstLayerSums[n]);
+    }
+
+    for(uint n=0; n<size; n++)
+    {
+        auto& nWeights = weightsV[n];
+        auto s = firstLayerSums[n];
+        for(uint i=0; i<inputs; i++)
+            nWeights[i]  -= m_learnFactor*randDiff*weightsW[n]*s*(1-s)*randInput[i];
+        nWeights[inputs] -= m_learnFactor*randDiff*weightsW[n]*s*(1-s);
+    }
+
+    for(uint n=0; n<size; n++)
+        weightsW[n] -= m_learnFactor*randDiff*firstLayerSums[n];
+    weightsW[size]   -= m_learnFactor*randDiff;
+
+    return (uint) wrongOutputs.size();
+}
+
 
 TestMLP::TestMLP()
+    : mlp(0.07f, [](float n){return 1/(1+exp(-n));})
 {
     BatchRenderer::setShader(AssetManager::getShader("batch"));
     MeshRenderer::setShader(AssetManager::getShader("mesh"));
 
-    points = (vec3*)malloc(1000*sizeof(vec3));
-    vec2 range = {0.f, glm::pi<float>()};
-    graph.setMesh(meshX, meshX, false);
-
+    points = (vec3*)malloc(POINT_COUNT*sizeof(vec3));
     // points
-    for(uint i=0; i<pointCount; i++)
+    for(uint i=0; i<POINT_COUNT; i++)
     {
         auto& p = points[i];
-        p.x = glm::linearRand(range.x, range.y);
-        p.z = glm::linearRand(range.x, range.y);
+        p.x = glm::linearRand(rangeXZ.x, rangeXZ.y);
+        p.z = glm::linearRand(rangeXZ.x, rangeXZ.y);
         p.y = cos(p.x*p.z)*cos(2*p.x);
     }
+    pointsNormalized = (float*)malloc(POINT_COUNT*3*sizeof(float));
+    for(uint i=0; i<POINT_COUNT; i++)
+    {
+        pointsNormalized[i*3+0] = mapToRange(rangeXZ, {-1,1}, points[i].x);
+        pointsNormalized[i*3+1] = mapToRange(rangeXZ, {-1,1}, points[i].z);
+        pointsNormalized[i*3+2] = points[i].y;
+    }
 
-    graph.setPoints(points, pointCount);
 
+    graphOrig.setMesh(MESH_X, MESH_X, false);
+    graphOrig.updateMesh([=](const vec2& p){
+        return cos(p.x*p.y)*cos(2*p.x);
+    });
+    graphOrig.setPoints(points, POINT_COUNT);
+
+    graphMLP.setMesh(MESH_X, MESH_X, false);
+    graphMLP.setPoints(points, POINT_COUNT);
 }
 
 void TestMLP::onUpdate(float dt)
 {
-    GraphicsContext::getCamera()->pointAt({5,5,5});
-    GraphicsContext::getCamera()->setFocusPoint({5,5,5});
-    accum+=dt/2;
+    GraphicsContext::getCamera()->setFocusPoint({12.5f,5,5});
 
-    graph.updateMesh([=](const vec2& p){
-        return cos(p.x*p.y+accum)*cos(2*p.x+accum);
-    });
-    graph.draw({0,0,0});
-
-}
-
-Graph3d::Graph3d(vec2 rangeX, vec2 rangeY, vec2 rangeZ, float scale)
-{
-    m_rangeX = rangeX;
-    m_rangeY = rangeY;
-    m_rangeZ = rangeZ;
-    m_scale  = scale;
-    sphere = MeshRenderer::createCubeSphere(5);
-}
-
-void Graph3d::setMesh(uint sizeX, uint sizeZ, bool smooth)
-{
-    meshX = sizeX;
-    meshZ = sizeZ;
-    m_smooth = smooth;
-    if(meshGrid)
-        free(meshGrid);
-
-    meshGrid = (vec3*)malloc(meshX*meshZ*sizeof(vec3));
-    float stepX = (float)10/(meshX-1);
-    float stepZ = (float)10/(meshZ-1);
-    for(uint i=0; i<meshZ; i++)
-        for(uint j=0; j<meshX; j++)
-        {
-            auto& p = meshGrid[i*meshX+j];
-            p.x = j*stepX;
-            p.z = i*stepZ;
-            p.y = 0;
-        }
-    if(m_smooth)
-        mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ);
-    else
-        mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ);
-}
-
-void Graph3d::setPoints(vec3 *_points, uint count)
-{
-    ASSERT(count);
-    nPoints = count;
-    if(points)
-        free(points);
-
-    points = (vec3*)malloc(nPoints*sizeof(vec3));
-    for(uint i=0; i<nPoints; i++)
+    if(trainingThread.get_tasks_running() == 0)
     {
-        auto p = _points[i];
-        points[i] = vec3(mapToRange(m_rangeX, {0.f, m_scale}, p.x),
-                         mapToRange(m_rangeY, {0.f, m_scale}, p.y),
-                         mapToRange(m_rangeZ, {0.f, m_scale}, p.z));
+        graphMLP.animateTo([=](const vec2& p){
+            vec2 temp = {mapToRange(rangeXZ, {-1,1}, p.x), mapToRange(rangeXZ, {-1,1}, p.y)};
+            return mlp.predict(glm::value_ptr(temp), sizeof(vec2));
+        }, (float)prevMs/1000);
+        trainingThread.submit([&](){
+            timer t;
+            t.start();
+            for(uint i=0; i<500; i++)
+            {
+                mlp.train(pointsNormalized, POINT_COUNT*3*sizeof (float));
+                trainCount++;
+            }
+            t.stop();
+            prevMs = t.ms();
+            LOG("count: %d, ms: %lld", trainCount, prevMs);
+        });
     }
-}
 
-void Graph3d::updateMesh(std::function<float(const vec2&)> func)
-{
-    for(uint i=0; i<meshX*meshX; i++)
-    {
-        auto& p = meshGrid[i];
-        float x1 = mapToRange({0, m_scale}, m_rangeX, p.x);
-        float x2 = mapToRange({0, m_scale}, m_rangeZ, p.z);
-        p.y = mapToRange({-1,1}, {0, m_scale}, func({x1, x2}));
-    }
-    if(m_smooth)
-        mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ);
-    else
-        mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ);
-}
+    graphOrig.draw({0,0,0}, dt);
+    graphMLP.draw({15,0,0}, dt);
 
-void Graph3d::draw(const vec3 &pos)
-{
-    drawGrid(pos);
-    MeshRenderer::begin();
-    if(meshGrid)
-    {
-        glDisable(GL_CULL_FACE);
-        MeshRenderer::drawMesh(pos, vec3(1.0f), mesh);
-        glEnable(GL_CULL_FACE);
-    }
-    if(points)
-        for(size_t i=0; i<nPoints; i++)
-            MeshRenderer::drawMesh(points[i], vec3(m_scale*0.01f), sphere, {0.2f,0.2f,0.6f,1});
-    MeshRenderer::end();
-}
-
-void Graph3d::drawGrid(const vec3& pos)
-{
-    BatchRenderer::begin();
-    float lWidth = m_scale * 0.01f;
-    // Draw axes
-    BatchRenderer::drawLine(pos, pos+m_scale*vec3(1, 0, 0), lWidth, {0.788, 0.820, 0.851,1});
-    BatchRenderer::drawLine(pos, pos+m_scale*vec3(0, 1, 0), lWidth, {0.788, 0.820, 0.851,1});
-    BatchRenderer::drawLine(pos, pos+m_scale*vec3(0, 0, 1), lWidth, {0.788, 0.820, 0.851,1});
-
-    // Draw planes
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.2f, 0), pos+m_scale*vec3(1, 0.2f, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.4f, 0), pos+m_scale*vec3(1, 0.4f, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.6f, 0), pos+m_scale*vec3(1, 0.6f, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.8f, 0), pos+m_scale*vec3(1, 0.8f, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.2f), pos+m_scale*vec3(1, 0, 0.2f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.4f), pos+m_scale*vec3(1, 0, 0.4f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.6f), pos+m_scale*vec3(1, 0, 0.6f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.8f), pos+m_scale*vec3(1, 0, 0.8f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.2f, 0, 0), pos+m_scale*vec3(0.2f, 1, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.4f, 0, 0), pos+m_scale*vec3(0.4f, 1, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.6f, 0, 0), pos+m_scale*vec3(0.6f, 1, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.8f, 0, 0), pos+m_scale*vec3(0.8f, 1, 0), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.2f), pos+m_scale*vec3(0, 1, 0.2f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.4f), pos+m_scale*vec3(0, 1, 0.4f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.6f), pos+m_scale*vec3(0, 1, 0.6f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0, 0.8f), pos+m_scale*vec3(0, 1, 0.8f), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.2f, 0), pos+m_scale*vec3(0, 0.2f, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.4f, 0), pos+m_scale*vec3(0, 0.4f, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.6f, 0), pos+m_scale*vec3(0, 0.6f, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0, 0.8f, 0), pos+m_scale*vec3(0, 0.8f, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.2f, 0, 0), pos+m_scale*vec3(0.2f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.4f, 0, 0), pos+m_scale*vec3(0.4f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.6f, 0, 0), pos+m_scale*vec3(0.6f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-    BatchRenderer::drawLine(pos+m_scale*vec3(0.8f, 0, 0), pos+m_scale*vec3(0.8f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::end();
 }
