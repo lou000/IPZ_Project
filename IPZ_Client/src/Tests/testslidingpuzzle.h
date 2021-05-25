@@ -8,7 +8,8 @@ class TestSlidingPuzzle : public Scene
 public:
     TestSlidingPuzzle();
     ~TestSlidingPuzzle(){/*dontcare*/};
-    void onUpdate(float dt);
+    virtual void onUpdate(float dt) override;
+    virtual void onStart() override;
 private:
     int n, size;
     float center;

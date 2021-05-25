@@ -218,6 +218,11 @@ int TestRosenblat::train(uint times) // returns number of incorrect results
     return brCount;
 }
 
+void TestRosenblat::onStart()
+{
+
+}
+
 void TestRosenblat::onUpdate(float dt)
 {
     winSize = App::getWindowSize();

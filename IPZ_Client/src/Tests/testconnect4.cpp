@@ -57,13 +57,7 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(mesh2);
     AssetManager::addAsset(mesh3);
 
-    auto winSize = App::getWindowSize();
-    camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    camera->setPosition({0, 7, 20});
-    camera->setFocusPoint({0,6,0});
-    camera->pointAt({0,6,0});
 
-    GraphicsContext::setCamera(camera);
     BatchRenderer::setShader(AssetManager::getShader("batch"));
     MeshRenderer::setShader(AssetManager::getShader("mesh"));
 
@@ -79,8 +73,18 @@ TestConnect4::TestConnect4()
 
 }
 
+void TestConnect4::onStart()
+{
+    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
+    auto camera = GraphicsContext::getCamera();
+    camera->setFov(50.f);
+    camera->setPosition({0, 7, 20});
+    camera->setFocusPoint({0,6,0});
+}
+
 void TestConnect4::onUpdate(float dt)
 {
+    auto camera = GraphicsContext::getCamera();
     auto mouseRay  = camera->getMouseRay();
     auto cameraPos = camera->getPos();
     vec3 intersection = {};

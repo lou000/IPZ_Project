@@ -8,6 +8,7 @@ class Test1 : public Scene
 public:
     Test1();
     ~Test1(){/*dontcare*/};
+    virtual void onStart() override;
     virtual void onUpdate(float dt) override;
 
 private:

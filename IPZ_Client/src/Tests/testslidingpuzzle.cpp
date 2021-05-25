@@ -5,17 +5,11 @@ TestSlidingPuzzle::TestSlidingPuzzle()
     for(int i=1; i<=35; i++)
         AssetManager::addAsset(std::make_shared<Texture>("../assets/img/numero"+std::to_string(i)+".png"));
 
-    auto winSize = App::getWindowSize();
-    auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    GraphicsContext::setCamera(camera);
     BatchRenderer::setShader(AssetManager::getShader("batch"));
 
     n = 5;
     size = n*n;
     center = (float)n/2-0.1f;
-    camera->setPosition({center, 8, 4});
-    camera->setFocusPoint({center,0,center});
-    camera->pointAt({center,0,center});
 
     puzzle = new SlidePuzzle(n, std::chrono::steady_clock::now().time_since_epoch().count(), SlidePuzzle::Manhattan);
     searcher = new informative_searcher(*puzzle, &SlidePuzzle::compare);
@@ -23,6 +17,15 @@ TestSlidingPuzzle::TestSlidingPuzzle()
     iter = solutionPath.end();
     iter--;
 
+}
+
+void TestSlidingPuzzle::onStart()
+{
+    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
+    auto camera = GraphicsContext::getCamera();
+    camera->setFov(50.f);
+    camera->setPosition({center, 8, 4});
+    camera->setFocusPoint({center,0,center});
 }
 
 void TestSlidingPuzzle::onUpdate(float dt)

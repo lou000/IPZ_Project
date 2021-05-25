@@ -8,11 +8,11 @@ class TestConnect4 : public Scene
 public:
     TestConnect4();
     ~TestConnect4(){/*dontcare*/};
-    void onUpdate(float dt);
+    virtual void onStart() override;
+    virtual void onUpdate(float dt) override;
 
 private:
     std::shared_ptr<MeshFile> mesh1, mesh2, mesh3;
-    std::shared_ptr<Camera> camera;
     float length = 11.9f;
     float top = 9.1;
     float leftSlot = -5.0f;

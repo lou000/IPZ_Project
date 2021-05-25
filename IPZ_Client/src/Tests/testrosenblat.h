@@ -14,7 +14,8 @@ class TestRosenblat : public Scene
 public:
     TestRosenblat();
     ~TestRosenblat(){/*dontcare*/};
-    void onUpdate(float dt);
+    virtual void onUpdate(float dt) override;
+    virtual void onStart() override;
 
 private:
     vec2 winSize = App::getWindowSize();

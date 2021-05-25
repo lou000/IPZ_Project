@@ -6,15 +6,21 @@ Test1::Test1()
     AssetManager::addAsset(texture);
     AssetManager::addAsset(texture2);
 
-    auto winSize = App::getWindowSize();
-    auto camera = std::make_shared<Camera>(40.f, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    GraphicsContext::setCamera(camera);
     BatchRenderer::setShader(AssetManager::getShader("batch"));
-    camera->setPosition({0,5.4,0});
+
 
     for(int i=0; i<1000; i++)
         randomPos.push_back({rndDouble(0, 6), rndDouble(0, 6)});
 
+}
+
+void Test1::onStart()
+{
+    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
+    auto camera = GraphicsContext::getCamera();
+    camera->setFov(50.f);
+    camera->setPosition({0,3.0f,0.1f});
+    camera->setFocusPoint({0,0,0});
 }
 
 void Test1::onUpdate(float dt)
