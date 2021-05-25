@@ -2,6 +2,8 @@
 #include "gtc/random.hpp"
 #define MESH_X 40
 #define POINT_COUNT 1000
+#define POINT_COUNT_NERFED 100
+#define NERFED_TEST_COUNT 30
 #define START_TIMED_BLOCK() \
     timer __t;   \
     __t.start()  \
@@ -98,13 +100,14 @@ void MLP<inputs, size>::train(std::array<float, inputs+1> in)
 
 
 TestMLP::TestMLP()
-    : mlp(0.07f, [](float n){return 1/(1+exp(-n));})
+    : mlp(       0.02f, [](float n){return 1/(1+exp(-n));}),
+      mlp_nerfed(0.02f, [](float n){return 1/(1+exp(-n));})
 {
     BatchRenderer::setShader(AssetManager::getShader("batch"));
     MeshRenderer::setShader(AssetManager::getShader("mesh"));
 
-    points = (vec3*)malloc(POINT_COUNT*sizeof(vec3));
     // points
+    points = (vec3*)malloc(POINT_COUNT*sizeof(vec3));
     for(uint i=0; i<POINT_COUNT; i++)
     {
         auto& p = points[i];
@@ -120,53 +123,156 @@ TestMLP::TestMLP()
         pointsNormalized[i].y = points[i].y;
     }
 
+    // points nerfed
+    points_nerfed = (vec3*)malloc(POINT_COUNT_NERFED*sizeof(vec3));
+    for(uint i=0; i<POINT_COUNT_NERFED; i++)
+    {
+        auto& p = points_nerfed[i];
+        p.x = glm::linearRand(rangeXZ.x, rangeXZ.y);
+        p.z = glm::linearRand(rangeXZ.x, rangeXZ.y);
+        p.y = cos(p.x*p.z)*cos(2*p.x);// + glm::linearRand(-0.2f, 0.2f);
+    }
+    pointsNormalized_nerfed = (vec3*)malloc(POINT_COUNT_NERFED*sizeof(vec3));
+    for(uint i=0; i<POINT_COUNT_NERFED; i++)
+    {
+        pointsNormalized_nerfed[i].x = mapToRange(rangeXZ, {-1,1}, points_nerfed[i].x);
+        pointsNormalized_nerfed[i].z = mapToRange(rangeXZ, {-1,1}, points_nerfed[i].z);
+        pointsNormalized_nerfed[i].y = points_nerfed[i].y;
+    }
+
 
     graphOrig.setMesh(MESH_X, MESH_X, false);
+    graphOrig.setPaletteBlend({{0.267, 0.004, 0.329, 1},{0.118, 0.624, 0.533,1},{0.992, 0.906, 0.141,1}}, 200);
     graphOrig.updateMesh([=](const vec2& p){
         return cos(p.x*p.y)*cos(2*p.x);
     });
-    graphOrig.setPoints(points, POINT_COUNT);
+    graphOrig.addPoints(points, POINT_COUNT, {0.2f,0.2f,0.6f,1});
 
     graphMLP.setMesh(MESH_X, MESH_X, false);
-    graphMLP.setPoints(points, POINT_COUNT);
+    graphMLP.addPoints(points, POINT_COUNT, {0.2f,0.2f,0.6f,1});
+
+    graphMLP_nerfed.setMesh(MESH_X, MESH_X, false);
+    graphMLP_nerfed.setPaletteBlend({{0.941, 0.906, 0.941, 1},{0.729, 0.400, 0.337,1},{0.157, 0.031, 0.176,1},{0.416, 0.545, 0.749,1},{0.929, 0.902, 0.937,1}}, 200);
+    graphMLP_nerfed.addPoints(points_nerfed, POINT_COUNT_NERFED-NERFED_TEST_COUNT, {0.2f,0.2f,0.6f,1});
+    graphMLP_nerfed.addPoints(points_nerfed+POINT_COUNT_NERFED-NERFED_TEST_COUNT, NERFED_TEST_COUNT, {1,0,0,1});
+}
+
+void TestMLP::onStart()
+{
+    GraphicsContext::setClearColor({0.184f, 0.200f, 0.329f, 1.f});
+    auto camera = GraphicsContext::getCamera();
+    camera->setFov(50.f);
+    camera->setPosition({20.f,15.f,40.f});
+    camera->setFocusPoint({20.f,5,5});
 }
 
 void TestMLP::onUpdate(float dt)
 {
-    GraphicsContext::getCamera()->setFocusPoint({12.5f,5,5});
+    accum+=dt;
     if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
         trainLoopsPerAnim -= 10;
     if(App::getKeyOnce(GLFW_KEY_KP_ADD))
         trainLoopsPerAnim += 10;
     if(App::getKeyOnce(GLFW_KEY_SPACE))
+    {
         mlp.reset();
+        mlp_nerfed.reset();
+        trainCount1 = 0;
+        trainCount2 = 0;
+    }
 
-    float animSpeed = 1.0f;//(float)prevMs/1000;
-    if(trainingThread.get_tasks_running() == 0 && !graphMLP.animating())
+    float animSpeed1 = (float)(prevMs1+1)/1000;
+    float animSpeed2 = (float)(prevMs2+1)/1000;
+
+    if(trainingThread1.get_tasks_total() == 0 && !graphMLP.animating())
     {
         graphMLP.animateTo([=](const vec2& p){
             float x = mapToRange(rangeXZ, {-1,1}, p.x);
             float z = mapToRange(rangeXZ, {-1,1}, p.y);
             return mlp.predict({x, z});
-        }, animSpeed);
-        trainingThread.submit([&](){
+        }, animSpeed1);
+
+        uint errorLearnSet = 0;
+        for(uint i=0; i<POINT_COUNT_NERFED-NERFED_TEST_COUNT; i++)
+        {
+            auto p = pointsNormalized[i];
+            float pred = mlp.predict({p.x, p.z});
+            if(abs(p.y-pred)>0.05)
+                errorLearnSet++;
+        }
+        if(accum-lastLog1 > 5.f)
+        {
+            lastLog1 = accum;
+            LOG("[MLP]  trainCount: %d, errorLearnSet: %d",
+                trainCount1, errorLearnSet);
+        }
+
+        trainingThread1.submit([&](){
             timer t;
             t.start();
             for(uint x=0; x<trainLoopsPerAnim; x++)
-            {
                 for(uint i=0; i<POINT_COUNT; i++)
                 {
                     mlp.train({pointsNormalized[i].x, pointsNormalized[i].z, pointsNormalized[i].y});
-                    trainCount++;
+                    trainCount1++;
                 }
-            }
+
             t.stop();
-            prevMs = t.ms();
-            LOG("count: %d, ms: %lld", trainCount, prevMs);
+            prevMs1 = t.ms();
         });
     }
 
-    graphOrig.draw({0,0,0}, dt);
-    graphMLP.draw({15,0,0}, dt);
+    if(trainingThread2.get_tasks_total() == 0 && !graphMLP_nerfed.animating())
+    {
+        graphMLP_nerfed.animateTo([=](const vec2& p){
+            float x = mapToRange(rangeXZ, {-1,1}, p.x);
+            float z = mapToRange(rangeXZ, {-1,1}, p.y);
+            return mlp_nerfed.predict({x, z});
+        }, animSpeed2);
+
+        uint errorLearnSet = 0;
+        for(uint i=0; i<POINT_COUNT_NERFED-NERFED_TEST_COUNT; i++)
+        {
+            auto p = pointsNormalized_nerfed[i];
+            float pred = mlp_nerfed.predict({p.x, p.z});
+            if(abs(p.y-pred)>0.05)
+                errorLearnSet++;
+        }
+        uint errorTestSet = 0;
+        for(uint i=POINT_COUNT_NERFED-NERFED_TEST_COUNT; i<POINT_COUNT_NERFED; i++)
+        {
+            auto p = pointsNormalized_nerfed[i];
+            float pred = mlp_nerfed.predict({p.x, p.z});
+            if(abs(p.y-pred)>0.05)
+                errorTestSet++;
+        }
+        if(accum-lastLog2 > 5.f)
+        {
+            lastLog2 = accum;
+            LOG("[Nerfed MLP]  trainCount: %d, errorLearnSet: %d, errorTestSet: %d",
+                trainCount2, errorLearnSet, errorTestSet);
+        }
+
+        trainingThread2.submit([&](){
+            timer t;
+            t.start();
+            for(uint x=0; x<trainLoopsPerAnim; x++)
+                for(uint i=0; i<POINT_COUNT_NERFED-NERFED_TEST_COUNT; i++)
+                {
+                    mlp_nerfed.train({pointsNormalized_nerfed[i].x,
+                                      pointsNormalized_nerfed[i].z,
+                                      pointsNormalized_nerfed[i].y});
+                    trainCount2++;
+                }
+            t.stop();
+            prevMs2 = t.ms();
+        });
+    }
+
+    graphOrig.draw(      { 0,0,0}, dt);
+    graphMLP.draw(       {15,0,0}, dt);
+    graphMLP_nerfed.draw({30,0,0}, dt);
 
 }
+
+

@@ -27,21 +27,31 @@ class TestMLP : public Scene
 public:
     TestMLP();
     ~TestMLP(){/*dontcare*/};
-    void onUpdate(float dt);
+    virtual void onStart() override;
+    virtual void onUpdate(float dt) override;
 
 private:
     vec3* points;
     vec3* pointsNormalized;
+    vec3* points_nerfed;
+    vec3* pointsNormalized_nerfed;
     float accum = 0;
-    size_t prevMs = 1;
-    uint trainCount = 0;
-    thread_pool trainingThread = thread_pool(1);
+    float lastLog1 = 0;
+    float lastLog2 = 0;
+    size_t prevMs1 = 1;
+    std::atomic<size_t> prevMs2 = 1;
+    uint trainCount1 = 0;
+    uint trainCount2 = 0;
+    thread_pool trainingThread1 = thread_pool(1);
+    thread_pool trainingThread2 = thread_pool(1);
     uint trainLoopsPerAnim = 10;
 
     vec2 rangeXZ = {0.f, glm::pi<float>()};
     MLP<2, 80> mlp;
+    MLP<2, 80> mlp_nerfed;
     Graph3d graphOrig = Graph3d(rangeXZ, {-1, 1}, rangeXZ, 10);
     Graph3d graphMLP  = Graph3d(rangeXZ, {-1, 1}, rangeXZ, 10);
+    Graph3d graphMLP_nerfed  = Graph3d(rangeXZ, {-1, 1}, rangeXZ, 10);
 };
 
 
