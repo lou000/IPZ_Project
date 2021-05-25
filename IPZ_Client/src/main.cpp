@@ -35,6 +35,7 @@ int main(void)
     Scene* test5 = new TestMLP();
 
     Scene* currentTest = test5;
+    currentTest->onStart();
 
 
     FrameBufferAttachment colorAtt;
@@ -65,23 +66,38 @@ int main(void)
             frameCount = 0;
             dtSum = 0;
         }
-        GraphicsContext::getCamera()->onUpdate(dt);
+
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
 
         if(App::getKeyOnce(GLFW_KEY_F1))
+        {
             currentTest = test1;
+            currentTest->onStart();
+        }
         if(App::getKeyOnce(GLFW_KEY_F2))
+        {
             currentTest = test2;
+            currentTest->onStart();
+        }
         if(App::getKeyOnce(GLFW_KEY_F3))
+        {
             currentTest = test3;
+            currentTest->onStart();
+        }
         if(App::getKeyOnce(GLFW_KEY_F4))
+        {
             currentTest = test4;
+            currentTest->onStart();
+        }
         if(App::getKeyOnce(GLFW_KEY_F5))
+        {
             currentTest = test5;
+            currentTest->onStart();
+        }
 
+        GraphicsContext::getCamera()->onUpdate(dt);
         currentTest->onUpdate(dt);
-
         fbo.blitToFrontBuffer();
         App::submitFrame();
     }
