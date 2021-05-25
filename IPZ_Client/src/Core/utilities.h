@@ -10,6 +10,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtx/compatibility.hpp>
 #include <gtc/type_ptr.hpp>
+#include <vector>
 #define LOGGING_ENABLED
 
 
@@ -170,7 +171,7 @@ inline GLenum textureSizedFormatToFormat(GLenum internalFormat)
     }
 }
 
-const glm::vec4 prettyColors[]=
+const std::vector<glm::vec4> prettyColors =
 {
     {0.050383, 0.029803, 0.527975, 1.0},
     {0.063536, 0.028426, 0.533124, 1.0},
