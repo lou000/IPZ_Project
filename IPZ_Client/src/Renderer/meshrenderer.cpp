@@ -51,7 +51,7 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
     int edgeVertices = (vPerEdge-2) * 12;
     int faceVertices = (vPerEdge-2)*(vPerEdge-2)*6;
     uint vCount = cornerVertices + edgeVertices + faceVertices;
-    MeshVertex* vertices = (MeshVertex*)alloca(vCount*sizeof(MeshVertex));
+    MeshVertex* vertices = (MeshVertex*)malloc(vCount*sizeof(MeshVertex));
 
     size_t v = 0;
     for(int y = 0; y<vPerEdge; y++)
@@ -86,7 +86,7 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
 
     // INDICES
     int iCount = 6*(vPerEdge-1)*(vPerEdge-1)*2*3; //six faces of (vPerEdge-1)^2 quads 2 tris per quad 3 indices per tri
-    uint16* indices = (uint16*)alloca(iCount*sizeof(uint16));
+    uint16* indices = (uint16*)malloc(iCount*sizeof(uint16));
     size_t ind = 0;
 
 
@@ -190,10 +190,13 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
         //tex coords maybe here
     }
 
-    return std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
+    auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
+    free(vertices);
+    free(indices);
+    return m;
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize, uint zSize)
+std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize, uint zSize, vec4* palette, uint pCount)
 {
     uint vCount = (xSize-1)*(zSize-1)*4; // num of quads
     uint iCount = (xSize-1)*(zSize-1)*2*3;
@@ -242,8 +245,8 @@ std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize,
             vertices[j3].position = points[i3];
 
             auto avgY = (points[i0].y+points[i1].y+points[i2].y+points[i3].y)/4;
-            int index = (int)mapToRange({0, 10}, {0, 249}, avgY);
-            auto col = prettyColors[index];
+            int index = (int)mapToRange({0, 10}, {0, pCount-1}, avgY);
+            auto col = palette[index];
 
             colorData[j0] = col;
             colorData[j1] = col;
@@ -266,7 +269,7 @@ std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize,
     return m;
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec3 *points, uint xSize, uint zSize) //left to right, top to bottom
+std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec3 *points, uint xSize, uint zSize, vec4* palette, uint pCount) //left to right, top to bottom
 {
     uint vCount = xSize*zSize;
     uint iCount = (xSize-1)*(zSize-1)*2*3;
@@ -315,8 +318,8 @@ std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec3 *points, uint xSiz
     for(uint i=0; i<xSize*zSize; i++)
     {
         vertices[i].normal = normalize(vertices[i].normal);
-        int index = (int)mapToRange({0, 10}, {0, 249}, vertices[i].position.y);
-        colorData[i] = prettyColors[index];
+        int index = (int)mapToRange({0, 10}, {0, pCount-1}, vertices[i].position.y);
+        colorData[i] = palette[index];
     }
 
     auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
