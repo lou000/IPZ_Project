@@ -196,8 +196,6 @@ void Camera::onUpdate(float dt)
 
 void Camera::onCreate()
 {
-    setPosition(vec3(0,1.2f,0.01f));
-    pointAt({0,0,0});
 }
 
 void Camera::updateViewMat()
