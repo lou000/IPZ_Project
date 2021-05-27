@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../Core/application.h"
 #include "../Core/scene.h"
+#include "../Renderer/graph.h"
 #include "thread_pool.hpp"
 
 
@@ -18,13 +19,6 @@ public:
     virtual void onStart() override;
 
 private:
-    vec2 winSize = App::getWindowSize();
-    float margin = winSize.y /10;
-    float gridSpacing = winSize.y / 10;
-    float bottom = winSize.y - margin;
-    float top    = margin;
-    float right  = winSize.x - margin;
-    float left   = margin;
 
     int nCenters = 100;
     int nPoints  = 1000;
@@ -43,6 +37,7 @@ private:
     float* features;
     float* weights;
     vec2 rangeX, rangeY;
+    Graph2d graph;
 
     void countour();
     int train(uint times);

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "meshrenderer.h"
 #include "batchrenderer.h"
+#define DEFAULT_2D_SIZE 1000
 #include <functional>
 
 class Graph3d
@@ -45,4 +46,36 @@ private:
     bool m_smooth;
 
     void drawGrid(const vec3 &pos);
+};
+
+class Graph2d
+{
+    struct Point{
+        vec2 pos;
+        vec4 color;
+    };
+    struct Line{
+        vec2 start;
+        vec2 end;
+        vec4 color;
+    };
+
+public:
+    Graph2d();
+    void setRange(vec2 rangeX, vec2 rangeY);
+    void setMesh(uint sizeX, uint sizeY, const vec4& borderColor = {1,1,1,1});
+    void addPoints(vec2* points, uint count, const vec4& color = {1,1,1,1});
+    void clearPoints();
+    void addLine(const vec2& start, const vec2& end, const vec4& color = {1,1,1,1});
+    void clearLines();
+    void updateMesh(std::function<float(const vec2&)> func, std::function<bool(float)> eval);
+    void draw(const vec2& pos, const vec2& size);
+
+private:
+    std::vector<Point> points;
+    std::vector<Line> lines;
+
+    vec2 m_rangeX = {0, DEFAULT_2D_SIZE};
+    vec2 m_rangeY = {0, DEFAULT_2D_SIZE};
+
 };

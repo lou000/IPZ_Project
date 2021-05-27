@@ -1,5 +1,6 @@
 ﻿#include "graph.h"
 
+
 Graph3d::Graph3d(vec2 rangeX, vec2 rangeY, vec2 rangeZ, float scale)
 {
     m_rangeX = rangeX;
@@ -131,7 +132,6 @@ void Graph3d::draw(const vec3 &pos, float dt)
 {
     if(m_animating)
     {
-
         if(maxAnimTime<dt)
             maxAnimTime = dt;
 
@@ -205,4 +205,103 @@ void Graph3d::drawGrid(const vec3& pos)
     BatchRenderer::drawLine(pos+m_scale*vec3(0.8f, 0, 0), pos+m_scale*vec3(0.8f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
 
     BatchRenderer::end();
+}
+
+Graph2d::Graph2d()
+{
+}
+
+void Graph2d::setRange(vec2 rangeX, vec2 rangeY)
+{
+    m_rangeX = rangeX;
+    m_rangeY = rangeY;
+}
+
+void Graph2d::addPoints(vec2 *_points, uint count, const vec4 &color)
+{
+    auto prevN = points.size();
+
+    if(points.capacity()<prevN+count)
+        points.resize(prevN+count);
+
+    for(uint i=0; i<count; i++)
+    {
+        Point p;
+        p.pos = _points[i];
+        p.color = color;
+        points.push_back(p);
+    }
+}
+
+void Graph2d::clearPoints()
+{
+    points.clear();
+}
+
+void Graph2d::addLine(const vec2 &start, const vec2 &end, const vec4 &color)
+{
+    Line l;
+    l.start = start;
+    l.end   = end;
+    l.color = color;
+    lines.push_back(l);
+}
+
+void Graph2d::clearLines()
+{
+    lines.clear();
+}
+
+void Graph2d::draw(const vec2 &pos, const vec2 &size)
+{
+    float diagonal = sqrt(size.y*size.y+size.x*size.x);
+    float margin = diagonal/20;
+    float gridSpacing = diagonal/10;
+    float lWidth = diagonal/300;
+    float bottom = pos.y + size.y - margin;
+    float top    = pos.y + margin;
+    float right  = pos.x + size.x - margin;
+    float left   = pos.x + margin;
+    vec2 topLeft     = {left,top};
+    vec2 topRight    = {right, top};
+    vec2 bottomRight = {right, bottom};
+    vec2 bottomLeft  = {left, bottom};
+
+    BatchRenderer::begin();
+
+    // Draw background
+    BatchRenderer::drawQuad(pos, size, {0.051, 0.067, 0.090, 1});
+
+    // Draw Axes
+    BatchRenderer::drawLine(topLeft, bottomLeft, lWidth, {0.788, 0.820, 0.851,1});
+    BatchRenderer::drawLine({left-lWidth/2, bottom}, bottomRight, lWidth, {0.788, 0.820, 0.851,1});
+
+    // Draw grid
+    for(float i=left+gridSpacing; i<right; i+=gridSpacing)
+        BatchRenderer::drawLine({i, bottom}, {i, top}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
+    for(float i=bottom-gridSpacing; i>top; i-=gridSpacing)
+        BatchRenderer::drawLine({left, i}, {right, i}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
+
+    // Draw points
+    for(auto p : points)
+    {
+        vec2 pos = {mapToRange(m_rangeX, {left, right}, p.pos.x),
+                    mapToRange(m_rangeY, {bottom, top}, p.pos.y)};
+        BatchRenderer::drawCircle(pos, lWidth/2, 10, p.color);
+    }
+
+    // Draw lines
+    for(auto l : lines)
+    {
+        vec2 pos1 = {mapToRange(m_rangeX, {left, right}, l.start.x),
+                     mapToRange(m_rangeY, {bottom, top}, l.start.y)};
+        vec2 pos2 = {mapToRange(m_rangeX, {left, right}, l.end.x),
+                     mapToRange(m_rangeY, {bottom, top}, l.end.y)};
+        BatchRenderer::drawLine(pos1, pos2, lWidth/2, l.color);
+    }
+
+
+    BatchRenderer::end();
+
+
 }

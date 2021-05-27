@@ -13,6 +13,8 @@ TestRosenblat::TestRosenblat()
 
 
     // random points
+    std::vector<vec2> pointsDrawIn;
+    std::vector<vec2> pointsDrawOut;
     points = (Point*)malloc(nPoints * sizeof(Point));
     for(int i=0; i<nPoints; i++)
     {
@@ -20,13 +22,24 @@ TestRosenblat::TestRosenblat()
         p.pos.x = glm::linearRand(rangeX.x, rangeX.y);
         p.pos.y = glm::linearRand(rangeY.x, rangeY.y);
         if(abs(sin(p.pos.x)) > abs(p.pos.y))
+        {
             p.val = -1;
+            pointsDrawIn.push_back(p.pos);
+        }
         else
+        {
             p.val =  1;
+            pointsDrawOut.push_back(p.pos);
+        }
+
+        // normalize
         p.pos.x = mapToRange(rangeX, {-1,1}, p.pos.x);
         p.pos.y = mapToRange(rangeY, {-1,1}, p.pos.y);
         points[i] = p;
     }
+
+    graph.addPoints(pointsDrawIn.data(),  (uint)pointsDrawIn.size(),  vec4(1.000, 0.502, 0.529, 1));
+    graph.addPoints(pointsDrawOut.data(), (uint)pointsDrawOut.size(), vec4(0.529, 0.682, 1.000, 1));
 
 
     // random centers
@@ -60,6 +73,7 @@ TestRosenblat::TestRosenblat()
             p.val = 0;
             meshGrid[i*meshX+j] = p;
         }
+    graph.setRange(rangeX, rangeY);
 }
 
 float TestRosenblat::calcFeature(vec2 point, vec2 center, float fi)
@@ -104,9 +118,10 @@ void TestRosenblat::countour()
 
 
     // very simple marching sqares solution to draw the outline
-    vec2 offset = {mapToRange({0,2}, {0, winSize.x-margin*2}, meshStep),
-                   mapToRange({0,2}, {0, winSize.y-margin*2}, meshStep)};
-    float lwidth = 2;
+    auto len = length(rangeY);
+    vec2 offset = {mapToRange({0,2}, rangeX, meshStep),
+                   meshStep};
+
     vec4 color = {0.629, 1.000, 0.688, 1};
     for(int i=0; i<meshX-1; i++)
     {
@@ -119,10 +134,10 @@ void TestRosenblat::countour()
             auto cell3 = meshGrid[i*meshX+j];
 
             // positions of sqaure vertices
-            vec2 p0 = {left+offset.x*j,     top+offset.y*(i+1)};
-            vec2 p1 = {left+offset.x*(j+1), top+offset.y*(i+1)};
-            vec2 p2 = {left+offset.x*(j+1), top+offset.y*i};
-            vec2 p3 = {left+offset.x*j,     top+offset.y*i};
+            vec2 p0 = {rangeX.x+offset.x*j,     rangeY.x+offset.y*(i+1)};
+            vec2 p1 = {rangeX.x+offset.x*(j+1), rangeY.x+offset.y*(i+1)};
+            vec2 p2 = {rangeX.x+offset.x*(j+1), rangeY.x+offset.y*i};
+            vec2 p3 = {rangeX.x+offset.x*j,     rangeY.x+offset.y*i};
 
             // points between vertices where value should be 0
             vec2 q0 = lerp(p0, p1, abs(cell0.val)/(abs(cell0.val)+abs(cell1.val)));
@@ -139,35 +154,35 @@ void TestRosenblat::countour()
             case 0:
                 break;
             case 1:
-                BatchRenderer::drawLine(q0, q3, lwidth, color);break;
+                graph.addLine(q0, q3, color);break;
             case 2:
-                BatchRenderer::drawLine(q0, q1, lwidth, color);break;
+                graph.addLine(q0, q1, color);break;
             case 3:
-                BatchRenderer::drawLine(q1, q3, lwidth, color);break;
+                graph.addLine(q1, q3, color);break;
             case 4:
-                BatchRenderer::drawLine(q1, q2, lwidth, color);break;
+                graph.addLine(q1, q2, color);break;
             case 5:
-                BatchRenderer::drawLine(q0, q1, lwidth, color);break;
-                BatchRenderer::drawLine(q2, q3, lwidth, color);break;
+                graph.addLine(q0, q1, color);break;
+                graph.addLine(q2, q3, color);break;
             case 6:
-                BatchRenderer::drawLine(q0, q2, lwidth, color);break;
+                graph.addLine(q0, q2, color);break;
             case 7:
-                BatchRenderer::drawLine(q2, q3, lwidth, color);break;
+                graph.addLine(q2, q3, color);break;
             case 8:
-                BatchRenderer::drawLine(q2, q3, lwidth, color);break;
+                graph.addLine(q2, q3, color);break;
             case 9:
-                BatchRenderer::drawLine(q0, q2, lwidth, color);break;
+                graph.addLine(q0, q2, color);break;
             case 10:
-                BatchRenderer::drawLine(q1, q2, lwidth, color);break;
-                BatchRenderer::drawLine(q0, q3, lwidth, color);break;
+                graph.addLine(q1, q2, color);break;
+                graph.addLine(q0, q3, color);break;
             case 11:
-                BatchRenderer::drawLine(q1, q2, lwidth, color);break;
+                graph.addLine(q1, q2, color);break;
             case 12:
-                BatchRenderer::drawLine(q1, q3, lwidth, color);break;
+                graph.addLine(q1, q3, color);break;
             case 13:
-                BatchRenderer::drawLine(q0, q1, lwidth, color);break;
+                graph.addLine(q0, q1, color);break;
             case 14:
-                BatchRenderer::drawLine(q0, q3, lwidth, color);break;
+                graph.addLine(q0, q3, color);break;
             case 15:
                 break;
             }
@@ -225,50 +240,7 @@ void TestRosenblat::onStart()
 
 void TestRosenblat::onUpdate(float dt)
 {
-    winSize = App::getWindowSize();
-    margin = winSize.y /10;
-    gridSpacing = winSize.y / 10;
-    bottom = winSize.y - margin;
-    top    = margin;
-    right  = winSize.x - margin;
-    left   = margin;
-    vec2 topLeft     = {left,top};
-    vec2 topRight    = {right, top};
-    vec2 bottomRight = {right, bottom};
-    vec2 bottomLeft  = {left, bottom};
-
-
-    BatchRenderer::begin();
-    // Draw background
-    BatchRenderer::drawQuad({0,0}, winSize, {0.051, 0.067, 0.090, 1});
-
-    // Draw Axes
-    BatchRenderer::drawLine(topLeft, bottomLeft, 5.f, {0.788, 0.820, 0.851,1});
-    BatchRenderer::drawLine({left-2.5, bottom}, bottomRight, 5.f, {0.788, 0.820, 0.851,1});
-
-    // Draw grid
-    for(float i=left+gridSpacing; i<right; i+=gridSpacing)
-        BatchRenderer::drawLine({i, bottom}, {i, top}, 2.f, {0.788, 0.820, 0.851, 0.5});
-    for(float i=bottom-gridSpacing; i>top; i-=gridSpacing)
-        BatchRenderer::drawLine({left, i}, {right, i}, 2.f, {0.788, 0.820, 0.851, 0.5});
-
-    // Draw points
-    for(int i=0; i<nPoints; i++)
-    {
-        auto p = points[i];
-        vec2 pos = {mapToRange({-1,1}, {left, right}, p.pos.x),
-                    mapToRange({-1,1}, {top, bottom}, p.pos.y)};
-        vec4 color = points[i].val == -1 ? vec4(1.000, 0.502, 0.529, 1) : vec4(0.529, 0.682, 1.000, 1);
-        BatchRenderer::drawCircle(pos, 3, 10, color);
-    }
-
-//    // Draw centers
-//    for(auto c : centers)
-//    {
-//        vec2 pos = {mapToRange({-1,1}, {left, right}, c.x),
-//                    mapToRange({-1,1}, {bottom, top}, c.y)};
-//        BatchRenderer::drawCircle(pos, 8, 10, {1, 1.000, 0.288, 1});
-//    }
+    auto winSize = App::getWindowSize();
 
     // train
     if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
@@ -290,5 +262,6 @@ void TestRosenblat::onUpdate(float dt)
     // countour slice of hyperspace
     countour();
 
-    BatchRenderer::end();
+    graph.draw({0, 0}, winSize);
+    graph.clearLines();
 }
