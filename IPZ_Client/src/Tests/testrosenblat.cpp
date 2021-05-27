@@ -117,8 +117,7 @@ void TestRosenblat::countour()
     tPool.wait_for_tasks();
 
 
-    // very simple marching sqares solution to draw the outline
-    auto len = length(rangeY);
+    // very simple marching sqares solution to draw the outline;
     vec2 offset = {mapToRange({0,2}, rangeX, meshStep),
                    meshStep};
 
