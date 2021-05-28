@@ -5,6 +5,7 @@
 #include "Tests/testconnect4.h"
 #include "Tests/testrosenblat.h"
 #include "Tests/testmlp.h"
+#include "Tests/testga.h"
 
 int main(void)
 {
@@ -33,8 +34,9 @@ int main(void)
     Scene* test3 = new TestConnect4();
     Scene* test4 = new TestRosenblat();
     Scene* test5 = new TestMLP();
+    Scene* test6 = new TestGA();
 
-    Scene* currentTest = test5;
+    Scene* currentTest = test6;
     currentTest->onStart();
 
 
@@ -93,6 +95,11 @@ int main(void)
         if(App::getKeyOnce(GLFW_KEY_F5))
         {
             currentTest = test5;
+            currentTest->onStart();
+        }
+        if(App::getKeyOnce(GLFW_KEY_F6))
+        {
+            currentTest = test6;
             currentTest->onStart();
         }
 

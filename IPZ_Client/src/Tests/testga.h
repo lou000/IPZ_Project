@@ -6,30 +6,42 @@
 #include <vector>
 #include <functional>
 
+template<typename T>
 class GA
 {
 public:
-    GA(uint popCount, uint genCount, std::function<float(uint*, uint)> fitnessFunc);
+    ~GA();
+    GA(uint popCount, uint geneCount, float mutateChance, float crossChance);
 
-    //                                     genes genCount
-    void initPopulation(std::function<void(uint*, uint)> initFunc);
+    //                                     genes geneCount
+    void initPopulation(std::function<void(T*, uint)> initFunc);
 
-    //                      selIndex pop popCount genCount
-    void select(std::function<uint(uint*, uint, uint)> selectFunc);
+    //                     selIndex fitness popCount
+    void select(std::function<uint(float*, uint)> selectFunc);
 
-    //                            genes1 genes2 genCount
-    void cross(std::function<void(uint*, uint*, uint)> crossFunc);
+    //                            genes1 genes2 geneCount
+    void cross(std::function<void(T*, T*, uint)> crossFunc);
 
-    //                             genes  genCount
-    void mutate(std::function<void(uint*, uint)> mutateFunc);
+    //                             genes  geneCount
+    void mutate(std::function<void(T*, uint)> mutateFunc);
+
+    //                          fitness genes geneCount
+    void evaluate(std::function<float(T*, uint)> fitnessFunc);
+
+    std::pair<T*, float> best();
+
+    float avg(){return m_avgScore;}
 
 private:
-    uint*  m_population;
+    T*  m_population;
     float* m_fitnessScores;
+    float* m_scoresNormalized;
     uint   m_popCount;
-    uint   m_genCount;
+    uint   m_geneCount;
+    float  m_avgScore;
 
-
+    float m_mutateChance;
+    float m_crossChance;
 };
 
 class TestGA : public Scene
@@ -39,4 +51,26 @@ public:
     ~TestGA(){/*dontcare*/};
     virtual void onStart() override;
     virtual void onUpdate(float dt) override;
+
+private:
+    GA<uint>* ga;
+    vec2* cities;
+    uint* indexes;
+    std::function<float(uint*, uint)> fitFunc;
+
+
+    float timePassed = 0;
+    float prevLog = 0;
+    float bestScore = -std::numeric_limits<float>::infinity();
+
+    vec2 prevAvg         = {0,0};
+    vec2 prevBestGen     = {0,0};
+    vec2 prevBestOverall = {0,0};
+
+
+    Graph2d allTimeBest;
+    Graph2d currentBest;
+    Graph2d avgPopScore;
+    Graph2d bestPerGen;
+    Graph2d bestOverall;
 };
