@@ -63,6 +63,8 @@ class Graph2d
 public:
     Graph2d();
     void setRange(vec2 rangeX, vec2 rangeY);
+    void setPointScale(float size){m_pointSizeF = size;}
+    void setLineScale(float width){m_lineWidthF = width;}
     void setMesh(uint sizeX, uint sizeY, const vec4& borderColor = {1,1,1,1});
     void addPoints(vec2* points, uint count, const vec4& color = {1,1,1,1});
     void clearPoints();
@@ -77,5 +79,8 @@ private:
 
     vec2 m_rangeX = {0, DEFAULT_2D_SIZE};
     vec2 m_rangeY = {0, DEFAULT_2D_SIZE};
+
+    float m_pointSizeF = 1;
+    float m_lineWidthF = 1;
 
 };

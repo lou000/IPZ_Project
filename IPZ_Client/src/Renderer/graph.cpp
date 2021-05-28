@@ -282,13 +282,6 @@ void Graph2d::draw(const vec2 &pos, const vec2 &size)
     for(float i=bottom-gridSpacing; i>top; i-=gridSpacing)
         BatchRenderer::drawLine({left, i}, {right, i}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
 
-    // Draw points
-    for(auto p : points)
-    {
-        vec2 pos = {mapToRange(m_rangeX, {left, right}, p.pos.x),
-                    mapToRange(m_rangeY, {bottom, top}, p.pos.y)};
-        BatchRenderer::drawCircle(pos, lWidth/2, 10, p.color);
-    }
 
     // Draw lines
     for(auto l : lines)
@@ -297,7 +290,15 @@ void Graph2d::draw(const vec2 &pos, const vec2 &size)
                      mapToRange(m_rangeY, {bottom, top}, l.start.y)};
         vec2 pos2 = {mapToRange(m_rangeX, {left, right}, l.end.x),
                      mapToRange(m_rangeY, {bottom, top}, l.end.y)};
-        BatchRenderer::drawLine(pos1, pos2, lWidth/2, l.color);
+        BatchRenderer::drawLine(pos1, pos2, lWidth/2*m_lineWidthF, l.color);
+    }
+
+    // Draw points
+    for(auto p : points)
+    {
+        vec2 pos = {mapToRange(m_rangeX, {left, right}, p.pos.x),
+                    mapToRange(m_rangeY, {bottom, top}, p.pos.y)};
+        BatchRenderer::drawCircle(pos, lWidth/2*m_pointSizeF, 10, p.color);
     }
 
 
