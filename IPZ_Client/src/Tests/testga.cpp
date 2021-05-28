@@ -1,8 +1,8 @@
 ﻿#include "testga.h"
 #include <map>
 #define CITIES_COUNT 30
-#define POPS_PER_LOOP 100
-#define MAX_TIME 100
+#define POPS_PER_LOOP 1
+#define MAX_TIME 10
 
 
 template<typename T>
@@ -51,7 +51,7 @@ void GA<T>::cross(std::function<void (T*, T*, uint)> crossFunc)
     for(uint p=0; p<m_popCount-1; p+=2)
     {
         float rand = glm::linearRand(0.f, 1.f);
-        if(rand>=m_crossChance)
+        if(rand<=m_crossChance)
             crossFunc(m_population+(p*m_geneCount), m_population+((p+1)*m_geneCount), m_geneCount);
     }
 }
@@ -62,7 +62,7 @@ void GA<T>::mutate(std::function<void (T *, uint)> mutateFunc)
     for(uint p=0; p<m_popCount; p++)
     {
         float rand = glm::linearRand(0.f, 1.f);
-        if(rand>=m_mutateChance)
+        if(rand<=m_mutateChance)
             mutateFunc(m_population+(p*m_geneCount), m_geneCount);
     }
 }
@@ -103,7 +103,7 @@ std::pair<T*, float> GA<T>::best()
 
 TestGA::TestGA()
 {
-    ga = new GA<uint>(200, CITIES_COUNT, 0.1f, 0.5f);
+    ga = new GA<uint>(200, CITIES_COUNT, 0.1f, 0.8f);
     cities = (vec2*) malloc(CITIES_COUNT*sizeof(vec2));
     indexes = (uint*) malloc(CITIES_COUNT*sizeof(uint));
 
@@ -157,6 +157,13 @@ void PMX(uint* x1, uint* x2, uint geneCount)
 {
     uint cross1 = glm::linearRand((uint)1, geneCount-3);
     uint cross2 = glm::linearRand(cross1,  geneCount-2);
+//    cross1 = 2;
+//    cross2 = 4;
+//    x1[0]=5;x1[1]=8;x1[2]=2;x1[3]=1;
+//    x1[4]=3;x1[5]=7;x1[6]=6;x1[7]=4;
+
+//    x2[0]=7;x2[1]=8;x2[2]=4;x2[3]=6;
+//    x2[4]=2;x2[5]=5;x2[6]=3;x2[7]=1;
 
     int* desc1 = (int*)alloca(geneCount*sizeof(int));
     int* desc2 = (int*)alloca(geneCount*sizeof(int));
@@ -218,10 +225,153 @@ void PMX(uint* x1, uint* x2, uint geneCount)
     memcpy(x2, desc2, geneCount*sizeof(uint));
 }
 
-void inverseMut(uint* genes, uint geneCount)
+void OX(uint* x1, uint* x2, uint geneCount)
 {
     uint cross1 = glm::linearRand((uint)1, geneCount-3);
     uint cross2 = glm::linearRand(cross1,  geneCount-2);
+
+//    cross1 = 2;
+//    cross2 = 4;
+//    x1[0]=5;x1[1]=8;x1[2]=2;x1[3]=1;
+//    x1[4]=3;x1[5]=7;x1[6]=6;x1[7]=4;
+
+//    x2[0]=7;x2[1]=8;x2[2]=4;x2[3]=6;
+//    x2[4]=2;x2[5]=5;x2[6]=3;x2[7]=1;
+
+    int* desc1 = (int*)alloca(geneCount*sizeof(int));
+    int* desc2 = (int*)alloca(geneCount*sizeof(int));
+    memset(desc1, -1, geneCount*sizeof(int));
+    memset(desc2, -1, geneCount*sizeof(int));
+
+    int* ex1 = (int*)alloca(geneCount*sizeof(int));
+    int* ex2 = (int*)alloca(geneCount*sizeof(int));
+
+    // middle
+    for(uint i = cross1; i<cross2+1; i++)
+    {
+        desc1[i] = x2[i];
+        desc2[i] = x1[i];
+    }
+
+    //copy in specific order
+    for(uint i = 0; i<geneCount; i++)
+    {
+        ex1[i] = x1[(cross2+1+i)%geneCount];
+        ex2[i] = x2[(cross2+1+i)%geneCount];
+    }
+
+    // copy to descendant without repeats
+    for(uint i = 0, k=0; i<geneCount; i++)
+    {
+        bool skip = false;
+        int g = ex1[(i+cross2+1)%geneCount];
+        for(uint j=0; j<geneCount; j++)
+            if(desc1[j] == g)
+            {
+                skip = true;
+                break;
+            }
+        if(!skip)
+        {
+            if(k == cross1)
+                k = cross2+1;
+            desc1[k++] = g;
+        }
+    }
+
+    // copy to descendant without repeats
+    for(uint i = 0, k=0; i<geneCount; i++)
+    {
+        bool skip = false;
+        int g = ex2[(i+cross2+1)%geneCount];
+        for(uint j=0; j<geneCount; j++)
+            if(desc2[j] == g)
+            {
+                skip = true;
+                break;
+            }
+        if(!skip)
+        {
+            if(k == cross1)
+                k = cross2+1;
+            desc2[k++] = g;
+        }
+    }
+
+    memcpy(x1, desc1, geneCount*sizeof(uint));
+    memcpy(x2, desc2, geneCount*sizeof(uint));
+}
+
+void CX(uint* x1, uint* x2, uint geneCount)
+{
+    uint start = glm::linearRand((uint)0, geneCount-1);
+    uint first = glm::linearRand<uint>(0, 1);
+    uint* firstX;
+    uint* secondX;
+    if(first)
+    {
+        firstX  = x1;
+        secondX = x2;
+    }
+    else
+    {
+        firstX  = x2;
+        secondX = x1;
+    }
+    int* desc1 = (int*)alloca(geneCount*sizeof(int));
+    int* desc2 = (int*)alloca(geneCount*sizeof(int));
+    memset(desc1, -1, geneCount*sizeof(int));
+    memset(desc2, -1, geneCount*sizeof(int));
+
+    uint place = start;
+    uint g = firstX[place];
+    desc1[place] = g;
+
+    bool bail = false;
+    while(!bail)
+    {
+       g = secondX[place];
+       for(uint i=0; i<geneCount; i++)
+           if(desc1[i] == (int)g)
+               bail = true;
+       for(uint i=0; i<geneCount; i++)
+           if(firstX[i] == g)
+               place = i;
+       desc1[place] = g;
+    }
+    for(uint i=0; i<geneCount; i++)
+        if(desc1[i] == -1)
+            desc1[i] = secondX[i];
+
+
+    place = start;
+    g = secondX[place];
+    desc2[place] = g;
+
+    bail = false;
+    while(!bail)
+    {
+       g = firstX[place];
+       for(uint i=0; i<geneCount; i++)
+           if(desc2[i] == (int)g)
+               bail = true;
+       for(uint i=0; i<geneCount; i++)
+           if(secondX[i] == g)
+               place = i;
+       desc2[place] = g;
+    }
+    for(uint i=0; i<geneCount; i++)
+        if(desc2[i] == -1)
+            desc2[i] = firstX[i];
+
+    memcpy(x1, desc1, geneCount*sizeof(uint));
+    memcpy(x2, desc2, geneCount*sizeof(uint));
+}
+
+void inverseMut(uint* genes, uint geneCount)
+{
+    uint cross1 = glm::linearRand((uint)0, geneCount-2);
+    uint cross2 = glm::linearRand(cross1,  geneCount-1);
 
     while(cross1<cross2)
     {
@@ -242,10 +392,23 @@ void TestGA::onStart()
     };
     ga->initPopulation(initFunc);
     ga->evaluate(fitFunc);
+    avgPopScore.clearLines();
+    bestPerGen .clearLines();
+    bestOverall.clearLines();
+    timePassed = 0;
+    prevLog = 0;
+    bestScore = -std::numeric_limits<float>::infinity();
+
+    prevAvg         = {0,0};
+    prevBestGen     = {0,0};
+    prevBestOverall = {0,0};
 }
 void TestGA::onUpdate(float dt)
 {
     timePassed+=dt;
+
+    if(App::getKeyOnce(GLFW_KEY_SPACE))
+        onStart();
 
     auto best = ga->best();
     if(timePassed<MAX_TIME)
@@ -253,7 +416,7 @@ void TestGA::onUpdate(float dt)
         for(uint i=0; i<POPS_PER_LOOP; i++)
         {
             ga->select(selectRulette);
-            ga->cross(PMX);
+            ga->cross(CX);
             ga->mutate(inverseMut);
             ga->evaluate(fitFunc);
 
@@ -261,12 +424,12 @@ void TestGA::onUpdate(float dt)
 
             if(best.second>bestScore)
             {
-                LOG("bestScore: %f", bestScore);
+                LOG("bestDistance: %f", 1/bestScore);
                 bestScore = best.second;
                 memcpy(indexes, best.first, CITIES_COUNT*sizeof(uint));
             }
         }
-        if(timePassed>prevLog+0.1f)
+        if(timePassed>prevLog)
         {
             prevLog = timePassed;
             avgPopScore.addLine(prevAvg,         {timePassed, ga->avg()},   {0.969, 0.647, 0.627, 1});

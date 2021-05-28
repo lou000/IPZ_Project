@@ -146,7 +146,6 @@ TestMLP::TestMLP()
     graphOrig.updateMesh([=](const vec2& p){
         return cos(p.x*p.y)*cos(2*p.x);
     });
-    graphOrig.addPoints(points, POINT_COUNT, {0.2f,0.2f,0.6f,1});
 
     graphMLP.setMesh(MESH_X, MESH_X, false);
     graphMLP.addPoints(points, POINT_COUNT, {0.2f,0.2f,0.6f,1});
