@@ -10,6 +10,7 @@
 #include <gtc/matrix_transform.hpp>
 #include <gtx/compatibility.hpp>
 #include <gtc/type_ptr.hpp>
+#include "gtc/random.hpp"
 #include <vector>
 #define LOGGING_ENABLED
 
@@ -95,10 +96,22 @@ inline void rndSeed(uint32_t s)
     ___seed = s;
 }
 
-template<typename tVal>
-inline tVal mapToRange(glm::vec<2,tVal> startRange, glm::vec<2,tVal> finalRange, tVal value)
+template<typename T>
+inline T mapToRange(glm::vec<2,T> startRange, glm::vec<2,T> finalRange, T value)
 {
     return (value-startRange.x)/(startRange.y-startRange.x)*(finalRange.y-finalRange.x)+finalRange.x;
+}
+
+template<typename T>
+inline void arrayShuffle(T* array, size_t count)
+{
+    for(size_t i=0; i<count-1; i++)
+    {
+        T temp = array[i];
+        size_t rand = glm::linearRand(i, count-1);
+        array[i] = array[rand];
+        array[rand] = temp;
+    }
 }
 
 inline GLenum textureSizedFormatToFormat(GLenum internalFormat)
