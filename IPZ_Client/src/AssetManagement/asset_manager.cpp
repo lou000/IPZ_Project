@@ -5,13 +5,13 @@
 void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
 {
     fileAssets.insert({asset->path, asset});
-    auto dir =  std::make_shared<Dir>();
+    auto dir = std::make_shared<Dir>();
     auto p = asset->path;
     dir->path = p.remove_filename();
     auto r = dirs.insert({dir->path, dir});
 
     //If directory doesnt exist add it to map
-    if(r.second)
+    if (r.second)
     {
         dir->assets.insert({asset->path, asset});
         addDirWatch(dir);
@@ -23,11 +23,9 @@ void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
     }
 }
 
-std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path& path)
+std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path &path)
 {
-    if(fileAssets.find(path) == fileAssets.end())
-    {
-        WARN("AssetManager: There is no asset named %s.", path.string().c_str());
+    if (fileAssets.find(path) == fileAssets.end())
         return nullptr;
     }
     else
@@ -36,30 +34,92 @@ std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path& pat
 
 void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
 {
-    //TODO: DAAAAAAAWIDDD dla Ciebie.
-    // usunąć asset z listy "fileAssets" i z listy "assets" w dir
-    // jezeli to byl jedyny asset w dir->assets to usunac dir
-    // jezeli to byl shaderFile to odmowic,
-    // usuwamy shaderFile usuwając shader nie osobno
+    auto assetIt = fileAssets.find(assetPath);
+    std::shared_ptr<Asset> asset = nullptr;
+
+    if (assetIt != fileAssets.end())
+    {
+        asset = assetIt->second;
+        if (asset->assetType == shaderFile)
+        {
+            WARN("Could not remove Asset:ShaderFile. Remove Shader first\n");
+            return;
+        }
+        else
+            fileAssets.erase(assetIt);
+    }
+    else
+        std::cout << "Asset not found.\n";
+
+    auto dirPath = asset->path.remove_filename();
+
+    auto dirIt = dirs.find(dirPath);
+    if (dirIt != dirs.end())
+    {
+        auto &dirAssets = dirIt->second->assets;
+        assetIt = dirAssets.find(assetPath);
+
+        if (assetIt != dirAssets.end())
+        {
+            if (asset->assetType == shaderFile)
+                WARN("Could not remove Asset:ShaderFile. Remove Shader first\n");
+            else
+            {
+                dirAssets.erase(assetIt);
+                if (dirAssets.empty())
+                    dirs.erase(dirIt);
+            }
+        }
+    }
 }
 
 void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
 {
     shaders.insert({shader->name, shader});
-    for(auto& file : shader->files)
+    for (auto &file : shader->files)
         x_addAsset(file);
 }
 
 void AssetManager::x_removeShader(int id)
 {
-    //TODO: DAAAAAAAWIDDD dla Ciebie.
-    // tutaj trzeba usunac shader, i zrobic _removeAsset na wszystkich
-    // shaderFile z nim powiązanych
+    for (auto &shaderIt : shaders)
+    {
+        auto shader = shaderIt.second;
+        if (shader->id() == id)
+        {
+            auto shaderFilesVector = shader->files;
+            for (std::shared_ptr<Asset> sf : shaderFilesVector)
+            {
+                auto shaderFilePath = sf->path;
+                fileAssets.erase(shaderFilePath);
+                auto dirPath = shaderFilePath.remove_filename();
+                auto dir = dirs.find(dirPath);
+
+                if (dir != dirs.end())
+                {
+                    auto &mapAssets = dir->second->assets;
+                    auto asset = mapAssets.find(sf->path);
+
+                    if (asset != mapAssets.end())
+                        mapAssets.erase(asset->first);
+
+                    if (mapAssets.empty())
+                    {
+                        dirs.erase(dir);
+                        break;
+                    }
+                }
+            }
+            shaderFilesVector.clear();
+            shaders.erase(shaderIt.first);
+            break;
+        }
+    }
 }
 
 std::shared_ptr<Shader> AssetManager::x_getShader(const std::string &name)
 {
-    if(shaders.find(name) == shaders.end())
+    if (shaders.find(name) == shaders.end())
         return nullptr;
     else
         return shaders.at(name);
@@ -69,15 +129,15 @@ void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
 {
 
     auto pathStr = dir->path.native();
-    const WCHAR* dirPath = pathStr.c_str();
+    const WCHAR *dirPath = pathStr.c_str();
 
     dir->handle = CreateFileW(
         dirPath,
         FILE_LIST_DIRECTORY,
-        FILE_SHARE_READ/*|FILE_SHARE_DELETE|*/|FILE_SHARE_WRITE,
+        FILE_SHARE_READ /*|FILE_SHARE_DELETE|*/ | FILE_SHARE_WRITE,
         NULL,
         OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED ,
+        FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
         NULL);
 
     //the buffer may overflow we should handle this, windows is providing us with info about this
@@ -86,23 +146,22 @@ void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
     dir->overlapped.hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 
     auto ret = ReadDirectoryChangesW(
-             dir->handle,
-             &dir->buffer[dir->bufferIndex],
-             sizeof(dir->buffer[dir->bufferIndex]),
-             FALSE,
-             FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
-             NULL,
-             &dir->overlapped,
-             NULL);
-    if(!ret)
+        dir->handle,
+        &dir->buffer[dir->bufferIndex],
+        sizeof(dir->buffer[dir->bufferIndex]),
+        FALSE,
+        FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME,
+        NULL,
+        &dir->overlapped,
+        NULL);
+    if (!ret)
         WARN("ReadDirectoryChangesW failed with %ld", GetLastError());
-
 }
 
 void AssetManager::x_checkForChanges()
 {
     // TODO: error logging
-    for(auto& [path, dir] : dirs)
+    for (auto &[path, dir] : dirs)
     {
         if (!dir->overlapped.hEvent)
             continue;
@@ -127,17 +186,18 @@ void AssetManager::x_checkForChanges()
             &dir->overlapped,
             NULL);
 
-        while(true) {
+        while (true)
+        {
             std::wstring filename(pFileNotify->FileName, pFileNotify->FileNameLength / sizeof(WCHAR));
             auto fullPath = dir->path;
             fullPath.replace_filename(filename);
 
-            if(dir->assets.count(fullPath) != 0)
+            if (dir->assets.count(fullPath) != 0)
             {
                 auto asset = dir->assets[fullPath];
-                if(asset->reloadScheduled != true)
+                if (asset->reloadScheduled != true)
                 {
-                    if(timeFirstChange == 0)
+                    if (timeFirstChange == 0)
                         timeFirstChange = std::clock();
                     asset->reloadScheduled = true;
                     LOG("Asset '%s' found and marked for reload", fullPath.string().c_str());
@@ -154,8 +214,8 @@ void AssetManager::x_checkForChanges()
 void AssetManager::x_tryReloadAssets()
 {
     // Let the app thats making changes some time to process the file
-    double msPassed = (std::clock() - timeFirstChange)/(double)(CLOCKS_PER_SEC / 1000);
-    if(timeFirstChange==0 || msPassed<500)
+    double msPassed = (std::clock() - timeFirstChange) / (double)(CLOCKS_PER_SEC / 1000);
+    if (timeFirstChange == 0 || msPassed < 500)
         return;
     else
         timeFirstChange = 0;
@@ -163,26 +223,22 @@ void AssetManager::x_tryReloadAssets()
     // Just in case someone changed multiple shader files,
     // this set below is for uniqueness.
     std::unordered_set<std::shared_ptr<Shader>> shadersToReload;
-    for(auto& asset : fileAssets)
+    for (auto &asset : fileAssets)
     {
-        if(asset.second->reloadScheduled)
+        if (asset.second->reloadScheduled)
         {
-            if(asset.second->doReload())
-            {
-                LOG("Asset %s reloaded.", asset.second->path.string().c_str());
-                asset.second->reloadScheduled = false;
-            }
-            if(asset.second->assetType == AssetType::shaderFile)
+            asset.second->doReload();
+            if (asset.second->assetType == AssetType::shaderFile)
             {
                 auto sF = std::dynamic_pointer_cast<ShaderFile>(asset.second);
                 // You can add a shaderFile to assets without compiling it to a shader. But why would you?
-                if(shaders.find(sF->shaderName()) == shaders.end())
+                if (shaders.find(sF->shaderName()) == shaders.end())
                     WARN("AssetManager: Reloaded shader file that is not bound to a shader. This will have no effect.");
                 else
                     shadersToReload.insert(shaders[sF->shaderName()]);
             }
         }
     }
-    for(auto shader : shadersToReload)
+    for (auto shader : shadersToReload)
         shader->compile();
 }
