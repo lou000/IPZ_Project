@@ -28,6 +28,8 @@ private:
     double y1 = 0;
     double x2;
     double y2;
+    double MSE1;
+    double MSE2;
 
     double dtMulti = 1;
     vec3 prevLinePoint = {x0, 0, y0};

@@ -102,8 +102,7 @@ TestPendulum::TestPendulum()
     // Calculate coefficiants for linear and sqr equations
     A1 = (data2X*data2Z.transpose())*(data2Z*data2Z.transpose()).inverse();
     A2 = (data2X*ZAndZsq.transpose())*(ZAndZsq*ZAndZsq.transpose()).inverse();
-    std::cout<<"A1:\n"<<A1<<"\n\n";
-    std::cout<<"A2:\n"<<A2<<"\n\n\n";
+
 
 
     // Calculate MSE1
@@ -137,8 +136,7 @@ TestPendulum::TestPendulum()
             first = false;
         }
     }
-    double MSE1 = (MSEx1+MSEy1)/(data1X.cols()*2);
-    std::cout<<"MSE1: "<<MSE1<<"\n";
+    MSE1 = (MSEx1+MSEy1)/(data1X.cols()*2);
 
     // Calculate MSE2
     double MSEx2 = 0;
@@ -161,9 +159,7 @@ TestPendulum::TestPendulum()
 //        std::cout<<"MSEx2 += ("<<ddxTrue<<" - "<<ddxComp<<") ^2\n";
 //        std::cout<<"MSEy2 += ("<<ddyTrue<<" - "<<ddyComp<<") ^2\n";
     }
-    double MSE2 = (MSEx2+MSEy2)/(data1X.cols()*2);
-    std::cout<<"MSE2: "<<MSE2<<"\n";
-
+    MSE2 = (MSEx2+MSEy2)/(data1X.cols()*2);
 }
 
 void TestPendulum::onStart()
@@ -174,6 +170,10 @@ void TestPendulum::onStart()
     camera->setPosition({0 ,50.f,50});
     camera->setFocusPoint({0,0,0});
     reset();
+    std::cout<<"A1:\n"<<A1<<"\n\n";
+    std::cout<<"A2:\n"<<A2<<"\n\n\n";
+    std::cout<<"MSE1: "<<MSE1<<"\n";
+    std::cout<<"MSE2: "<<MSE2<<"\n";
 }
 
 void TestPendulum::onUpdate(float dt)
