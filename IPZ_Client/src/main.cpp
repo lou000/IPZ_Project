@@ -104,6 +104,11 @@ int main(void)
             currentTest = test6;
             currentTest->onStart();
         }
+        if(App::getKeyOnce(GLFW_KEY_F7))
+        {
+            currentTest = test7;
+            currentTest->onStart();
+        }
 
         GraphicsContext::getCamera()->onUpdate(dt);
         currentTest->onUpdate(dt);

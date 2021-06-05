@@ -52,32 +52,61 @@ MatrixXd matFromCsv(const std::string& path)
     return mat;
 }
 
+double TestPendulum::d2x(double x1, double y1, double x0, double y0)
+{
+    Array4d arr = {x1, y1, x0, y0};
+    return (arr.transpose()*A1.row(0).array()).sum();
+}
+
+double TestPendulum::d2y(double x1, double y1, double x0, double y0)
+{
+    Array4d arr = {x1, y1, x0, y0};
+    return (arr.transpose()*A1.row(1).array()).sum();
+}
+
+void TestPendulum::reset()
+{
+    stop = 500;
+    x0 = 60;
+    y0 = 0;
+    x1 = 0;
+    y1 = 0;
+    x2 = d2x(x1, y1, x0, y0);
+    y2 = d2y(x1, y1, x0, y0);
+    prevLinePoint = {x0, 0, y0};
+    graph.clearLines();
+}
+
 TestPendulum::TestPendulum()
 {
     ball = MeshRenderer::createCubeSphere(10);
     graph.setPointSize(8);
 
+    // Import data from CSV files
     auto data1 = matFromCsv("../assets/misc/data1.csv");
     auto data2 = matFromCsv("../assets/misc/data2.csv");
+
+    // Separate matrices
     auto data1X = data1.block(0, 0, data1.rows(), 2).transpose();
     auto data1Z = data1.block(0, 2, data1.rows(), 4).transpose();
 
     auto data2X = data2.block(0, 0, data2.rows(), 2).transpose();
     auto data2Z = data2.block(0, 2, data2.rows(), 4).transpose();
 
+    // Make [Z;Z^2] matrix
     auto Zsq = pow(data2Z.array(), 2);
     MatrixXd ZAndZsq(Zsq.rows()*2, Zsq.cols());
     ZAndZsq.block(0,0,Zsq.rows(), Zsq.cols()) = data2Z;
     ZAndZsq.block(Zsq.rows(),0,Zsq.rows(), Zsq.cols()) = Zsq;
 
-
+    // Calculate coefficiants for linear and sqr equations
     A1 = (data2X*data2Z.transpose())*(data2Z*data2Z.transpose()).inverse();
     A2 = (data2X*ZAndZsq.transpose())*(ZAndZsq*ZAndZsq.transpose()).inverse();
     std::cout<<"A1:\n"<<A1<<"\n\n";
     std::cout<<"A2:\n"<<A2<<"\n\n\n";
 
 
-    // MSE1
+    // Calculate MSE1
     vec3 prevPoint = {0,0,0};
     bool first = true;
     double MSEx1 = 0;
@@ -92,11 +121,11 @@ TestPendulum::TestPendulum()
         auto ddyComp = (data1Z.col(i).transpose().array() * A1.row(1).array()).sum();
         MSEy1 += (ddyTrue-ddyComp)*(ddyTrue-ddyComp);
 
-        // add lines to graph2
+        // Add lines from data1 to graph
         vec3 point = {data1Z(2, i), 0, data1Z(3, i)};
         if(!first)
         {
-            if(glm::length(prevPoint-point)>1)
+            if(glm::length(prevPoint-point)>1) // only draw line if the length > 1
             {
                 graph2.addLine(prevPoint, point, {0, 1, 0, 1});
                 prevPoint = point;
@@ -111,7 +140,7 @@ TestPendulum::TestPendulum()
     double MSE1 = (MSEx1+MSEy1)/(data1X.cols()*2);
     std::cout<<"MSE1: "<<MSE1<<"\n";
 
-    // MSE2
+    // Calculate MSE2
     double MSEx2 = 0;
     double MSEy2 = 0;
     auto Zsq1 = pow(data1Z.array(), 2);
@@ -149,6 +178,7 @@ void TestPendulum::onStart()
 
 void TestPendulum::onUpdate(float dt)
 {
+    // Controls
     if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
         dtMulti -= 1;
     if(App::getKeyOnce(GLFW_KEY_KP_ADD))
@@ -156,11 +186,11 @@ void TestPendulum::onUpdate(float dt)
     if(App::getKeyOnce(GLFW_KEY_SPACE))
         reset();
 
-
+    // Clear ball and its line
     graph.clearPoints();
     graph.removeLastLine();
 
-    // SIM
+    // Simulate pendulum
     double timeToSim = dt*dtMulti;
     if(stop>0)
     {
@@ -185,7 +215,7 @@ void TestPendulum::onUpdate(float dt)
         prevLinePoint = point;
     }
 
-    //DRAW
+    // Draw
     float lh = 90;
     vec3 lv = point - vec3{0, 100, 0};
     point.y = 100-sqrt(lh*lh - lv.x*lv.x - lv.z*lv.z);
@@ -193,29 +223,4 @@ void TestPendulum::onUpdate(float dt)
     graph.addLine({0, 100, 0}, point, {1,1,1,1});
     graph.draw ({-22,0,0},dt);
     graph2.draw({ 2,0,0},dt);
-}
-
-double TestPendulum::d2x(double x1, double y1, double x0, double y0)
-{
-    Array4d arr = {x1, y1, x0, y0};
-    return (arr.transpose()*A1.row(0).array()).sum();
-}
-
-double TestPendulum::d2y(double x1, double y1, double x0, double y0)
-{
-    Array4d arr = {x1, y1, x0, y0};
-    return (arr.transpose()*A1.row(1).array()).sum();
-}
-
-void TestPendulum::reset()
-{
-    stop = 500;
-    x0 = 60;
-    y0 = 0;
-    x1 = 0;
-    y1 = 0;
-    x2 = d2x(x1, y1, x0, y0);
-    y2 = d2y(x1, y1, x0, y0);
-    prevLinePoint = {x0, 0, y0};
-    graph.clearLines();
 }
