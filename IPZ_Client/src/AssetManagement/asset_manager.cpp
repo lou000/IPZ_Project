@@ -27,7 +27,6 @@ std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path &pat
 {
     if (fileAssets.find(path) == fileAssets.end())
         return nullptr;
-    }
     else
         return fileAssets.at(path);
 }

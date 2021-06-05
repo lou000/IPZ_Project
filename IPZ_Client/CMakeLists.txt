@@ -1,4 +1,4 @@
-﻿ cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.5)
 
 project(IPZ_Client LANGUAGES C CXX)
 
@@ -19,6 +19,8 @@ set(client_INCLUDE_DIRS
     external/SIplusplus_wchar
     external/fast_obj
     external/thread_pool
+    external/Eigen
+    external/csv-parser
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
