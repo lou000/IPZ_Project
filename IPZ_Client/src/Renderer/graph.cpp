@@ -67,6 +67,39 @@ void Graph3d::addPoints(vec3 *_points, uint count, const vec4& color)
     }
 }
 
+void Graph3d::addLine(const vec3 &start, const vec3 &end, const vec4 &color)
+{
+    auto _start = vec3(mapToRange(m_rangeX, {0.f, m_scale}, start.x),
+                       mapToRange(m_rangeY, {0.f, m_scale}, start.y),
+                       mapToRange(m_rangeZ, {0.f, m_scale}, start.z));
+    auto _end = vec3(mapToRange(m_rangeX, {0.f, m_scale}, end.x),
+                     mapToRange(m_rangeY, {0.f, m_scale}, end.y),
+                     mapToRange(m_rangeZ, {0.f, m_scale}, end.z));
+
+    lines.push_back({_start, _end, color});
+}
+
+void Graph3d::removeLastLine()
+{
+    if(lines.size()>0)
+        lines.pop_back();
+}
+
+void Graph3d::clearPoints()
+{
+    nPoints = 0;
+    if(points)
+    {
+        free(points);
+        points = nullptr;
+    }
+}
+
+void Graph3d::clearLines()
+{
+    lines.clear();
+}
+
 void Graph3d::updateMesh(std::function<float(const vec2&)> func)
 {
     for(uint i=0; i<meshX*meshX; i++)
@@ -130,6 +163,17 @@ void Graph3d::setPaletteBlend(std::vector<vec4> blendColors, uint steps)
 
 void Graph3d::draw(const vec3 &pos, float dt)
 {
+    float lWidth = m_scale * 0.001f;
+
+    BatchRenderer::begin();
+    drawGrid(pos);
+    for(auto& line : lines)
+    {
+        BatchRenderer::drawLine(pos+line.start, pos+line.end, lWidth, line.color);
+    }
+    BatchRenderer::end();
+
+
     if(m_animating)
     {
         if(maxAnimTime<dt)
@@ -150,7 +194,6 @@ void Graph3d::draw(const vec3 &pos, float dt)
             m_animating = false;
         }
     }
-    drawGrid(pos);
     MeshRenderer::begin();
     if(meshGrid)
     {
@@ -160,13 +203,17 @@ void Graph3d::draw(const vec3 &pos, float dt)
     }
     if(points)
         for(size_t i=0; i<nPoints; i++)
-            MeshRenderer::drawMesh(pos+points[i].pos, vec3(m_scale*0.01f), sphere, points[i].color);
+            MeshRenderer::drawMesh(pos+points[i].pos, vec3(m_scale*0.01f*m_pointSize), sphere, points[i].color);
     MeshRenderer::end();
+}
+
+void Graph3d::setPointSize(float size)
+{
+    m_pointSize = size;
 }
 
 void Graph3d::drawGrid(const vec3& pos)
 {
-    BatchRenderer::begin();
     float lWidth = m_scale * 0.01f;
     // Draw axes
     BatchRenderer::drawLine(pos, pos+m_scale*vec3(1, 0, 0), lWidth, {0.788, 0.820, 0.851,1});
@@ -203,8 +250,6 @@ void Graph3d::drawGrid(const vec3& pos)
     BatchRenderer::drawLine(pos+m_scale*vec3(0.4f, 0, 0), pos+m_scale*vec3(0.4f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
     BatchRenderer::drawLine(pos+m_scale*vec3(0.6f, 0, 0), pos+m_scale*vec3(0.6f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
     BatchRenderer::drawLine(pos+m_scale*vec3(0.8f, 0, 0), pos+m_scale*vec3(0.8f, 0, 1), lWidth/10, {0.788, 0.820, 0.851, 0.5});
-
-    BatchRenderer::end();
 }
 
 Graph2d::Graph2d()
