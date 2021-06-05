@@ -6,6 +6,7 @@
 #include "Tests/testrosenblat.h"
 #include "Tests/testmlp.h"
 #include "Tests/testga.h"
+#include "Tests/testpendulum.h"
 
 int main(void)
 {
@@ -35,6 +36,7 @@ int main(void)
     Scene* test4 = new TestRosenblat();
     Scene* test5 = new TestMLP();
     Scene* test6 = new TestGA();
+    Scene* test7 = new TestPendulum();
 
     Scene* currentTest = test6;
     currentTest->onStart();
@@ -108,8 +110,4 @@ int main(void)
         fbo.blitToFrontBuffer();
         App::submitFrame();
     }
-    delete test1;
-    delete test2;
-    delete test3;
-    delete test4;
 }
