@@ -38,7 +38,7 @@ int main(void)
     Scene* test6 = new TestGA();
     Scene* test7 = new TestPendulum();
 
-    Scene* currentTest = test6;
+    Scene* currentTest = test7;
     currentTest->onStart();
 
 
