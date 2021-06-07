@@ -43,7 +43,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
             stream<<"  ("<<move.first.x<<","<<move.first.y<<") g:"<<move.second<<"   ";
     }
     std::wcout<<stream.str()<<"\n";
-    int random = rndInt(0, bestMoves.size());
+    int random = glm::linearRand<int>(0, bestMoves.size());
     ASSERT(bestMoves.size());
     return bestMoves[random].first;
 }

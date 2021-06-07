@@ -62,14 +62,14 @@ private:
     float m_lastFrameTime = 0;
     vec2 m_prevMousePos = {0,0};
     float mouseScrollYOffset = 0;
-    // this is probably very wrong way of doing this its only temporary
+
     std::vector<uint16> keyBuffer;
     std::vector<uint16> mouseButtonBuffer;
     std::vector<uint16> mouseHeldBuffer;
 
     void x_init(uint width, uint height);
-    void x_submitFrame(); //this obviously shouldnt be here
-    void x_clearAll();    //this obviously shouldnt be here
+    void x_submitFrame();
+    void x_clearAll();
     void x_quit();
 
     void x_setVsync(uint interval);

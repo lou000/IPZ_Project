@@ -10,7 +10,7 @@ Test1::Test1()
 
 
     for(int i=0; i<1000; i++)
-        randomPos.push_back({rndDouble(0, 6), rndDouble(0, 6)});
+        randomPos.push_back({glm::linearRand<double>(0, 6), glm::linearRand<double>(0, 6)});
 
 }
 
@@ -48,8 +48,8 @@ void Test1::onUpdate(float dt)
     float y = 0.0001;
     for(auto& pos : randomPos)
     {
-        pos.x += (float)rndInt(-2, 1)/200;;
-        pos.y += (float)rndInt(-2, 1)/200;
+        pos.x += (float)glm::linearRand<int>(-2, 1)/200;;
+        pos.y += (float)glm::linearRand<int>(-2, 1)/200;
         pos = mod(pos, {6,6});
         BatchRenderer::drawQuad({pos.x-3, y, pos.y-3}, {0.3f, 0.3f}, texture2);
         y+=0.0001;

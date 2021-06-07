@@ -337,10 +337,6 @@ vec2 App::x_getMousePosChange()
     vec2 mouseChange = (vec2)currentMousePos - m_prevMousePos;
     m_prevMousePos = (vec2)currentMousePos;
 
-    //the problem is that first when we call this function mouseChange is huge
-    //this is a very ugly hack, later we will use glfwSetCursorPosCallback();
-//    if(length(mouseChange)>500)
-//        return {0,0};
     return mouseChange;
 }
 

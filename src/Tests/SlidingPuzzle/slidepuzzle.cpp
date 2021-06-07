@@ -107,11 +107,10 @@ void SlidePuzzle::createGrid()
 
 void SlidePuzzle::shuffleGrid()
 {
-    rndSeed(seed);
     for(int i=0; i<SHUFFLES_FACTOR*size; i++)
     {
         auto cells = getMovableCells(emptyIndex);
-        int r = rndInt(0, cells.size());
+        int r = glm::linearRand<int>(0, cells.size()-1);
         swapWithEmpty(cells[r]);
     }
 }
