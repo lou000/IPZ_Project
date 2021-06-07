@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.5)
 
-project(IPZ_Client LANGUAGES C CXX)
+project(Primor LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -39,11 +39,11 @@ add_subdirectory(external/fast_obj)
 add_subdirectory(external/glfw)
 add_library(glad "external/glad/src/glad.c")
 
-add_executable(IPZ_Client
+add_executable(Primor
     ${client_SRC}
     ${client_INCLUDE_SRCS}
     )
-target_link_libraries(IPZ_Client glfw glad opengl32)
+target_link_libraries(Primor glfw glad opengl32)
 
 
 
