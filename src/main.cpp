@@ -7,6 +7,7 @@
 #include "Tests/testmlp.h"
 #include "Tests/testga.h"
 #include "Tests/testpendulum.h"
+#include "Tests/testcameras.h"
 
 int main(void)
 {
@@ -37,8 +38,9 @@ int main(void)
     Scene* test5 = new TestMLP();
     Scene* test6 = new TestGA();
     Scene* test7 = new TestPendulum();
+    Scene* test8 = new TestCameras();
 
-    Scene* currentTest = test7;
+    Scene* currentTest = test8;
     currentTest->onStart();
 
 

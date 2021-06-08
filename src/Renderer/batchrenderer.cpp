@@ -155,6 +155,18 @@ void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const vec4& ti
     x_drawQuad_internal(quadVertexPos, nullptr, 1, tintColor);
 }
 
+void BatchRenderer::x_drawQuad(const vec2 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture)
+{
+    const vec4 quadVertexPos[4] =
+        {
+            viewProjOrtho * vec4(pos.x,        pos.y+size.y, 1, 1),
+            viewProjOrtho * vec4(pos.x+size.x, pos.y+size.y, 1, 1),
+            viewProjOrtho * vec4(pos.x+size.x, pos.y,        1, 1),
+            viewProjOrtho * vec4(pos.x,        pos.y,        1, 1),
+            };
+    x_drawQuad_internal(quadVertexPos, texture, 1, {1,1,1,1});
+}
+
 void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
                          float tilingFactor, const vec4& tintColor)
 {

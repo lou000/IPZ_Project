@@ -1,4 +1,4 @@
-﻿ cmake_minimum_required(VERSION 3.5)
+﻿cmake_minimum_required(VERSION 3.5)
 
 project(Primor LANGUAGES C CXX)
 
@@ -25,6 +25,10 @@ set(client_INCLUDE_DIRS
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
 
+set(OpenCV_DIR C:/Users/user/Downloads/opencv/build)
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+
 file(GLOB_RECURSE client_SRC CONFIGURE_DEPENDS "src/*.h" "src/*.cpp")
 
 file(GLOB_RECURSE assert_SRC CONFIGURE_DEPENDS "external/ppk_assert/src/*.h" "external/ppk_assert/src/*.cpp")
@@ -43,7 +47,7 @@ add_executable(Primor
     ${client_SRC}
     ${client_INCLUDE_SRCS}
     )
-target_link_libraries(Primor glfw glad opengl32)
+target_link_libraries(Primor glfw glad opengl32 ${OpenCV_LIBS})
 
 
 
