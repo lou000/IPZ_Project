@@ -1,11 +1,17 @@
 #pragma once
 
-#include "imgui.h"
 #include "glad/glad.h"
+#include "application.h"
+#define IM_VEC2_CLASS_EXTRA                                                 \
+        ImVec2(const glm::vec2& f) { x = f.x; y = f.y; }                       \
+        operator glm::vec2() const { return glm::vec2(x,y); }
+
+#define IM_VEC4_CLASS_EXTRA                                                 \
+        ImVec4(const glm::vec4& f) { x = f.x; y = f.y; z = f.z; w = f.w; }     \
+        operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #define IMGUI_IMPL_OPENGL_LOADER_GLAD
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
-#include "application.h"
 #include "imgui.h"
 
 inline void imguiInit()
