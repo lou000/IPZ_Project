@@ -21,6 +21,7 @@ set(client_INCLUDE_DIRS
     external/thread_pool
     external/Eigen
     external/csv-parser
+    external/imgui
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
@@ -33,10 +34,19 @@ file(GLOB_RECURSE client_SRC CONFIGURE_DEPENDS "src/*.h" "src/*.cpp")
 
 file(GLOB_RECURSE assert_SRC CONFIGURE_DEPENDS "external/ppk_assert/src/*.h" "external/ppk_assert/src/*.cpp")
 file(GLOB_RECURSE SIplusplus_SRC CONFIGURE_DEPENDS "external/SIplusplus_wchar/*.h" "external/SIplusplus_wchar/*.cpp")
+file(GLOB imgui_SRC CONFIGURE_DEPENDS
+    "external/imgui/backends/imgui_impl_glfw.h"
+    "external/imgui/backends/imgui_impl_glfw.cpp"
+    "external/imgui/backends/imgui_impl_opengl3.h"
+    "external/imgui/backends/imgui_impl_opengl3.cpp"
+    "external/imgui/*.cpp"
+    "external/imgui/*.h"
+    )
 
 set(client_INCLUDE_SRCS
     ${assert_SRC}
     ${SIplusplus_SRC}
+    ${imgui_SRC}
     )
 
 add_subdirectory(external/fast_obj)
