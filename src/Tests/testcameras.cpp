@@ -30,7 +30,7 @@ void TestCameras::onUpdate(float dt)
     }
     auto size = App::getWindowSize();
     BatchRenderer::begin();
-    BatchRenderer::drawQuad({0,0}, (vec2)size/2.f, texture);
+    BatchRenderer::drawQuad({0,0}, (vec2)size, texture);
     BatchRenderer::end();
 
 }

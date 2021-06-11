@@ -118,7 +118,7 @@ int main(void)
         currentTest->onUpdate(dt);
         fbo.blitToFrontBuffer();
         imguiBegin();
-        imguiTest();
+//        imguiTest();
         imguiEnd();
         App::submitFrame();
     }
