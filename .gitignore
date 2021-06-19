@@ -7,7 +7,7 @@ CMakeSettings.json
 *.sln
 *.vcxproj
 *.vs
-!/IPZ_Client/assets/shaders/*.vs
+!/assets/shaders/*.vs
 
 
 # Client
