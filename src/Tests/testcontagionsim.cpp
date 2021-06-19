@@ -218,7 +218,7 @@ void TestContagionSim::draw()
             color = {0, 0, 0, 1};
             break;
         }
-        BatchRenderer::drawCircle(pos, 2, 10, color);
+        BatchRenderer::drawCircle(pos, 3, 10, color);
     }
     BatchRenderer::end();
 }
@@ -244,14 +244,14 @@ void TestContagionSim::onStart()
 
 void TestContagionSim::onUpdate(float dt)
 {
-    if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+    if(App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_LEFT))
     {
         vec2 winSize = App::getWindowSize();
         auto mousePos = App::getMousePos();
         vec2 mappedMousePos = {mapToRange({0, winSize.x}, {0, ARENA_X}, mousePos.x),
                                mapToRange({0, winSize.y}, {0, ARENA_Y}, mousePos.y)};
         for(auto& member : population)
-            if(glm::distance(member.pos, mappedMousePos)<1.f && member.state == healthy)
+            if(glm::distance(member.pos, mappedMousePos)<5.f && member.state == healthy)
                 member.changeState(infected);
 
     }
