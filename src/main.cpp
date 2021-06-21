@@ -115,11 +115,11 @@ int main(void)
         }
 
         GraphicsContext::getCamera()->onUpdate(dt);
-        currentTest->onUpdate(dt);
-        fbo.blitToFrontBuffer();
         imguiBegin();
+        currentTest->onUpdate(dt);
 //        imguiTest();
         imguiEnd();
+        fbo.blitToFrontBuffer();
         App::submitFrame();
     }
 }
