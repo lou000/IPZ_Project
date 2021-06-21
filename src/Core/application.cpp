@@ -130,7 +130,7 @@ void App::x_init(uint width, uint height)
     ppk::assert::implementation::setAssertHandler(assertHandler);
     glfwSetErrorCallback(error_callback);
 
-    glfwWindowHint(GLFW_SAMPLES, 16);
+//    glfwWindowHint(GLFW_SAMPLES, 16);
     m_windowHeight = height;
     m_windowWidth  = width;
     m_window = glfwCreateWindow(width, height, "Test", NULL, NULL);
