@@ -26,7 +26,7 @@ set(client_INCLUDE_DIRS
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
 
-set(OpenCV_DIR C:/Users/user/Downloads/opencv/build)
+set(OpenCV_DIR "C:/opencv/build")
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 
