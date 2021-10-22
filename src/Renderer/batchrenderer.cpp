@@ -26,8 +26,8 @@ void BatchRenderer::x_init()
     // setup buffers
     vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
     indexBuffer = (uint16*)malloc(MAX_INDEX_BUFFER_SIZE);
-    vertexBufferEnd = vertexBuffer + MAX_VERTEX_BUFFER_SIZE/sizeof(byte);//redundant but clear
-    indexBufferEnd  = indexBuffer + MAX_INDEX_BUFFER_SIZE/sizeof(uint16);
+    vertexBufferEnd = vertexBuffer + MAX_VERTEX_BUFFER_SIZE/sizeof(byte);
+    indexBufferEnd  = indexBuffer  + MAX_INDEX_BUFFER_SIZE /sizeof(uint16);
 
     BufferLayout layout = {
         {BufferElement::Float4, "a_Position"    },
