@@ -1,8 +1,8 @@
 ﻿#include "testga.h"
 #include <map>
-#define CITIES_COUNT 30
+#define CITIES_COUNT 20
 #define POPS_PER_LOOP 1
-#define MAX_TIME 10
+#define MAX_TIME 15
 
 
 template<typename T>

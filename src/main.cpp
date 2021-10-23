@@ -13,17 +13,12 @@ int main(void)
 {
     //TODO: add initialization tests everywhere and setup some defaults like camera etc
     App::init(1200, 800);
-    App::setVsync(1);
+    App::setVsync(0);
 
     // FPS counter should go to App
     float dtSum = 0;
     int frameCount = 0;
 
-    std::vector<std::filesystem::path> shaderSrcs2 = {
-        "../assets/shaders/default_mesh.fs",
-        "../assets/shaders/default_mesh.vs"
-    };
-    AssetManager::addShader(std::make_shared<Shader>("mesh", shaderSrcs2));
 
     std::vector<std::filesystem::path> shaderSrcs = {
         "../assets/shaders/default_batch.fs",
@@ -31,16 +26,33 @@ int main(void)
     };
     AssetManager::addShader(std::make_shared<Shader>("batch", shaderSrcs));
 
-    Scene* test1 = new Test1();
-    Scene* test2 = new TestSlidingPuzzle();
-    Scene* test3 = new TestConnect4();
-    Scene* test4 = new TestRosenblat();
-    Scene* test5 = new TestMLP();
-    Scene* test6 = new TestGA();
-    Scene* test7 = new TestPendulum();
-    Scene* test8 = new TestContagionSim();
+    std::vector<std::filesystem::path> shaderSrcs2 = {
+        "../assets/shaders/default_mesh.fs",
+        "../assets/shaders/default_mesh.vs"
+    };
+    AssetManager::addShader(std::make_shared<Shader>("mesh", shaderSrcs2));
 
-    Scene* currentTest = test8;
+    auto test1 = Test1();
+    auto test2 = TestSlidingPuzzle();
+    auto test3 = TestConnect4();
+    auto test4 = TestRosenblat();
+    auto test5 = TestMLP();
+    auto test6 = TestGA();
+    auto test7 = TestPendulum();
+    auto test8 = TestContagionSim();
+
+    std::vector<Scene*> tests;
+    tests.push_back(&test1);
+    tests.push_back(&test2);
+    tests.push_back(&test3);
+    tests.push_back(&test4);
+    tests.push_back(&test5);
+    tests.push_back(&test6);
+    tests.push_back(&test7);
+    tests.push_back(&test8);
+
+
+    Scene* currentTest = &test1;
     currentTest->onStart();
 
 
@@ -55,9 +67,12 @@ int main(void)
     depthAtt.renderBuffer = true;
 
     auto winSize = App::getWindowSize();
-    FrameBuffer fbo = FrameBuffer(winSize.x, winSize.y, std::vector<FrameBufferAttachment>{colorAtt}, depthAtt, 16);
+    FrameBuffer fbo = FrameBuffer(winSize.x, winSize.y, {colorAtt}, depthAtt, 16);
     while (!App::shouldClose())
     {
+        AssetManager::checkForChanges();
+        AssetManager::tryReloadAssets();
+
         fbo.bind();
         App::clearAll();
         float dt = App::getTimeStep();
@@ -72,48 +87,13 @@ int main(void)
             dtSum = 0;
         }
 
-        AssetManager::checkForChanges();
-        AssetManager::tryReloadAssets();
-
-        if(App::getKeyOnce(GLFW_KEY_F1))
+        for(uint i=0; i<tests.size(); i++)
         {
-            currentTest = test1;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F2))
-        {
-            currentTest = test2;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F3))
-        {
-            currentTest = test3;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F4))
-        {
-            currentTest = test4;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F5))
-        {
-            currentTest = test5;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F6))
-        {
-            currentTest = test6;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F7))
-        {
-            currentTest = test7;
-            currentTest->onStart();
-        }
-        if(App::getKeyOnce(GLFW_KEY_F8))
-        {
-            currentTest = test8;
-            currentTest->onStart();
+            if(App::getKeyOnce(GLFW_KEY_F1+i))
+            {
+                currentTest = tests.at(i);
+                currentTest->onStart();
+            }
         }
 
         GraphicsContext::getCamera()->onUpdate(dt);
