@@ -126,7 +126,7 @@ std::shared_ptr<Shader> AssetManager::x_getShader(const std::string &name)
 
 void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
 {
-
+#ifdef _WIN32
     auto pathStr = dir->path.native();
     const WCHAR *dirPath = pathStr.c_str();
 
@@ -155,10 +155,12 @@ void AssetManager::addDirWatch(std::shared_ptr<Dir> dir)
         NULL);
     if (!ret)
         WARN("ReadDirectoryChangesW failed with %ld", GetLastError());
+#endif
 }
 
 void AssetManager::x_checkForChanges()
 {
+#ifdef _WIN32
     // TODO: error logging
     for (auto &[path, dir] : dirs)
     {
@@ -208,6 +210,7 @@ void AssetManager::x_checkForChanges()
             pFileNotify = (FILE_NOTIFY_INFORMATION *)((PBYTE)pFileNotify + pFileNotify->NextEntryOffset);
         }
     }
+    #endif
 }
 
 void AssetManager::x_tryReloadAssets()
