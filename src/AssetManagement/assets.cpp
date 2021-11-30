@@ -1,8 +1,9 @@
 ﻿#include "assets.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-#define FAST_OBJ_IMPLEMENTATION
-#include "fast_obj.h"
+#include "asset_manager.h"
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 #include <unordered_set>
 #include <cstdlib> //calloc
 #include "../Renderer/buffer.h" // VAO
@@ -276,98 +277,86 @@ bool ShaderFile::getTypeFromFile()
 MeshFile::MeshFile(const std::filesystem::path &path)
 {
     this->path = path;
-    loadOBJ();
+    loadModel();
 }
 
 bool MeshFile::doReload()
 {
-    return loadOBJ();
+    return loadModel();
 }
 
-bool MeshFile::loadOBJ()
+bool MeshFile::loadModel()
 {
     auto str = path.string();
     auto c_str = str.c_str();
+    UNUSED(c_str);
     if(!std::filesystem::exists(path))
     {
         WARN("Asset: Couldnt load the mesh file %s doesnt exist", c_str);
         return false;
     }
 
-    fastObjMesh* meshImp = fast_obj_read(c_str);
-    if(meshImp->position_count <= 1)
+    // per face normal
+
+    auto importer = AssetManager::getAssimpImporter();
+    const aiScene* scene = importer->ReadFile( str, aiProcessPreset_TargetRealtime_Quality);
+    if(!scene)
     {
-        WARN("Asset: Couldnt load mesh %s, there is no vertex pos data.", c_str);
+        WARN("Asset: Couldnt load mesh %s, assimp failed with error %s.", c_str, importer->GetErrorString());
         return false;
     }
 
-    // We have to convert from obj indices to opengl indices,
-    // we can only index full vertices not individual components
-    std::unordered_map<size_t, uint16> map;
+    // For now consider only one mesh and only vertices/indices.
+    // Materials, textures and scenes will come later
     std::vector<uint16> indices;
-    std::vector<float> vertices;
-    int count = 0;
-    int globalCount = 0;
-    for(uint i=0; i<meshImp->face_count; i++)
+    std::vector<MeshVertex> vertices;
+    ASSERT_ERROR(scene->mNumMeshes == 1 && scene->mMeshes[0], "TODO: Support for models with more then one mesh!");
+    // TODO: deal with materials and textures
+
+    auto mesh = scene->mMeshes[0];
+
+    for(uint i=0; i<mesh->mNumVertices; i++)
     {
-        for(uint j=0; j<meshImp->face_vertices[i]; j++)
+        MeshVertex vertex;
+        vertex.position.x = mesh->mVertices[i].x;
+        vertex.position.y = mesh->mVertices[i].y;
+        vertex.position.z = mesh->mVertices[i].z;
+
+        vertex.normal.x = mesh->mNormals[i].x;
+        vertex.normal.y = mesh->mNormals[i].y;
+        vertex.normal.z = mesh->mNormals[i].z;
+
+        // we support only one texture per vertex
+        if(mesh->mTextureCoords[0])
         {
-            auto index = meshImp->indices[globalCount];
-            globalCount++;
-            size_t hash = 0;
-            hash |= ((size_t)index.n)<<16;
-            hash |= ((size_t)index.p)<<32;
-            hash |= ((size_t)index.t)<<48;
-
-            auto pair = map.insert({hash, count});
-            if(pair.second) // if this is a unique vertex
-            {
-                // push 3 positions
-                int indx = index.p*3;
-                vertices.push_back(meshImp->positions[indx+0]);
-                vertices.push_back(meshImp->positions[indx+1]);
-                vertices.push_back(meshImp->positions[indx+2]);
-
-                indx = index.n*3;
-                if(meshImp->normal_count>1)
-                {
-                    //push 3 normals
-                    vertices.push_back(meshImp->normals[indx+0]);
-                    vertices.push_back(meshImp->normals[indx+1]);
-                    vertices.push_back(meshImp->normals[indx+2]);
-                }
-                else
-                {
-                    vertices.push_back(0);
-                    vertices.push_back(0);
-                    vertices.push_back(0);
-                }
-
-                indx = index.t*2;
-                if(meshImp->texcoord_count>1)
-                {
-                    //push 2 texture coordinates
-                    vertices.push_back(meshImp->texcoords[indx+0]);
-                    vertices.push_back(meshImp->texcoords[indx+1]);
-                }
-                else
-                {
-                    vertices.push_back(0);
-                    vertices.push_back(0);
-                }
-
-                indices.push_back(count);//push index
-                count++;
-            }
-            else
-            {
-                ASSERT(hash != (*pair.first).second);
-                indices.push_back((*pair.first).second);//push index of previous vertex
-            }
+            vertex.texCoords.x = mesh->mTextureCoords[0][i].x;
+            vertex.texCoords.y = mesh->mTextureCoords[0][i].y;
         }
-    }
-    delete meshImp;
+        else
+            vertex.texCoords = {0.f, 0.f};
 
-    m_mesh = std::make_shared<Mesh>(vertices.data(), vertices.size()/(sizeof(MeshVertex)/sizeof(float)), indices.data(), indices.size());
+        // we support only one color per vertex
+//            if(mesh->mColors[0])
+//            {
+//                vertex.color.r = mesh->mColors[0][i].r;
+//                vertex.color.g = mesh->mColors[0][i].g;
+//                vertex.color.b = mesh->mColors[0][i].b;
+//                vertex.color.a = mesh->mColors[0][i].a;
+//            }
+//            else
+//                vertex.color = {1.f, 1.f, 1.f, 1.f};
+
+        vertices.push_back(vertex);
+    }
+
+    for(uint i=0; i<mesh->mNumFaces; i++)
+    {
+        aiFace face = mesh->mFaces[i];
+        for(uint j=0; j<face.mNumIndices; j++)
+            indices.push_back(face.mIndices[j]);
+    }
+
+    m_mesh = std::make_shared<Mesh>((float*)vertices.data(), vertices.size(), indices.data(), indices.size());
     return true;
 }
+

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "buffer.h"
 
 using namespace glm;
@@ -6,6 +6,7 @@ using namespace glm;
 struct MeshVertex{
     vec3 position;
     vec3 normal;
+//    vec4 color;
     vec2 texCoords;
 };
 

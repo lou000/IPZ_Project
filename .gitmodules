@@ -17,3 +17,6 @@
 [submodule "IPZ_Client/external/fast_obj"]
 	path = IPZ_Client/external/fast_obj
 	url = https://github.com/thisistherk/fast_obj
+[submodule "external/assimp"]
+	path = external/assimp
+	url = https://github.com/assimp/assimp

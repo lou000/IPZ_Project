@@ -15,6 +15,7 @@ enum AssetType{
 };
 
 class VertexArray;
+class AssetManager;
 
 // TODO: make utility functions toTexture() etc to quickly cast
 class Asset{
@@ -88,11 +89,6 @@ private:
 
 class MeshFile : public Asset
 {
-    struct MeshVertex{
-        vec3 position;
-        vec3 normal;
-        vec2 texCoords;
-    };
 
 public:
     MeshFile(const std::filesystem::path& path);
@@ -102,7 +98,7 @@ public:
 
 private:
     std::shared_ptr<Mesh> m_mesh;
-    bool loadOBJ();
+    bool loadModel();
 
 };
 

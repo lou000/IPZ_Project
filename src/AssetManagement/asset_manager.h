@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <windows.h>
+#include <assimp/Importer.hpp>
 #include <unordered_set>
 #include <filesystem>
 #include <iostream>
@@ -46,11 +47,15 @@ public:
     static void removeShader(int id){getInstance().x_removeShader(id);}
     static std::shared_ptr<Shader> getShader(const std::string& name) {return getInstance().x_getShader(name);}
 
+    static Assimp::Importer* getAssimpImporter(){return getInstance().x_getAssimpImporter();}
     static void tryReloadAssets() {getInstance().x_tryReloadAssets();}
     static void checkForChanges() {getInstance().x_checkForChanges();}
 
 private:
     std::clock_t timeFirstChange = 0;
+    Assimp::Importer importer;
+    Assimp::Importer* x_getAssimpImporter(){return &importer;}
+
     void x_addAsset(std::shared_ptr<Asset> asset);
     void x_removeAsset(const std::filesystem::path& assetPath);
     std::shared_ptr<Asset> x_getAsset(const std::filesystem::path& path);
