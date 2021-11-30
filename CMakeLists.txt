@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.5)
+﻿ cmake_minimum_required(VERSION 3.5)
 
 project(Primor LANGUAGES C CXX)
 add_compile_options("/FS")
