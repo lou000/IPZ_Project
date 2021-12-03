@@ -79,7 +79,7 @@ void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
         x_addAsset(file);
 }
 
-void AssetManager::x_removeShader(int id)
+void AssetManager::x_removeShader(uint id)
 {
     for (auto &shaderIt : shaders)
     {
@@ -239,6 +239,7 @@ void AssetManager::x_tryReloadAssets()
                 else
                     shadersToReload.insert(shaders[sF->shaderName()]);
             }
+            asset.second->reloadScheduled = false;
         }
     }
     for (auto shader : shadersToReload)

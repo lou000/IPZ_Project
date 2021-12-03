@@ -61,7 +61,7 @@ private:
     std::shared_ptr<Asset> x_getAsset(const std::filesystem::path& path);
 
     void x_addShader(std::shared_ptr<Shader> shader);
-    void x_removeShader(int id);
+    void x_removeShader(uint id);
     std::shared_ptr<Shader> x_getShader(const std::string& name);
 
     void x_tryReloadAssets(); // files may still be locked by application making changes
