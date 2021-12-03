@@ -22,8 +22,6 @@ set(client_INCLUDE_DIRS
     external/colorwin/src
     external/SIplusplus_wchar
     external/thread_pool
-    external/Eigen
-    external/csv-parser
     external/assimp/include
     )
 include_directories(${client_INCLUDE_DIRS})

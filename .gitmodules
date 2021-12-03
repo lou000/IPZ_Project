@@ -1,22 +1,16 @@
-[submodule "IPZ_Client/external/glm"]
-	path = IPZ_Client/external/glm
+[submodule "external/glm"]
+	path = external/glm
 	url = https://github.com/g-truc/glm
-[submodule "IPZ_Client/external/glfw"]
-	path = IPZ_Client/external/glfw
+[submodule "external/glfw"]
+	path = external/glfw
 	url = https://github.com/mmozeiko/glfw.git
     branch = unblock_events_windows_move_resize
-[submodule "IPZ_Client/external/colorwin"]
-	path = IPZ_Client/external/colorwin
+[submodule "external/colorwin"]
+	path = external/colorwin
 	url = https://github.com/jrebacz/colorwin
-[submodule "IPZ_Client/external/ppk_assert"]
-	path = IPZ_Client/external/ppk_assert
+[submodule "external/ppk_assert"]
+	path = external/ppk_assert
 	url = https://github.com/gpakosz/PPK_ASSERT
-[submodule "IPZ_Shared/external/asio"]
-	path = IPZ_Shared/external/asio
-	url = https://github.com/barrbrain/asio
-[submodule "IPZ_Client/external/fast_obj"]
-	path = IPZ_Client/external/fast_obj
-	url = https://github.com/thisistherk/fast_obj
 [submodule "external/assimp"]
 	path = external/assimp
 	url = https://github.com/assimp/assimp
