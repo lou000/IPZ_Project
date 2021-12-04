@@ -296,8 +296,6 @@ bool MeshFile::loadModel()
         return false;
     }
 
-    // per face normal
-
     auto importer = AssetManager::getAssimpImporter();
     const aiScene* scene = importer->ReadFile( str, aiProcessPreset_TargetRealtime_Quality);
     if(!scene)
@@ -309,44 +307,59 @@ bool MeshFile::loadModel()
     // For now consider only one mesh and only vertices/indices.
     // Materials, textures and scenes will come later
     std::vector<uint16> indices;
-    std::vector<MeshVertex> vertices;
+    std::vector<float> vertices; // resize
     ASSERT_ERROR(scene->mNumMeshes == 1 && scene->mMeshes[0], "TODO: Support for models with more then one mesh!");
     // TODO: deal with materials and textures
 
     auto mesh = scene->mMeshes[0];
 
+    bool textured = false;
+    uint vertexSize = sizeof(MeshVertex)/sizeof(float); //in floats
+    if(!textured)
+        vertexSize = sizeof(MeshVertexColored)/sizeof(float);
+
+    vertices.resize(vertexSize*mesh->mNumVertices);
     for(uint i=0; i<mesh->mNumVertices; i++)
     {
-        MeshVertex vertex;
-        vertex.position.x = mesh->mVertices[i].x;
-        vertex.position.y = mesh->mVertices[i].y;
-        vertex.position.z = mesh->mVertices[i].z;
+        auto offset = i*vertexSize;
+        vertices[offset+0] = mesh->mVertices[i].x;
+        vertices[offset+1] = mesh->mVertices[i].y;
+        vertices[offset+2] = mesh->mVertices[i].z;
 
-        vertex.normal.x = mesh->mNormals[i].x;
-        vertex.normal.y = mesh->mNormals[i].y;
-        vertex.normal.z = mesh->mNormals[i].z;
+        vertices[offset+3] = mesh->mNormals[i].x;
+        vertices[offset+4] = mesh->mNormals[i].y;
+        vertices[offset+5] = mesh->mNormals[i].z;
 
         // we support only one texture per vertex
         if(mesh->mTextureCoords[0])
         {
-            vertex.texCoords.x = mesh->mTextureCoords[0][i].x;
-            vertex.texCoords.y = mesh->mTextureCoords[0][i].y;
+            vertices[offset+6] = mesh->mTextureCoords[0][i].x;
+            vertices[offset+7] = mesh->mTextureCoords[0][i].y;
         }
         else
-            vertex.texCoords = {0.f, 0.f};
+        {
+            vertices[offset+6] = 0;
+            vertices[offset+7] = 0;
+        }
 
         // we support only one color per vertex
-//            if(mesh->mColors[0])
-//            {
-//                vertex.color.r = mesh->mColors[0][i].r;
-//                vertex.color.g = mesh->mColors[0][i].g;
-//                vertex.color.b = mesh->mColors[0][i].b;
-//                vertex.color.a = mesh->mColors[0][i].a;
-//            }
-//            else
-//                vertex.color = {1.f, 1.f, 1.f, 1.f};
-
-        vertices.push_back(vertex);
+        if(!textured)
+        {
+            if(mesh->mColors[0])
+            {
+                vertices[offset+8 ] = mesh->mColors[0][i].r;
+                vertices[offset+9 ] = mesh->mColors[0][i].g;
+                vertices[offset+10] = mesh->mColors[0][i].b;
+                vertices[offset+11] = mesh->mColors[0][i].a;
+            }
+            else
+            {
+                vertices[offset+8 ] = 1.f;
+                vertices[offset+9 ] = 1.f;
+                vertices[offset+10] = 1.f;
+                vertices[offset+11] = 1.f;
+            }
+        }
     }
 
     for(uint i=0; i<mesh->mNumFaces; i++)
@@ -356,7 +369,7 @@ bool MeshFile::loadModel()
             indices.push_back(face.mIndices[j]);
     }
 
-    m_mesh = std::make_shared<Mesh>((float*)vertices.data(), vertices.size(), indices.data(), indices.size());
+    m_mesh = std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize, indices.data(), indices.size(), textured);
     return true;
 }
 
