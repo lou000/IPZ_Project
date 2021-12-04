@@ -13,6 +13,11 @@ public:
 
 private:
     std::shared_ptr<MeshFile> mesh1, mesh2, mesh3;
+    Entity* previewPuck = nullptr;
+    Entity* puckInPlay = nullptr;
+    vec4 red = {0.882, 0.192, 0.161, 1};
+    vec4 yellow = {0.906, 0.878, 0.302, 1};
+    uint entityCount = 4;
     float length = 11.9f;
     float top = 9.1;
     float leftSlot = -5.0f;

@@ -2,12 +2,6 @@
 //#define PUZZLE_DEBUG
 #define SHUFFLES_FACTOR 500
 
-#ifdef PUZZLE_DEBUG
-#define PPK_ASSERT_ENABLED 1
-#else
-#define PPK_ASSERT_ENABLED 0
-#endif
-
 #include <unordered_set>
 #include <cstring>  //for memcmp
 #include <vector>

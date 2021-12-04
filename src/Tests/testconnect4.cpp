@@ -58,10 +58,34 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(mesh3);
 
 
-    BatchRenderer::setShader(AssetManager::getShader("batch"));
-    MeshRenderer::setShader(AssetManager::getShader("mesh"));
+    std::vector<std::filesystem::path> shaderSrcs1 = {
+        "../assets/shaders/basic_pbr.fs",
+        "../assets/shaders/basic_pbr.vs"
+    };
+    AssetManager::addShader(std::make_shared<Shader>("basic_pbr", shaderSrcs1));
 
+    pbrShader = AssetManager::getShader("basic_pbr");
 
+    camera = GraphicsContext::getCamera();
+    camera->setFov(50.f);
+    camera->setPosition({0, 7, 20});
+    camera->setFocusPoint({0,6,0});
+
+    auto board = getEntity({mesh1->mesh()}, {0,0,0});
+    board->setOverrideColor({0.165, 0.349, 1.000, 1});
+
+    auto puck1 = getEntity({mesh2->mesh()}, {1,0,3});
+    puck1->setOverrideColor(red);
+
+    auto puck2 = getEntity({mesh3->mesh()}, {-1,0,3});
+    puck2->setOverrideColor(yellow);
+
+    previewPuck = getEntity({mesh3->mesh()}, {0, 0, 0}, quat({radians(90.f), 0, 0}));
+    previewPuck->setOverrideColor(yellow);
+    previewPuck->overrideColor.a = 0.2f;
+
+    directionalLight.pos = {20, 25, 25};
+    directionalLight.color = {1,1,1};
 
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
@@ -75,21 +99,16 @@ TestConnect4::TestConnect4()
 
 void TestConnect4::onStart()
 {
-    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
-    auto camera = GraphicsContext::getCamera();
-    camera->setFov(50.f);
-    camera->setPosition({0, 7, 20});
-    camera->setFocusPoint({0,6,0});
+
 }
 
 void TestConnect4::onUpdate(float dt)
 {
-    auto camera = GraphicsContext::getCamera();
     auto mouseRay  = camera->getMouseRay();
     auto cameraPos = camera->getPos();
     vec3 intersection = {};
 
-    MeshRenderer::begin();
+    previewPuck->renderable = false;
     if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && c4->userTurn && c4->is_terminal() == std::nullopt)
     {
         if(intersectPlane({0, 0, -1}, {0,0,0.45}, cameraPos, mouseRay, intersection))
@@ -100,10 +119,17 @@ void TestConnect4::onUpdate(float dt)
                     currentMove = c4->createMove(i);
                     if(currentMove.h_grade>=0)
                     {
-                        auto model = translate(mat4(1.0f), {hPositions[i],11,-0.45}) * rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f });
-                        MeshRenderer::drawMesh(model, mesh3->mesh(), {0.906, 0.878, 0.302,0.2});
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+                        {
+                            puckInPlay = getEntity({mesh3->mesh()}, {hPositions[i],11,-0.45}, quat({radians(90.f), 0, 0}));
+                            puckInPlay->setOverrideColor(yellow);
                             animating = true;
+                        }
+                        else
+                        {
+                            previewPuck->renderable = true;
+                            previewPuck->pos = {hPositions[i],11,-0.45};
+                        }
                     }
                 }
         }
@@ -113,49 +139,30 @@ void TestConnect4::onUpdate(float dt)
         searcher->do_search(*c4);
         auto moves = searcher->get_scores();
         currentMove = pickRandomTopMove(moves);
+
+        puckInPlay = getEntity({mesh3->mesh()}, {0,0,0}, quat({radians(90.f), 0, 0}));
+        puckInPlay->setOverrideColor(red);
+
         animating = true;
     }
 
     if(animating)
     {
+        ASSERT(puckInPlay);
         ySpeed += 20*dt;
         yPos -= ySpeed*dt;
-        auto model = translate(mat4(1.0f), {hPositions[currentMove.x], yPos,-0.45})*rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f });
-        if(c4->userTurn)
-            MeshRenderer::drawMesh(model, mesh3->mesh(), {0.906, 0.878, 0.302,1});
-        else
-            MeshRenderer::drawMesh(model, mesh2->mesh(), {0.882, 0.192, 0.161,1});
+
+        puckInPlay->pos = {hPositions[currentMove.x], yPos,-0.45};
 
         if(yPos<=vPositions[currentMove.y])
         {
             animating = false;
+            puckInPlay->pos.y = vPositions[currentMove.y];
+            puckInPlay = nullptr;
             ySpeed = 0;
             yPos = 11;
             c4->commitMove(currentMove);
         }
     }
-
-    for(uint i=0; i<c4->size; i++)
-    {
-        uint x = i%c4->width;
-        uint y = i/c4->width;
-        auto model = translate(mat4(1.0f), {hPositions[x], vPositions[y],-0.45})*rotate(mat4(1.0f), radians(90.f), { 1.0f, 0.0f, 0.0f });
-        if(c4->grid[i] == 'O')
-            MeshRenderer::drawMesh(model, mesh3->mesh(), {0.906, 0.878, 0.302,1});
-        else if(c4->grid[i] == 'X')
-            MeshRenderer::drawMesh(model, mesh2->mesh(), {0.882, 0.192, 0.161,1});
-    }
-    MeshRenderer::drawMesh({0,0,0}, {1,1,1}, mesh1->mesh(), {0.165, 0.349, 1.000,1});
-    MeshRenderer::drawMesh({1,0,3}, {1,1,1}, mesh2->mesh(), {0.882, 0.192, 0.161,1});
-    MeshRenderer::drawMesh({-1,0,3}, {1,1,1}, mesh3->mesh(), {0.906, 0.878, 0.302,1});
-    MeshRenderer::end();
-
-    BatchRenderer::begin();
-//    BatchRenderer::drawQuad({100,100}, {300,300}, {1,1,0,1}); //2d quad
-//    BatchRenderer::drawLine({100,100}, {400,400}, 5.f, {1,0,1,1}); // 2d line
-//    BatchRenderer::drawCircle({400, 400}, 5, 10, {1,0,0,1}); // 2d circle
-//    BatchRenderer::drawLine({-1,0,3}, {leftSlot,top,0}, .02f, {0.882, 0.192, 0.161,1}); //3d line
-    BatchRenderer::drawQuad({0,0,0}, {20, 20}, {0.094, 0.141, 0.176,1}); // 3d quad
-    BatchRenderer::end();
 
 }

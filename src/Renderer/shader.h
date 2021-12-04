@@ -21,12 +21,14 @@ public:
 
     void bind();
     void unbind();
+    void dispatch(uint x, uint y, uint z);
     uint32 id() {return m_id;}
     void setUniform(const char* name, BufferElement::DataType type, const std::any& value, bool transpose = false);
     void setUniformArray(const char* name, BufferElement::DataType type, const std::any& value, uint count, bool transpose = false);
 
 private:
     uint32 m_id = 0;
+    bool isCompute = false;
     std::string name;
     std::vector<std::shared_ptr<ShaderFile>> files;
 

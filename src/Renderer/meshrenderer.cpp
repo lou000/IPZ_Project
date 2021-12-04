@@ -27,10 +27,6 @@ void MeshRenderer::x_drawMesh(const mat4 &model, const std::shared_ptr<Mesh> &me
     currentShader->setUniform("u_Color", BufferElement::Float4, color);
 
     mesh->vao()->bind();
-    if(mesh->vao()->vertexBuffers().size() == 1)
-    {
-        glVertexAttrib4f(3, 1.f, 1.f, 1.f, 1.f); // if we dont have per vertex mesh colors specified set them to white
-    }
     glDrawElements(GL_TRIANGLES, (GLsizei)mesh->vao()->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
     mesh->vao()->unbind();
     glBindTexture(GL_TEXTURE_2D, 0);

@@ -1,6 +1,14 @@
 ﻿#include "buffer.h"
 #include "../Core/application.h"
 
+void BufferLayout::appendElement(BufferElement element)
+{
+    element.size = BufferElement::typeComponentSize(element.type);
+    elements.push_back(element);
+    element.offset = m_stride;
+    m_stride += element.size;
+}
+
 void BufferLayout::processElements()
 {
     uint offset = 0;
