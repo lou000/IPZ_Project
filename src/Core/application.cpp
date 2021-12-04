@@ -288,11 +288,6 @@ void App::x_submitFrame()
     glfwPollEvents();
 }
 
-void App::x_clearAll()
-{
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-}
-
 void App::x_quit()
 {
     glfwDestroyWindow(m_window);
