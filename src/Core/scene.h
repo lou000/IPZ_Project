@@ -19,13 +19,14 @@ public:
     Entity* getEntity();
     Entity* getEntity(std::vector<std::shared_ptr<Mesh>> meshes, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
     uint activeCount = 0;
+    std::shared_ptr<Camera> activeCamera;
 
     std::array<Entity, 100> entities;
     std::array<PointLight, 100> lights;
     DirectionalLight directionalLight;
     std::shared_ptr<Camera> camera;
+    std::shared_ptr<Camera> editorCamera;
     std::shared_ptr<Shader> pbrShader;
-
 
 };
 

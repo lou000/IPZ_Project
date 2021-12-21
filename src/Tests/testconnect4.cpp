@@ -53,9 +53,17 @@ TestConnect4::TestConnect4()
     mesh2 = std::make_shared<MeshFile>("../assets/meshes/connect4Puck1.obj");
     mesh3 = std::make_shared<MeshFile>("../assets/meshes/connect4Puck2.obj");
 
+    auto testMesh1 = std::make_shared<MeshFile>("../assets/meshes/obelisk1.fbx");
+    auto testMesh2 = std::make_shared<MeshFile>("../assets/meshes/wolf.fbx");
+//    auto testMesh3 = std::make_shared<MeshFile>("../assets/meshes/tree.blend");
+
     AssetManager::addAsset(mesh1);
     AssetManager::addAsset(mesh2);
     AssetManager::addAsset(mesh3);
+
+    AssetManager::addAsset(testMesh1);
+    AssetManager::addAsset(testMesh2);
+//    AssetManager::addAsset(testMesh3);
 
 
     std::vector<std::filesystem::path> shaderSrcs1 = {
@@ -79,6 +87,10 @@ TestConnect4::TestConnect4()
 
     auto puck2 = getEntity({mesh3->mesh()}, {-1,0,3});
     puck2->setOverrideColor(yellow);
+
+    auto test1 = getEntity({testMesh1->mesh()}, {5,0,5}, quat({-radians(90.f), 0, 0}));
+    auto test2 = getEntity({testMesh2->mesh()}, {-5,0,5}, quat({-radians(90.f), 0, 0}));
+//    auto test3 = getEntity({testMesh3->mesh()}, {1,0,3});
 
     previewPuck = getEntity({mesh3->mesh()}, {0, 0, 0}, quat({radians(90.f), 0, 0}));
     previewPuck->setOverrideColor(yellow);

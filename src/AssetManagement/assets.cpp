@@ -296,7 +296,9 @@ bool MeshFile::loadModel()
         return false;
     }
 
+
     auto importer = AssetManager::getAssimpImporter();
+    importer->SetPropertyFloat("PP_GSN_MAX_SMOOTHING_ANGLE", 1);
     const aiScene* scene = importer->ReadFile( str, aiProcessPreset_TargetRealtime_Quality);
     if(!scene)
     {

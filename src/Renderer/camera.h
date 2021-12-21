@@ -50,6 +50,7 @@ private:
     float m_aspectRatio = 1;
     float m_nearClip    = 0.1f;
     float m_farClip     = 1000;
+    bool isActive = false;
     vec3 m_focusPoint = {0,0,0};
 
     quat m_rotation = {1,0,0,0};
