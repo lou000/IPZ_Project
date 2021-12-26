@@ -38,15 +38,15 @@ set(client_INCLUDE_SRCS
     )
 
 add_subdirectory(external/glfw)
-add_subdirectory(external/assimp)
-set_property(DIRECTORY external/assimp APPEND PROPERTY COMPILE_OPTIONS "/FS")
 add_library(glad "external/glad/src/glad.c")
 
 add_executable(Primor
     ${client_SRC}
     ${client_INCLUDE_SRCS}
     )
-target_link_libraries(Primor glfw glad opengl32 assimp)
+target_link_libraries(Primor glfw glad opengl32
+    ${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib
+    ${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib)
 
 
 
