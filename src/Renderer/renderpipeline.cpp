@@ -71,7 +71,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
             for(auto mesh : ent.model->meshes())
             {
                 auto vao = mesh->vao();
-                if(mesh->textured)
+                if(mesh->material.textured)
                 {
                     //draw with textured_pbr
                     ASSERT_ERROR(0, "TODO: Textured pbr meshes my dude...");
@@ -79,9 +79,9 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
                 else
                 {
                     //draw with basic_pbr
-                    sceneShader->setUniform("u_Metallic", BufferElement::Float, mesh->metallic);
-                    sceneShader->setUniform("u_Roughness", BufferElement::Float, mesh->roughness);
-                    sceneShader->setUniform("u_OverrideColor", BufferElement::Float4, ent.overrideColor);
+                    sceneShader->setUniform("u_Metallic", BufferElement::Float, mesh->material.metallic);
+                    sceneShader->setUniform("u_Roughness", BufferElement::Float, mesh->material.roughness);
+                    sceneShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
                     vao->bind();
                     glDrawElements(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
                     vao->unbind();

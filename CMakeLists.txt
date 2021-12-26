@@ -1,7 +1,6 @@
 ﻿ cmake_minimum_required(VERSION 3.5)
 
 project(Primor LANGUAGES C CXX)
-add_compile_options("/FS")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -47,10 +46,19 @@ add_executable(Primor
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib" AND
    EXISTS "${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib")
-    target_link_libraries(Primor
-        ${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib
-        ${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib
-        )
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_libraries(Primor
+            ${CMAKE_SOURCE_DIR}/external/assimp/lib/Debug/assimp-vc142-mtd.lib
+            ${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Debug/zlibstaticd.lib
+            )
+    else()
+        target_link_libraries(Primor
+            ${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib
+            ${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib
+            )
+    endif()
+
 else()
    add_subdirectory(external/assimp)
    target_link_libraries(Primor assimp)

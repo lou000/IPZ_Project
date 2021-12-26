@@ -292,7 +292,7 @@ bool Model::loadModel()
     UNUSED(c_str);
     if(!std::filesystem::exists(path))
     {
-        WARN("Asset: Couldnt load the mesh file %s doesnt exist", c_str);
+        WARN("Asset: Couldnt load the asset file %s doesnt exist", c_str);
         return false;
     }
 
@@ -302,7 +302,7 @@ bool Model::loadModel()
     const aiScene* scene = importer->ReadFile( str, aiProcessPreset_TargetRealtime_Quality);
     if(!scene)
     {
-        WARN("Asset: Couldnt load mesh %s, assimp failed with error %s.", c_str, importer->GetErrorString());
+        WARN("Asset: Couldnt load asset %s, assimp failed with error %s.", c_str, importer->GetErrorString());
         return false;
     }
 
@@ -313,13 +313,44 @@ bool Model::loadModel()
 
     // TODO: deal with materials and textures
 
-    bool textured = false;
     for(uint i=0; i<scene->mNumMeshes; i++)
     {
+        Material material;
         auto mesh = scene->mMeshes[i];
+        auto mat = scene->mMaterials[mesh->mMaterialIndex];
+
+        aiColor3D matColor;
+        if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_DIFFUSE, matColor))
+        {
+            WARN("Couldnt read material color of asset %s", c_str);
+        }
+        else
+        {
+            material.color = {matColor.r, matColor.g, matColor.b, 1};
+        }
+
+        if(AI_SUCCESS != mat->Get(AI_MATKEY_REFLECTIVITY, material.metallic))
+        {
+            WARN("Couldnt read material metallnes of asset %s", c_str);
+        }
+        else
+        {
+            LOG("Metallnes of %s is %f", c_str, material.metallic);
+        }
+
+        if(AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, material.roughness))
+        {
+            WARN("Couldnt read material roughness of asset %s", c_str);
+        }
+        else
+        {
+            material.roughness = (1-material.roughness/100); //bring to <-1, 1> and invert
+            material.roughness = glm::abs(1-glm::sqrt(1.f-material.roughness));
+            LOG("Roughness of %s is %f", c_str, material.roughness);
+        }
+
+
         uint vertexSize = sizeof(MeshVertex)/sizeof(float); //in floats
-        if(!textured)
-            vertexSize = sizeof(MeshVertexColored)/sizeof(float);
 
         vertices.resize(vertexSize*mesh->mNumVertices);
         for(uint i=0; i<mesh->mNumVertices; i++)
@@ -344,25 +375,6 @@ bool Model::loadModel()
                 vertices[offset+6] = 0;
                 vertices[offset+7] = 0;
             }
-
-            // we support only one color per vertex
-            if(!textured)
-            {
-                if(mesh->mColors[0])
-                {
-                    vertices[offset+8 ] = mesh->mColors[0][i].r;
-                    vertices[offset+9 ] = mesh->mColors[0][i].g;
-                    vertices[offset+10] = mesh->mColors[0][i].b;
-                    vertices[offset+11] = mesh->mColors[0][i].a;
-                }
-                else
-                {
-                    vertices[offset+8 ] = 1.f;
-                    vertices[offset+9 ] = 1.f;
-                    vertices[offset+10] = 1.f;
-                    vertices[offset+11] = 1.f;
-                }
-            }
         }
 
         for(uint i=0; i<mesh->mNumFaces; i++)
@@ -371,7 +383,8 @@ bool Model::loadModel()
             for(uint j=0; j<face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
-        m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize, indices.data(), indices.size(), textured));
+        m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize,
+                                                  indices.data(), indices.size(), material));
     }
 
     return true;
