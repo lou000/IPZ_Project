@@ -17,7 +17,7 @@ public:
     virtual void onStart() = 0;
 
     Entity* getEntity();
-    Entity* getEntity(std::vector<std::shared_ptr<Mesh>> meshes, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
+    Entity* getEntity(std::shared_ptr<Model> meshes, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
     uint activeCount = 0;
     std::shared_ptr<Camera> activeCamera;
 

@@ -66,9 +66,9 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
         if(ent.renderable && ent.enabled)
         {
             // draw here
-            auto model = ent.getModel();
+            auto model = ent.getModelMatrix();
             sceneShader->setUniform("u_Model", BufferElement::Mat4, model);
-            for(auto mesh : ent.meshes)
+            for(auto mesh : ent.model->meshes())
             {
                 auto vao = mesh->vao();
                 if(mesh->textured)

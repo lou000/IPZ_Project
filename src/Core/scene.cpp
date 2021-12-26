@@ -9,12 +9,12 @@ Entity* Scene::getEntity()
     return ent;
 }
 
-Entity *Scene::getEntity(std::vector<std::shared_ptr<Mesh> > meshes, vec3 pos, quat rotation)
+Entity *Scene::getEntity(std::shared_ptr<Model> model, vec3 pos, quat rotation)
 {
     auto ent = &entities[activeCount];
     ent->enabled = true;
     ent->renderable = true;
-    ent->meshes = meshes;
+    ent->model = model;
     ent->pos = pos;
     ent->rotation = rotation;
     activeCount++;
