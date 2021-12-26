@@ -87,17 +87,17 @@ private:
     char* data;
 };
 
-class MeshFile : public Asset
+class Model : public Asset
 {
 
 public:
-    MeshFile(const std::filesystem::path& path);
+    Model(const std::filesystem::path& path);
 
     virtual bool doReload() override;
-    std::shared_ptr<Mesh> mesh(){return m_mesh;}
+    std::vector<std::shared_ptr<Mesh>> meshes(){return m_meshes;}
 
 private:
-    std::shared_ptr<Mesh> m_mesh;
+    std::vector<std::shared_ptr<Mesh>> m_meshes;
     bool loadModel();
 
 };

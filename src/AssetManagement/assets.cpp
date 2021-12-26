@@ -274,18 +274,18 @@ bool ShaderFile::getTypeFromFile()
     return true;
 }
 
-MeshFile::MeshFile(const std::filesystem::path &path)
+Model::Model(const std::filesystem::path &path)
 {
     this->path = path;
     loadModel();
 }
 
-bool MeshFile::doReload()
+bool Model::doReload()
 {
     return loadModel();
 }
 
-bool MeshFile::loadModel()
+bool Model::loadModel()
 {
     auto str = path.string();
     auto c_str = str.c_str();
@@ -310,68 +310,70 @@ bool MeshFile::loadModel()
     // Materials, textures and scenes will come later
     std::vector<uint16> indices;
     std::vector<float> vertices; // resize
-    ASSERT_ERROR(scene->mNumMeshes == 1 && scene->mMeshes[0], "TODO: Support for models with more then one mesh!");
+
     // TODO: deal with materials and textures
 
-    auto mesh = scene->mMeshes[0];
-
     bool textured = false;
-    uint vertexSize = sizeof(MeshVertex)/sizeof(float); //in floats
-    if(!textured)
-        vertexSize = sizeof(MeshVertexColored)/sizeof(float);
-
-    vertices.resize(vertexSize*mesh->mNumVertices);
-    for(uint i=0; i<mesh->mNumVertices; i++)
+    for(uint i=0; i<scene->mNumMeshes; i++)
     {
-        auto offset = i*vertexSize;
-        vertices[offset+0] = mesh->mVertices[i].x;
-        vertices[offset+1] = mesh->mVertices[i].y;
-        vertices[offset+2] = mesh->mVertices[i].z;
-
-        vertices[offset+3] = mesh->mNormals[i].x;
-        vertices[offset+4] = mesh->mNormals[i].y;
-        vertices[offset+5] = mesh->mNormals[i].z;
-
-        // we support only one texture per vertex
-        if(mesh->mTextureCoords[0])
-        {
-            vertices[offset+6] = mesh->mTextureCoords[0][i].x;
-            vertices[offset+7] = mesh->mTextureCoords[0][i].y;
-        }
-        else
-        {
-            vertices[offset+6] = 0;
-            vertices[offset+7] = 0;
-        }
-
-        // we support only one color per vertex
+        auto mesh = scene->mMeshes[i];
+        uint vertexSize = sizeof(MeshVertex)/sizeof(float); //in floats
         if(!textured)
+            vertexSize = sizeof(MeshVertexColored)/sizeof(float);
+
+        vertices.resize(vertexSize*mesh->mNumVertices);
+        for(uint i=0; i<mesh->mNumVertices; i++)
         {
-            if(mesh->mColors[0])
+            auto offset = i*vertexSize;
+            vertices[offset+0] = mesh->mVertices[i].x;
+            vertices[offset+1] = mesh->mVertices[i].y;
+            vertices[offset+2] = mesh->mVertices[i].z;
+
+            vertices[offset+3] = mesh->mNormals[i].x;
+            vertices[offset+4] = mesh->mNormals[i].y;
+            vertices[offset+5] = mesh->mNormals[i].z;
+
+            // we support only one texture per vertex
+            if(mesh->mTextureCoords[0])
             {
-                vertices[offset+8 ] = mesh->mColors[0][i].r;
-                vertices[offset+9 ] = mesh->mColors[0][i].g;
-                vertices[offset+10] = mesh->mColors[0][i].b;
-                vertices[offset+11] = mesh->mColors[0][i].a;
+                vertices[offset+6] = mesh->mTextureCoords[0][i].x;
+                vertices[offset+7] = mesh->mTextureCoords[0][i].y;
             }
             else
             {
-                vertices[offset+8 ] = 1.f;
-                vertices[offset+9 ] = 1.f;
-                vertices[offset+10] = 1.f;
-                vertices[offset+11] = 1.f;
+                vertices[offset+6] = 0;
+                vertices[offset+7] = 0;
+            }
+
+            // we support only one color per vertex
+            if(!textured)
+            {
+                if(mesh->mColors[0])
+                {
+                    vertices[offset+8 ] = mesh->mColors[0][i].r;
+                    vertices[offset+9 ] = mesh->mColors[0][i].g;
+                    vertices[offset+10] = mesh->mColors[0][i].b;
+                    vertices[offset+11] = mesh->mColors[0][i].a;
+                }
+                else
+                {
+                    vertices[offset+8 ] = 1.f;
+                    vertices[offset+9 ] = 1.f;
+                    vertices[offset+10] = 1.f;
+                    vertices[offset+11] = 1.f;
+                }
             }
         }
+
+        for(uint i=0; i<mesh->mNumFaces; i++)
+        {
+            aiFace face = mesh->mFaces[i];
+            for(uint j=0; j<face.mNumIndices; j++)
+                indices.push_back(face.mIndices[j]);
+        }
+        m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize, indices.data(), indices.size(), textured));
     }
 
-    for(uint i=0; i<mesh->mNumFaces; i++)
-    {
-        aiFace face = mesh->mFaces[i];
-        for(uint j=0; j<face.mNumIndices; j++)
-            indices.push_back(face.mIndices[j]);
-    }
-
-    m_mesh = std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize, indices.data(), indices.size(), textured);
     return true;
 }
 
