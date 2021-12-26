@@ -44,9 +44,19 @@ add_executable(Primor
     ${client_SRC}
     ${client_INCLUDE_SRCS}
     )
-target_link_libraries(Primor glfw glad opengl32
-    ${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib
-    ${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib" AND
+   EXISTS "${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib")
+    target_link_libraries(Primor
+        ${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib
+        ${CMAKE_SOURCE_DIR}/external/assimp/contrib/zlib/Release/zlibstatic.lib
+        )
+else()
+   add_subdirectory(external/assimp)
+   target_link_libraries(Primor assimp)
+endif()
+
+target_link_libraries(Primor glfw glad opengl32)
 
 
 

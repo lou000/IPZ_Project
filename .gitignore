@@ -16,3 +16,4 @@ CMakeSettings.json
 /build_debug/*
 !/build_debug/*.exe
 !/assets/meshes/*.obj
+*.lib
