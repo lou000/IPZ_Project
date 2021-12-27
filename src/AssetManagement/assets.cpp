@@ -299,7 +299,7 @@ bool Model::loadModel()
 
     auto importer = AssetManager::getAssimpImporter();
     importer->SetPropertyFloat("PP_GSN_MAX_SMOOTHING_ANGLE", 1);
-    const aiScene* scene = importer->ReadFile( str, aiProcessPreset_TargetRealtime_Quality);
+    const aiScene* scene = importer->ReadFile( str, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GenBoundingBoxes);
     if(!scene)
     {
         WARN("Asset: Couldnt load asset %s, assimp failed with error %s.", c_str, importer->GetErrorString());
@@ -311,12 +311,12 @@ bool Model::loadModel()
     std::vector<uint16> indices;
     std::vector<float> vertices; // resize
 
-    // TODO: deal with materials and textures
-
-    for(uint i=0; i<scene->mNumMeshes; i++)
+    AABB modelBB;
+    LOG("Loading asset %s", c_str);
+    for(uint s=0; s<scene->mNumMeshes; s++)
     {
         Material material;
-        auto mesh = scene->mMeshes[i];
+        auto mesh = scene->mMeshes[s];
         auto mat = scene->mMaterials[mesh->mMaterialIndex];
 
         aiColor3D matColor;
@@ -333,10 +333,6 @@ bool Model::loadModel()
         {
             WARN("Couldnt read material metallnes of asset %s", c_str);
         }
-        else
-        {
-            LOG("Metallnes of %s is %f", c_str, material.metallic);
-        }
 
         if(AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, material.roughness))
         {
@@ -346,7 +342,6 @@ bool Model::loadModel()
         {
             material.roughness = (1-material.roughness/100); //bring to <-1, 1> and invert
             material.roughness = glm::abs(1-glm::sqrt(1.f-material.roughness));
-            LOG("Roughness of %s is %f", c_str, material.roughness);
         }
 
 
@@ -383,9 +378,31 @@ bool Model::loadModel()
             for(uint j=0; j<face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
+        LOG("Mesh %d\n v: %d  i: %d\nRoughness: %f  Metallness: %f", s,
+            (int)vertices.size()/vertexSize, (int)indices.size(), material.roughness, material.metallic);
+        AABB bb;
+        memcpy(&bb.min, &mesh->mAABB.mMin, sizeof (vec3));
+        memcpy(&bb.max, &mesh->mAABB.mMax, sizeof (vec3));
+
+        // correct mesh AABB
+        if(modelBB.max.x<bb.max.x)
+            modelBB.max.x = bb.max.x;
+        if(modelBB.max.y<bb.max.y)
+            modelBB.max.y = bb.max.y;
+        if(modelBB.max.z<bb.max.z)
+            modelBB.max.z = bb.max.z;
+
+        if(modelBB.min.x>bb.min.x)
+            modelBB.min.x = bb.min.x;
+        if(modelBB.min.y>bb.min.y)
+            modelBB.min.y = bb.min.y;
+        if(modelBB.min.z>bb.min.z)
+            modelBB.min.z = bb.min.z;
+
         m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize,
-                                                  indices.data(), indices.size(), material));
+                                                  indices.data(), indices.size(), material, bb));
     }
+    m_boundingBox = modelBB;
 
     return true;
 }

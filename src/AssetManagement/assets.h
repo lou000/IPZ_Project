@@ -95,9 +95,11 @@ public:
 
     virtual bool doReload() override;
     std::vector<std::shared_ptr<Mesh>> meshes(){return m_meshes;}
+    AABB boundingBox(){return m_boundingBox;}
 
 private:
     std::vector<std::shared_ptr<Mesh>> m_meshes;
+    AABB m_boundingBox;
     bool loadModel();
 
 };

@@ -1,8 +1,8 @@
 ﻿#include "mesh.h"
 #include "../Core/utilities.h"
 
-Mesh::Mesh(float *vertexData, size_t vCount, uint16 *indexData, size_t iCount, Material material)
-    : material(material)
+Mesh::Mesh(float *vertexData, size_t vCount, uint16 *indexData, size_t iCount, Material material, AABB boundingBox)
+    : material(material), boundingBox(boundingBox)
 {
     ASSERT(vertexData && indexData);
     auto iBuffer = std::make_shared<IndexBuffer>(iCount*sizeof(uint16), indexData);
