@@ -13,7 +13,9 @@ struct Entity
 
     bool enabled = false;
     bool renderable = false;
-    vec4 overrideColor = {1,1,1,1};
+    //NOTE: We might add this as a boolean check but you shouldn't set override color to
+    //      invisible, instead you should set renderable to false
+    vec4 overrideColor = {0,0,0,0};
     vec3 pos = {0, 0, 0};
     vec3 scale = {1, 1, 1};
     quat rotation = {1,0,0,0};;

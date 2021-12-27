@@ -81,7 +81,13 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
                     //draw with basic_pbr
                     sceneShader->setUniform("u_Metallic", BufferElement::Float, mesh->material.metallic);
                     sceneShader->setUniform("u_Roughness", BufferElement::Float, mesh->material.roughness);
-                    sceneShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
+
+                    //NOTE: We might add this as a boolean check but you shouldn't set override color to
+                    //      invisible, instead you should set renderable to false
+                    if(ent.overrideColor.a > 0)
+                        sceneShader->setUniform("u_Color", BufferElement::Float4, ent.overrideColor);
+                    else
+                        sceneShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
                     vao->bind();
                     glDrawElements(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
                     vao->unbind();
