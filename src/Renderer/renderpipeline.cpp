@@ -15,6 +15,10 @@ RenderPipeline::RenderPipeline()
     depthAtt.renderBuffer = true;
     auto winSize = App::getWindowSize();
     mainFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt}, depthAtt, 16);
+
+    whiteTexture = std::make_shared<Texture>(1, 1);
+    uint whiteData = 0xffffffff;
+    whiteTexture->setTextureData(&whiteData, sizeof(uint));
 }
 
 void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
@@ -30,8 +34,8 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     sceneShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
     sceneShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
 
-    sceneShader->setUniform("u_DirLightPos", BufferElement::Float3, scene->directionalLight.pos);
-    sceneShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
+    sceneShader->setUniform("u_DirLightPos", BufferElement::Float3, scene->skyLight.pos);
+    sceneShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->skyLight.color);
 
 
     glm::vec3 lightPositions[] = {
@@ -98,6 +102,9 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // TODO: DRAW debug graphics
+    BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
+    scene->debugDraw();
+    BatchRenderer::end();
 
     mainFBO.blitToFrontBuffer();
 
