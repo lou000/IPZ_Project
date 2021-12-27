@@ -96,8 +96,8 @@ TestConnect4::TestConnect4()
     previewPuck->setOverrideColor(yellow);
     previewPuck->overrideColor.a = 0.2f;
 
-    directionalLight.pos = {20, 25, 25};
-    directionalLight.color = {1,1,1};
+    skyLight.pos = {20, 25, 25};
+    skyLight.color = {1,1,1};
 
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
@@ -174,6 +174,38 @@ void TestConnect4::onUpdate(float dt)
             ySpeed = 0;
             yPos = 11;
             c4->commitMove(currentMove);
+        }
+    }
+
+}
+
+void TestConnect4::debugDraw()
+{
+    for(auto ent : entities)
+    {
+        if(ent.enabled)
+        {
+            auto model = ent.getModelMatrix();
+            auto bb = ent.model->boundingBox();
+            bb.max = model*vec4(bb.max, 1);
+            bb.min = model*vec4(bb.min, 1);
+            BatchRenderer::drawLine(bb.min, {bb.max.x, bb.min.y, bb.min.z}, 0.05, {1,0,0,1});
+            BatchRenderer::drawLine(bb.min, {bb.min.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+            BatchRenderer::drawLine(bb.min, {bb.min.x, bb.min.y, bb.max.z}, 0.05, {1,0,0,1});
+
+            BatchRenderer::drawLine(bb.max, {bb.min.x, bb.max.y, bb.max.z}, 0.05, {1,0,0,1});
+            BatchRenderer::drawLine(bb.max, {bb.max.x, bb.min.y, bb.max.z}, 0.05, {1,0,0,1});
+            BatchRenderer::drawLine(bb.max, {bb.max.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+
+            BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05, {1,0,0,1});
+            BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+
+            BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.max.x, bb.min.y, bb.min.z}, 0.05, {1,0,0,1});
+            BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.min.x, bb.min.y, bb.max.z}, 0.05, {1,0,0,1});
+
+            BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+
+            BatchRenderer::drawLine({bb.min.x, bb.min.y, bb.max.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05, {1,0,0,1});
         }
     }
 

@@ -37,7 +37,7 @@ public:
     void operator=(BatchRenderer const&) = delete;
 
     static void init(){getInstance().x_init();}
-    static void begin(){getInstance().x_begin();}
+    static void begin(mat4 viewProj){getInstance().x_begin(viewProj);}
     static void end(){getInstance().x_end();}
     static void drawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
@@ -85,12 +85,12 @@ private:
     int maxTextureSlots = 0;
     int textureCount    = 1;
 
-    std::shared_ptr<Shader> m_currentShader = nullptr;
+    std::shared_ptr<Shader> m_debugShader = nullptr;
     std::vector<std::shared_ptr<Texture>> textureSlots;
     std::shared_ptr<Texture> whiteTex;
 
     void x_init();
-    void x_begin();
+    void x_begin(mat4 viewProj);
     void x_end();
 
 
@@ -108,7 +108,7 @@ private:
     void x_drawCircle(const vec2& pos, float radius, int triangles, const vec4& color);
 
 
-    void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
+    void x_setShader(std::shared_ptr<Shader> shader){m_debugShader = shader;}
 
     int addTexture(const std::shared_ptr<Texture>& texture);
     void startBatch();

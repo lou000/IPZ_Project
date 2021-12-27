@@ -165,7 +165,7 @@ void Graph3d::draw(const vec3 &pos, float dt)
 {
     float lWidth = m_scale * 0.001f;
 
-    BatchRenderer::begin();
+    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
     drawGrid(pos);
     for(auto& line : lines)
     {
@@ -312,7 +312,7 @@ void Graph2d::draw(const vec2 &pos, const vec2 &size)
     vec2 bottomRight = {right, bottom};
     vec2 bottomLeft  = {left, bottom};
 
-    BatchRenderer::begin();
+    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
 
     // Draw background
     BatchRenderer::drawQuad(pos, size, {0.051, 0.067, 0.090, 1});

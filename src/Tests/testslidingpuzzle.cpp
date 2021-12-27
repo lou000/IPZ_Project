@@ -84,7 +84,7 @@ void TestSlidingPuzzle::onUpdate(float dt)
             movDir.z = 1;
     }
 
-    BatchRenderer::begin();
+    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
     BatchRenderer::drawQuad({center,-0.001,center}, {n, n}, vec4(0.459, 0.349, 0.298, 1));
     for(int i=0; i<size; i++)
     {

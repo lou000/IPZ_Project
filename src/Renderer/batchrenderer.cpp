@@ -39,18 +39,24 @@ void BatchRenderer::x_init()
     auto iBuffer = std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE);
     auto vBuffer = {std::make_shared<VertexBuffer>(layout, MAX_VERTEX_BUFFER_SIZE)};
     vertexArray = std::make_shared<VertexArray>(vBuffer, iBuffer);
+
+    std::vector<std::filesystem::path> shaderSrcs2 = {
+        "../assets/shaders/default_batch.fs",
+        "../assets/shaders/default_batch.vs"
+    };
+    m_debugShader = std::make_shared<Shader>("batch", shaderSrcs2);
 }
 
-void BatchRenderer::x_begin()
+void BatchRenderer::x_begin(mat4 viewProj)
 {
     // bind all uniforms
 //    glDisable(GL_CULL_FACE);
-    m_currentShader->bind();
-    m_currentShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
+    viewProj3d = viewProj;
+    m_debugShader->bind();
+    m_debugShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
 
     // setup projections
-    viewProj3d = GraphicsContext::getCamera()->getViewProjectionMatrix();
-    m_currentShader->setUniform("u_ViewProjection", BufferElement::Mat4, viewProj3d);
+    m_debugShader->setUniform("u_ViewProjection", BufferElement::Mat4, viewProj3d);
     auto viewSize = GraphicsContext::getViewPortSize();
     viewProjOrtho = glm::ortho(0.f, (float)viewSize.x, (float)viewSize.y, 0.f, -1.f, 1.f)*glm::lookAt(vec3(0,0,1),vec3(0,0,0),vec3(0,1,0));
 
@@ -61,7 +67,7 @@ void BatchRenderer::x_begin()
 void BatchRenderer::x_end()
 {
     flush();
-    m_currentShader->unbind();
+    m_debugShader->unbind();
     vertexArray->unbind();
 }
 

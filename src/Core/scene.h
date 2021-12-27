@@ -15,18 +15,21 @@ public:
     virtual ~Scene(){};
     virtual void onUpdate(float dt) = 0;
     virtual void onStart() = 0;
+    virtual void debugDraw() = 0;
 
-    Entity* getEntity();
-    Entity* getEntity(std::shared_ptr<Model> meshes, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
-    uint activeCount = 0;
     std::shared_ptr<Camera> activeCamera;
 
-    std::array<Entity, 100> entities;
-    std::array<PointLight, 100> lights;
-    DirectionalLight directionalLight;
     std::shared_ptr<Camera> camera;
     std::shared_ptr<Camera> editorCamera;
     std::shared_ptr<Shader> pbrShader;
+
+    //TODO: Entity manager
+    uint activeCount = 0;
+    Entity* getEntity();
+    Entity* getEntity(std::shared_ptr<Model> model, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
+    std::array<Entity, 100> entities;
+    std::array<PointLight, 100> lights;
+    DirectionalLight skyLight;
 
 };
 

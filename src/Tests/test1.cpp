@@ -26,7 +26,7 @@ void Test1::onStart()
 void Test1::onUpdate(float dt)
 {
 
-    BatchRenderer::begin();
+    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
     float w = 0.09f;
     float z = w/2;
     float x = w/2;
