@@ -28,9 +28,11 @@ vec3 toneMapACES(vec3 x);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(float NdotV, float NdotL, float roughness);
-vec3 fresnelSchlick(float cosTheta, vec3 F0);
+vec3 FresnelSchlick(float cosTheta, vec3 F0);
 vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity, 
                           vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0);
+vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
+                            vec3 fragPos, vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0);
 
 void main()
 {		
@@ -40,36 +42,12 @@ void main()
     vec3 F0 = vec3(0.04); 
     F0 = mix(F0, v_Color.rgb, u_Metallic);
 	           
-    // reflectance equation
+    // lights contribution TODO: pass intensities and ranges
     vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, 5, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     
-    for(int i = 0; i < 1; ++i) 
+    for(int i = 0; i < 4; ++i) 
     {
-        // calculate per-light radiance
-        vec3 L = normalize(lightPositions[i] - v_Pos);
-        vec3 H = normalize(V + L);
-        float distance    = length(lightPositions[i] - v_Pos);
-        float attenuation = 1.0 / (distance * distance);
-        vec3 radiance     = lightColors[i] * attenuation;
-
-        float nDotV = max(dot(N, V), 0.0);
-        float nDotL = max(dot(N, L), 0.0);
-        
-        // cook-torrance brdf
-        float NDF = DistributionGGX(N, H, u_Roughness);        
-        float G   = GeometrySmith(nDotV, nDotL, u_Roughness);      
-        vec3  F    = fresnelSchlick(max(dot(H, V), 0.0), F0);        
-        
-        vec3 numerator    = NDF * G * F;
-        float denominator = 4.0 * nDotV * nDotL + 0.0001;
-        vec3 specular     = numerator / denominator; 
-
-        vec3 kS = F;
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - u_Metallic;	  
-            
-        // add to outgoing radiance Lo             
-        Lo += (kD * v_Color.rgb / PI + specular) * radiance * nDotL; 
+        Lo += pointLightContribution(lightPositions[i], lightColors[i], 1, 20, v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     }
   
     vec3 ambient = vec3(0.03) * v_Color.rgb;
@@ -80,6 +58,35 @@ void main()
     color = toneMapACES(color);
    
     o_Color = vec4(color, v_Color.a);
+}
+
+vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
+                            vec3 fragPos, vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0)
+{
+    vec3 lightDir = normalize(lightPosition - fragPos);
+    vec3 halfway = normalize(viewDir + lightDir);
+    float distance    = length(lightPosition - fragPos);
+    float attenuation = pow(clamp(1 - pow((distance / range), 4.0), 0.0, 1.0), 2.0)/(1.0  + (distance * distance) );
+    vec3 radiance     = lightColor * attenuation;
+
+    float nDotV = max(dot(normal, viewDir), 0.0);
+    float nDotL = max(dot(normal, lightDir), 0.0);
+
+    float NDF = DistributionGGX(normal, halfway, rough);
+    float G   = GeometrySmith(nDotV, nDotL, rough);
+    vec3  F   = FresnelSchlick(max(dot(halfway,viewDir), 0.0), F0);
+
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metal;
+
+    vec3 numerator = NDF * G * F;
+    float denominator = 4.0 * nDotV * nDotL;
+    vec3 specular = numerator / max(denominator, 0.0000001);
+
+    radiance *= (kD * (color / PI) + specular ) * nDotL;
+
+    return intensity*radiance;
 }
 
 vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity, 
@@ -94,7 +101,7 @@ vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
     // cook-torrance brdf
     float NDF = DistributionGGX(normal, H, rough);        
     float G   = GeometrySmith(nDotV, nDotL, rough);      
-    vec3  F   = fresnelSchlick(max(dot(H, viewDir), 0.0), F0);
+    vec3  F   = FresnelSchlick(max(dot(H, viewDir), 0.0), F0);
 
     //Finding specular and diffuse component
     vec3 kS = F;
@@ -112,39 +119,39 @@ vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
 
 // Narkowicz 2015, "ACES Filmic Tone Mapping Curve"
 vec3 toneMapACES(vec3 x) {
-  const float a = 2.51;
-  const float b = 0.03;
-  const float c = 2.43;
-  const float d = 0.59;
-  const float e = 0.14;
-  return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
+    const float a = 2.51;
+    const float b = 0.03;
+    const float c = 2.43;
+    const float d = 0.59;
+    const float e = 0.14;
+    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
 }
 
 // https://github.com/dmnsgn/glsl-tone-map/blob/master/uncharted2.glsl
 vec3 uncharted2Tonemap(vec3 x) {
-  float A = 0.15;
-  float B = 0.50;
-  float C = 0.10;
-  float D = 0.20;
-  float E = 0.02;
-  float F = 0.30;
-  float W = 11.2;
-  return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+    float A = 0.15;
+    float B = 0.50;
+    float C = 0.10;
+    float D = 0.20;
+    float E = 0.02;
+    float F = 0.30;
+    float W = 11.2;
+    return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
 vec3 toneMapUncharted2(vec3 color) {
-  const float W = 11.2;
-  float exposureBias = 2.0;
-  vec3 curr = uncharted2Tonemap(exposureBias * color);
-  vec3 whiteScale = 1.0 / uncharted2Tonemap(vec3(W));
-  return curr * whiteScale;
+    const float W = 11.2;
+    float exposureBias = 2.0;
+    vec3 curr = uncharted2Tonemap(exposureBias * color);
+    vec3 whiteScale = 1.0 / uncharted2Tonemap(vec3(W));
+    return curr * whiteScale;
 }
 
 // Filmic Tonemapping Operators http://filmicworlds.com/blog/filmic-tonemapping-operators
 vec3 toneMapFilmic(vec3 x) {
-  vec3 X = max(vec3(0.0), x - 0.004);
-  vec3 result = (X * (6.2 * X + 0.5)) / (X * (6.2 * X + 1.7) + 0.06);
-  return pow(result, vec3(2.2));
+    vec3 X = max(vec3(0.0), x - 0.004);
+    vec3 result = (X * (6.2 * X + 0.5)) / (X * (6.2 * X + 1.7) + 0.06);
+    return pow(result, vec3(2.2));
 }
 
 // ----------------------------------------------------------------------------
@@ -181,7 +188,7 @@ float GeometrySmith(float NdotV, float NdotL, float roughness)
     return ggx1 * ggx2;
 }
 // ----------------------------------------------------------------------------
-vec3 fresnelSchlick(float cosTheta, vec3 F0)
+vec3 FresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
