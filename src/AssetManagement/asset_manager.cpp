@@ -193,10 +193,12 @@ void AssetManager::x_checkForChanges()
             auto fullPath = dir->path;
             fullPath.replace_filename(filename);
 
-            if (dir->assets.count(fullPath) != 0)
+            for(auto &[path, asset] : dir->assets)
             {
-                auto asset = dir->assets[fullPath];
-                if (asset->reloadScheduled != true)
+                // we have to check for equivalent becouse windows paths are case insensitive
+                // path returned from ReadDirectoryChanges might be diffirent from stored asset path
+                // but both will point to the correct asset
+                if (std::filesystem::equivalent(fullPath, path) && asset->reloadScheduled != true)
                 {
                     if (timeFirstChange == 0)
                         timeFirstChange = std::clock();
