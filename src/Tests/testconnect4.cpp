@@ -98,6 +98,7 @@ TestConnect4::TestConnect4()
 
     skyLight.direction = {-3, -5, -1.33f};
     skyLight.color = {1,1,1};
+    skyLight.intensity = 5.f;
 
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;

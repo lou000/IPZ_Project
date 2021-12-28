@@ -36,6 +36,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     sceneShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->skyLight.direction);
     sceneShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->skyLight.color);
+    sceneShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->skyLight.intensity);
 
 
     glm::vec3 lightPositions[] = {

@@ -18,6 +18,7 @@ uniform vec3 lightColors[4];
 
 uniform vec3 u_CameraPosition;
 uniform vec3 u_DirLightDirection;
+uniform float u_DirLightIntensity;
 uniform vec3 u_DirLightCol;
 
 const float PI = 3.14159265359;
@@ -43,7 +44,7 @@ void main()
     F0 = mix(F0, v_Color.rgb, u_Metallic);
 	           
     // lights contribution TODO: pass intensities and ranges
-    vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, 5, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
+    vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     
     for(int i = 0; i < 4; ++i) 
     {
