@@ -49,7 +49,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 }
 TestConnect4::TestConnect4()
 {
-    mesh1 = std::make_shared<Model>("../assets/meshes/connect4Board.obj");
+    mesh1 = std::make_shared<Model>("../assets/meshes/connect4_board.fbx");
     mesh2 = std::make_shared<Model>("../assets/meshes/connect4Puck1.obj");
     mesh3 = std::make_shared<Model>("../assets/meshes/connect4Puck2.obj");
 
@@ -96,7 +96,7 @@ TestConnect4::TestConnect4()
     previewPuck->setOverrideColor(yellow);
     previewPuck->overrideColor.a = 0.2f;
 
-    skyLight.pos = {20, 25, 25};
+    skyLight.direction = {-3, -5, -1.33f};
     skyLight.color = {1,1,1};
 
     for(int i=0;i<7; i++)

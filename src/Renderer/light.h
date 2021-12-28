@@ -8,7 +8,7 @@ using namespace glm;
 
 struct DirectionalLight
 {
-    vec3 pos;
+    vec3 direction;
     vec3 color;
 
     bool enabled = true;

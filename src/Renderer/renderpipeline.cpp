@@ -34,7 +34,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     sceneShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
     sceneShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
 
-    sceneShader->setUniform("u_DirLightPos", BufferElement::Float3, scene->skyLight.pos);
+    sceneShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->skyLight.direction);
     sceneShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->skyLight.color);
 
 
