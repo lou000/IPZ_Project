@@ -319,6 +319,11 @@ bool Model::loadModel()
         auto mesh = scene->mMeshes[s];
         auto mat = scene->mMaterials[mesh->mMaterialIndex];
 
+        uint vertexSize = sizeof(MeshVertex)/sizeof(float); //in floats
+        vertices.resize(vertexSize*mesh->mNumVertices);
+        indices.clear();
+
+
         aiColor3D matColor;
         if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_DIFFUSE, matColor))
         {
@@ -344,10 +349,6 @@ bool Model::loadModel()
             material.roughness = glm::abs(1-glm::sqrt(1.f-material.roughness));
         }
 
-
-        uint vertexSize = sizeof(MeshVertex)/sizeof(float); //in floats
-
-        vertices.resize(vertexSize*mesh->mNumVertices);
         for(uint i=0; i<mesh->mNumVertices; i++)
         {
             auto offset = i*vertexSize;
@@ -378,7 +379,7 @@ bool Model::loadModel()
             for(uint j=0; j<face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
-        LOG("Mesh %d\n v: %d  i: %d\nRoughness: %f  Metallness: %f", s,
+        LOG("Mesh %s\n v: %d  i: %d\nRoughness: %f  Metallness: %f", mesh->mName.C_Str(),
             (int)vertices.size()/vertexSize, (int)indices.size(), material.roughness, material.metallic);
         AABB bb;
         memcpy(&bb.min, &mesh->mAABB.mMin, sizeof (vec3));
