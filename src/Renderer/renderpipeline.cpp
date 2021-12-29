@@ -4,6 +4,7 @@
 
 RenderPipeline::RenderPipeline()
 {
+    // Create main framebuffer
     FrameBufferAttachment colorAtt;
     colorAtt.type = GL_COLOR_ATTACHMENT0;
     colorAtt.format = GL_RGBA8;
@@ -16,10 +17,16 @@ RenderPipeline::RenderPipeline()
     auto winSize = App::getWindowSize();
     mainFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt}, depthAtt, 16);
 
+
+    // Create white texture for non-textured drawing
     whiteTexture = std::make_shared<Texture>(1, 1);
     uint whiteData = 0xffffffff;
     whiteTexture->setTextureData(&whiteData, sizeof(uint));
+
+    // Create lights SSBO
+    lightsSSBO = StorageBuffer(sizeof(uint) + MAX_LIGHTS*sizeof(PointLight), 2);
 }
+
 
 void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 {
@@ -30,40 +37,31 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     auto sceneShader = scene->pbrShader;
     auto sceneCamera = scene->camera;
     sceneShader->bind();
+
+    // Set camera data
     sceneShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
     sceneShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
     sceneShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
 
+    // Set directional light data
     sceneShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->skyLight.direction);
     sceneShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->skyLight.color);
     sceneShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->skyLight.intensity);
 
 
-    glm::vec3 lightPositions[] = {
-        glm::vec3(-10.0f,  10.0f, 10.0f),
-        glm::vec3( 10.0f,  10.0f, 10.0f),
-        glm::vec3(-10.0f, -10.0f, 10.0f),
-        glm::vec3( 10.0f, -10.0f, 10.0f),
-    };
-    glm::vec3 lightColors[] = {
-        glm::vec3(300.0f, 300.0f, 300.0f),
-        glm::vec3(300.0f, 300.0f, 300.0f),
-        glm::vec3(300.0f, 300.0f, 300.0f),
-        glm::vec3(300.0f, 300.0f, 300.0f)
-    };
-
-    // TODO: remove test code
-    for (unsigned int i = 0; i < sizeof(lightPositions) / sizeof(lightPositions[0]); ++i)
+    // Set point lights data
+    std::vector<PointLight> enabledLights;
+    for(auto light : scene->lights)
     {
-        glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime()) * 5.0, 0.0, 0.0);
-//        newPos = lightPositions[i];
-        auto str1 = "lightPositions[" + std::to_string(i) + "]";
-        auto str2 = "lightColors[" + std::to_string(i) + "]";
-        sceneShader->setUniform(str1.c_str(), BufferElement::Float3, newPos);
-        sceneShader->setUniform(str2.c_str(), BufferElement::Float3, lightColors[i]);
+        if(light.enabled)
+            enabledLights.push_back(light);
     }
+    uint lSize = (uint)enabledLights.size();
+    sceneShader->setUniform("u_PointLightCount", BufferElement::Uint, lSize);
+    lightsSSBO.bind();
+    lightsSSBO.setData(enabledLights.data(), sizeof(PointLight)*lSize);
 
-    // TODO: SSBO for pointlights
+
     for(auto ent : scene->entities)
     {
         // this is a lot of branching in a tight loop,
@@ -100,9 +98,10 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
             }
         }
     }
+    lightsSSBO.unbind();
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // TODO: DRAW debug graphics
+    // Draw debug graphics
     BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
     scene->debugDraw();
     BatchRenderer::end();
