@@ -41,6 +41,7 @@ void Shader::setUniform(const char* name, BufferElement::DataType type, const st
     int loc = glGetUniformLocation(m_id, name);
     switch (type)
     {
+    case BufferElement::Uint:   glUniform1ui(loc, std::any_cast<uint>(value)); return;
     case BufferElement::Int:   glUniform1i(loc, std::any_cast<int>(value)); return;
     case BufferElement::Float: glUniform1f(loc, std::any_cast<float>(value)); return;
     case BufferElement::Float2:
@@ -71,6 +72,7 @@ void Shader::setUniformArray(const char *name, BufferElement::DataType type, con
     int loc = glGetUniformLocation(m_id, name);
     switch (type)
     {
+    case BufferElement::Uint:   glUniform1uiv(loc, count, std::any_cast<uint*>(values)); return;
     case BufferElement::Int:    glUniform1iv(loc, count, std::any_cast<int*>(values)); return;
     case BufferElement::Float:  glUniform1fv(loc, count, std::any_cast<float*>(values)); return;
         //everything below is untested, i have no clue if this works
