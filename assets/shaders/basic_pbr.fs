@@ -13,13 +13,25 @@ uniform float u_Metallic;
 uniform float u_Roughness;
 
 // lights
-uniform vec3 lightPositions[4];
-uniform vec3 lightColors[4];
+struct PointLight{
+    vec4 position;
+    vec4 color;
+    bool enabled;
+    bool shadowCasting;
+    float intensity;
+    float range;
+};
+
+layout (std430, binding = 2) buffer pointLightsSSBO
+{
+    PointLight pointLights[];
+};
 
 uniform vec3 u_CameraPosition;
 uniform vec3 u_DirLightDirection;
 uniform float u_DirLightIntensity;
 uniform vec3 u_DirLightCol;
+uniform uint u_PointLightCount;
 
 const float PI = 3.14159265359;
 
@@ -46,9 +58,12 @@ void main()
     // lights contribution TODO: pass intensities and ranges
     vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     
-    for(int i = 0; i < 4; ++i) 
+    for(int i = 0; i < u_PointLightCount; ++i) 
     {
-        Lo += pointLightContribution(lightPositions[i], lightColors[i], 1, 20, v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
+        vec3 pos = pointLights[i].position.xyz;
+        vec3 col = pointLights[i].color.rgb;
+        Lo += pointLightContribution(pos, col, pointLights[i].intensity, pointLights[i].range, 
+                                     v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     }
   
     vec3 ambient = vec3(0.03) * v_Color.rgb;
