@@ -7,6 +7,8 @@
 #include "../Renderer/shader.h"
 #include "entity.h"
 
+#define MAX_LIGHTS 100
+
 // For now this is base class that represents the "game"
 class Scene
 {
@@ -24,11 +26,13 @@ public:
     std::shared_ptr<Shader> pbrShader;
 
     //TODO: Entity manager
-    uint activeCount = 0;
-    Entity* getEntity();
-    Entity* getEntity(std::shared_ptr<Model> model, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
+    uint activeEntityCount = 0;
+    uint activeLightCount = 0;
+    Entity* createEntity();
+    PointLight* createLight(vec3 pos, vec3 color, float range, float intensity);
+    Entity* createEntity(std::shared_ptr<Model> model, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
     std::array<Entity, 100> entities;
-    std::array<PointLight, 100> lights;
+    std::array<PointLight, MAX_LIGHTS> lights;
     DirectionalLight skyLight;
 
 };

@@ -79,20 +79,24 @@ TestConnect4::TestConnect4()
     camera->setPosition({0, 7, 20});
     camera->setFocusPoint({0,6,0});
 
-    auto board = getEntity(mesh1, {0,0,0});
+    auto board = createEntity(mesh1, {0,0,0});
     board->setOverrideColor({0.165, 0.349, 1.000, 1});
 
-    auto puck1 = getEntity(mesh2, {1,0,3});
+    auto puck1 = createEntity(mesh2, {1,0,3});
     puck1->setOverrideColor(red);
 
-    auto puck2 = getEntity(mesh3, {-1,0,3});
+    auto puck2 = createEntity(mesh3, {-1,0,3});
     puck2->setOverrideColor(yellow);
 
-    auto test1 = getEntity(testMesh1, {5,0,5}, quat({-radians(90.f), 0, 0}));
-    auto test2 = getEntity(testMesh2, {-5,0,5}, quat({-radians(90.f), 0, 0}));
+    auto test1 = createEntity(testMesh1, {5,0,5}, quat({-radians(90.f), 0, 0}));
+    auto test2 = createEntity(testMesh2, {-5,0,5}, quat({-radians(90.f), 0, 0}));
 //    auto test3 = getEntity(testMesh3, {1,0,3});
 
-    previewPuck = getEntity(mesh3, {0, 0, 0}, quat({radians(90.f), 0, 0}));
+    for(uint row=0; row<4; row++)
+        for(uint col=0; col<4; col++)
+            createLight({-10.f+row*5.f, 5, -10.f+col*5.f}, {1,1,1}, 60.f, 5.f);
+
+    previewPuck = createEntity(mesh3, {0, 0, 0}, quat({radians(90.f), 0, 0}));
     previewPuck->setOverrideColor(yellow);
     previewPuck->overrideColor.a = 0.2f;
 
@@ -134,7 +138,7 @@ void TestConnect4::onUpdate(float dt)
                     {
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
                         {
-                            puckInPlay = getEntity(mesh3, {hPositions[i],11,-0.45}, quat({radians(90.f), 0, 0}));
+                            puckInPlay = createEntity(mesh3, {hPositions[i],11,-0.45}, quat({radians(90.f), 0, 0}));
                             puckInPlay->setOverrideColor(yellow);
                             animating = true;
                         }
@@ -153,7 +157,7 @@ void TestConnect4::onUpdate(float dt)
         auto moves = searcher->get_scores();
         currentMove = pickRandomTopMove(moves);
 
-        puckInPlay = getEntity(mesh3, {0,0,0}, quat({radians(90.f), 0, 0}));
+        puckInPlay = createEntity(mesh3, {0,0,0}, quat({radians(90.f), 0, 0}));
         puckInPlay->setOverrideColor(red);
 
         animating = true;

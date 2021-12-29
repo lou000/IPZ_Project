@@ -1,22 +1,32 @@
 ﻿#include "scene.h"
 
 
-Entity* Scene::getEntity()
+Entity* Scene::createEntity()
 {
-    auto ent = &entities[activeCount];
+    auto ent = &entities[activeEntityCount++];
     ent->enabled = true;
-    activeCount++;
     return ent;
 }
 
-Entity *Scene::getEntity(std::shared_ptr<Model> model, vec3 pos, quat rotation)
+PointLight *Scene::createLight(vec3 pos, vec3 color, float range, float intensity)
 {
-    auto ent = &entities[activeCount];
+    auto light = &lights[activeLightCount++];
+    light->enabled = true;
+    light->pos = vec4(pos, 1);
+    light->color = vec4(color, 1);
+    light->range = range;
+    light->intensity = intensity;
+    return light;
+}
+
+Entity *Scene::createEntity(std::shared_ptr<Model> model, vec3 pos, quat rotation)
+{
+    auto ent = &entities[activeEntityCount];
     ent->enabled = true;
     ent->renderable = true;
     ent->model = model;
     ent->pos = pos;
     ent->rotation = rotation;
-    activeCount++;
+    activeEntityCount++;
     return ent;
 }
