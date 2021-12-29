@@ -338,3 +338,43 @@ void FrameBuffer::update()  // create/recreate framebuffer
     ASSERT(status == GL_FRAMEBUFFER_COMPLETE, "OpenGL: Framebuffer is incomplete!\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+StorageBuffer::StorageBuffer(size_t size, uint bufferIndex, void *data, uint usage)
+    :size(size)
+{
+    glGenBuffers(1, &id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+StorageBuffer::~StorageBuffer()
+{
+    if(id)
+        glDeleteBuffers(1, &id);
+}
+
+void StorageBuffer::bind()
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+}
+
+void StorageBuffer::unbind()
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void StorageBuffer::setData(const void *data, size_t size, uint usage)
+{
+    ASSERT(size<=this->size);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void StorageBuffer::setSubData(const void *data, size_t offset, size_t size)
+{
+    ASSERT(size+offset<=this->size);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);
+}

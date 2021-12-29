@@ -203,3 +203,20 @@ private:
     std::vector<std::shared_ptr<Texture>> attachedTextures; //give weak pointer if we take from here
     std::shared_ptr<Texture> depthTexture = nullptr; //could be depth+stencil
 };
+
+class StorageBuffer
+{
+public:
+    StorageBuffer(){};
+    StorageBuffer(size_t size, uint bufferIndex, void* data = nullptr, uint usage = GL_DYNAMIC_DRAW);
+    ~StorageBuffer();
+    void bind();
+    void unbind();
+    void setData(const void* data, size_t size, uint usage);
+    void setSubData(const void* data, size_t offset, size_t size); // this does not bind the buffer beforehand
+
+private:
+    uint id = 0;
+    uint size = 0;
+
+};
