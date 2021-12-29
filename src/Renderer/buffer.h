@@ -12,6 +12,7 @@ class BufferElement{
 
 public:
     enum DataType{
+        Uint,
         Int,
         Float,
         Float2,
@@ -27,6 +28,7 @@ public:
     inline static uint typeComponentCount(DataType type){
         switch (type)
         {
+        case Uint:   return 1;
         case Int:    return 1;
         case Float:  return 1;
         case Float2: return 2;
@@ -40,6 +42,7 @@ public:
     inline static uint typeComponentSize(DataType type){
         switch (type)
         {
+        case Uint:   return 4;
         case Int:    return 4;
         case Float:  return 4;
         case Float2: return 4*2;
@@ -54,6 +57,7 @@ public:
     inline static uint typeToNative(DataType type){
         switch (type)
         {
+        case Uint:   return GL_UNSIGNED_INT;
         case Int:    return GL_INT;
         case Float:
         case Float2:
@@ -177,7 +181,7 @@ class FrameBuffer
 {
     //TODO: fill out the functions, and remember to blit to screen for now
 public:
-    FrameBuffer(){};
+    FrameBuffer() = default;
     FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
                 FrameBufferAttachment depthAttachment = {}, uint samples = 1);
     void resize(uint width, uint height);
@@ -207,16 +211,16 @@ private:
 class StorageBuffer
 {
 public:
-    StorageBuffer(){};
+    StorageBuffer() = default;
     StorageBuffer(size_t size, uint bufferIndex, void* data = nullptr, uint usage = GL_DYNAMIC_DRAW);
-    ~StorageBuffer();
     void bind();
     void unbind();
-    void setData(const void* data, size_t size, uint usage);
+    void setData(const void* data, size_t size);
     void setSubData(const void* data, size_t offset, size_t size); // this does not bind the buffer beforehand
 
 private:
     uint id = 0;
     uint size = 0;
+    uint bufferIndex = 0;
 
 };

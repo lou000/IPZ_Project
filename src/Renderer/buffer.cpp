@@ -190,7 +190,6 @@ void VertexArray::setIBuffer(std::shared_ptr<IndexBuffer> buffer)
     iBuffer = buffer;
 }
 
-
 FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAttachments,
                          FrameBufferAttachment depthAttachment, uint samples)
     :width(width), height(height), samples(samples), colorAttachments(colorAttachments), depthAttachment(depthAttachment)
@@ -340,19 +339,13 @@ void FrameBuffer::update()  // create/recreate framebuffer
 }
 
 StorageBuffer::StorageBuffer(size_t size, uint bufferIndex, void *data, uint usage)
-    :size(size)
+    :size(size), bufferIndex(bufferIndex)
 {
     glGenBuffers(1, &id);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, id);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-}
-
-StorageBuffer::~StorageBuffer()
-{
-    if(id)
-        glDeleteBuffers(1, &id);
 }
 
 void StorageBuffer::bind()
@@ -365,11 +358,11 @@ void StorageBuffer::unbind()
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void StorageBuffer::setData(const void *data, size_t size, uint usage)
+void StorageBuffer::setData(const void *data, size_t size)
 {
     ASSERT(size<=this->size);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, data);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
