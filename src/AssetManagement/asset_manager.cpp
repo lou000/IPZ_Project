@@ -203,7 +203,7 @@ void AssetManager::x_checkForChanges()
                     if (timeFirstChange == 0)
                         timeFirstChange = std::clock();
                     asset->reloadScheduled = true;
-                    LOG("Asset '%s' found and marked for reload", fullPath.string().c_str());
+                    LOG("Asset '%s' found and marked for reload\n", fullPath.string().c_str());
                 }
             }
 

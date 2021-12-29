@@ -312,7 +312,7 @@ bool Model::loadModel()
     std::vector<float> vertices; // resize
 
     AABB modelBB;
-    LOG("Loading asset %s", c_str);
+    LOG("\nLoading asset %s\n", c_str);
     for(uint s=0; s<scene->mNumMeshes; s++)
     {
         Material material;
@@ -379,7 +379,7 @@ bool Model::loadModel()
             for(uint j=0; j<face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
-        LOG("Mesh %s\n v: %d  i: %d\nRoughness: %f  Metallness: %f", mesh->mName.C_Str(),
+        LOG("Mesh %s\n v: %d  i: %d\nRoughness: %f  Metallness: %f\n", mesh->mName.C_Str(),
             (int)vertices.size()/vertexSize, (int)indices.size(), material.roughness, material.metallic);
         AABB bb;
         memcpy(&bb.min, &mesh->mAABB.mMin, sizeof (vec3));
@@ -403,6 +403,7 @@ bool Model::loadModel()
         m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize,
                                                   indices.data(), indices.size(), material, bb));
     }
+    LOG("\n");
     m_boundingBox = modelBB;
 
     return true;

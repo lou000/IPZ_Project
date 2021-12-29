@@ -35,10 +35,10 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
     using namespace colorwin;
     switch(level)
     {
-    case 0/*LOG */: std::cout<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
+    case 0/*LOG */: std::cout<<color(cyan)<<message; return AssertAction::None;
     case 1/*WARN*/: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
     case 2/*OPENGL_LOG  */: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
-    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
+    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
     case 4/*GLFW_LOG    */: std::cout<<color(cyan)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::None;
     case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::Throw;
 
