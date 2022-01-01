@@ -274,7 +274,7 @@ void FrameBuffer::update()  // create/recreate framebuffer
     if(id)  // delete all data if framebuffer exists
     {
         glDeleteFramebuffers(1, &id);
-        depthTexture = 0;   //should auto delete from texture destructors
+        depthTexture = nullptr;   //should auto delete from texture destructors
         attachedTextures.clear();
         glDeleteRenderbuffers(rboIds.size(), rboIds.data());
     }
@@ -286,7 +286,7 @@ void FrameBuffer::update()  // create/recreate framebuffer
         for (size_t i=0; i<texCount; i++)
         {
             auto att = colorAttachments[i];
-            ASSERT(att.type>=GL_COLOR_ATTACHMENT0 && att.type <= GL_COLOR_ATTACHMENT0+(uint)maxAttachments-1);
+            ASSERT(att.type >= GL_COLOR_ATTACHMENT0 && att.type <= (GL_COLOR_ATTACHMENT0+(uint)maxAttachments-1));
             if(att.renderBuffer)
             {
                 uint rbo;

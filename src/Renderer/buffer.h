@@ -184,6 +184,8 @@ public:
     FrameBuffer() = default;
     FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
                 FrameBufferAttachment depthAttachment = {}, uint samples = 1);
+
+    std::shared_ptr<Texture> getTexture(uint index){return attachedTextures.at(index);}
     void resize(uint width, uint height);
     void bind();
     void bind(std::vector<GLenum> attachments);
