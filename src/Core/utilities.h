@@ -20,12 +20,13 @@
 #define ASSERT_DEBUG          PPK_ASSERT_DEBUG
 #define ASSERT_ERROR          PPK_ASSERT_ERROR
 #define ASSERT_FATAL          PPK_ASSERT_FATAL
-#define LOG(message, ...)     PPK_ASSERT_CUSTOM(0, 0, message, __VA_ARGS__)
-#define WARN(message, ...)     PPK_ASSERT_CUSTOM(1, 0, message, __VA_ARGS__)
-#define OPENGL_LOG(message, ...)     PPK_ASSERT_CUSTOM(2, 0, message, __VA_ARGS__)
-#define OPENGL_THROW(message, ...)   PPK_ASSERT_CUSTOM(3, 0, message, __VA_ARGS__)
+#define LOG(message, ...)          PPK_ASSERT_CUSTOM(0, 0, message, __VA_ARGS__)
+#define WARN(message, ...)         PPK_ASSERT_CUSTOM(1, 0, message, __VA_ARGS__)
+#define OPENGL_LOG(message, ...)   PPK_ASSERT_CUSTOM(2, 0, message, __VA_ARGS__)
+#define OPENGL_THROW(message, ...) PPK_ASSERT_CUSTOM(3, 0, message, __VA_ARGS__)
 #define GLFW_LOG(message, ...)     PPK_ASSERT_CUSTOM(4, 0, message, __VA_ARGS__)
 #define GLFW_THROW(message, ...)   PPK_ASSERT_CUSTOM(5, 0, message, __VA_ARGS__)
+#define ASSERT_NOT_REACHED()       PPK_ASSERT_CUSTOM(6, 0)
 
 static ppk::assert::implementation::AssertAction::AssertAction assertHandler(const char* file, int line, const char* function,
                                                                               const char* expression, int level, const char* message)
@@ -41,6 +42,7 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
     case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
     case 4/*GLFW_LOG    */: std::cout<<color(cyan)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::None;
     case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::Throw;
+    case 6/*GLFW_THROW  */: std::cout<<color(red)<<file<<" : "<<line<<"\n ASSERT_NOT_REACHED: Shouldn't be here!\n"; return AssertAction::Throw;
 
     case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;
     case AssertLevel::Debug:
