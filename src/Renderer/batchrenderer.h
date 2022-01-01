@@ -54,6 +54,9 @@ public:
     static void drawTris(vec3* verts, uint16* indices, uint iCount, float lWidth, const vec4& color)
     {getInstance().x_drawTris(verts, indices, iCount, lWidth, color);}
 
+    static void drawQuad(const vec2 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture = nullptr,
+                  float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
+    {getInstance().x_drawQuad(pos, size, texture, tilingFactor, tintColor);}
     static void drawQuad(const vec2 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_drawQuad(pos, size, tintColor);}
     static void drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color)
@@ -103,6 +106,8 @@ private:
     void x_drawPoint(const vec3& pos, float lWidth, float lLen, const vec4& color);
     void x_drawTris(vec3* verts, uint16* indices, uint iCount, float lWidth, const vec4& color);
 
+    void x_drawQuad(const vec2 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
+                    float tilingFactor, const vec4 &tintColor);
     void x_drawQuad(const vec2 &pos, const vec2 &size, const vec4 &tintColor);
     void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
     void x_drawCircle(const vec2& pos, float radius, int triangles, const vec4& color);

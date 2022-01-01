@@ -1,6 +1,6 @@
 ﻿#include "batchrenderer.h"
 #include "gtx/vector_angle.hpp"
-#include "../AssetManagement/assets.h"
+#include "../AssetManagement/asset_manager.h"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
@@ -45,6 +45,7 @@ void BatchRenderer::x_init()
         "../assets/shaders/default_batch.vs"
     };
     m_debugShader = std::make_shared<Shader>("batch", shaderSrcs2);
+    AssetManager::addShader(m_debugShader);
 }
 
 void BatchRenderer::x_begin(mat4 viewProj)
@@ -159,6 +160,19 @@ void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const vec4& ti
         viewProjOrtho * vec4(pos.x,        pos.y,        1, 1),
     };
     x_drawQuad_internal(quadVertexPos, nullptr, 1, tintColor);
+}
+
+void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
+                               float tilingFactor, const vec4& tintColor)
+{
+    const vec4 quadVertexPos[4] =
+    {
+        viewProjOrtho * vec4(pos.x,        pos.y+size.y, 1, 1),
+        viewProjOrtho * vec4(pos.x+size.x, pos.y+size.y, 1, 1),
+        viewProjOrtho * vec4(pos.x+size.x, pos.y,        1, 1),
+        viewProjOrtho * vec4(pos.x,        pos.y,        1, 1),
+    };
+    x_drawQuad_internal(quadVertexPos, texture, tilingFactor, tintColor);
 }
 
 void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
