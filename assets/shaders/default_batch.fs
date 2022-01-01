@@ -15,6 +15,7 @@ vec4 colorize(in vec4 texCol, in vec4 color)
 
 
 layout(location = 0) out vec4 color;
+layout(location = 1) out vec4 unused;
 
 in vec4 v_Color;
 in vec2 v_TexCoord;
@@ -63,6 +64,7 @@ void main()
 	}
     texColor*=v_Color;
 	color = texColor;
+    unused = vec4(0,0,0,0);
     // if(v_TexIndex == 2)
     //     color = colorize(texColor, vec4(0.965, 0.827, 0.502, 0.95));
     // color = vec4(0.5, 0.2, 0.2, 1);

@@ -4,24 +4,60 @@
 
 RenderPipeline::RenderPipeline()
 {
+    // Init shaders
+    std::vector<std::filesystem::path> shaderSrcs = {
+        "../assets/shaders/final_composite.fs",
+        "../assets/shaders/final_composite.vs"
+    };
+    screenShader = std::make_shared<Shader>("final_composite", shaderSrcs);
+    AssetManager::addShader(screenShader);
+
+
+
     // Create main framebuffer
     FrameBufferAttachment colorAtt;
     colorAtt.type = GL_COLOR_ATTACHMENT0;
-    colorAtt.format = GL_RGBA8;
-    colorAtt.renderBuffer = true;
+    colorAtt.format = GL_R11F_G11F_B10F;
+    colorAtt.renderBuffer = false;
+
+    FrameBufferAttachment bloomTresholdImage;
+    bloomTresholdImage.type = GL_COLOR_ATTACHMENT1;
+    bloomTresholdImage.format = GL_R11F_G11F_B10F;
+    bloomTresholdImage.renderBuffer = false;
 
     FrameBufferAttachment depthAtt;
     depthAtt.type = GL_DEPTH_STENCIL_ATTACHMENT;
     depthAtt.format = GL_DEPTH24_STENCIL8;
-    depthAtt.renderBuffer = true;
-    auto winSize = App::getWindowSize();
-    mainFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt}, depthAtt, 16);
+    depthAtt.renderBuffer = false;
 
+    auto winSize = App::getWindowSize();
+    hdrFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt, bloomTresholdImage}, depthAtt, 0);
+
+    // Create output framebuffer
+    colorAtt.renderBuffer = true;
+    outputFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt}, {}, 16);
 
     // Create white texture for non-textured drawing
     whiteTexture = std::make_shared<Texture>(1, 1);
     uint whiteData = 0xffffffff;
     whiteTexture->setTextureData(&whiteData, sizeof(uint));
+
+    // Create VOA for a quad TODO: move this to primitive generation
+    const float quadVertices[24] = {
+        -1.0f, 1.0f, 0.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f,
+        1.0f, -1.0f, 1.0f, 0.0f,
+
+        -1.0f, 1.0f, 0.0f, 1.0f,
+        1.0f, -1.0f, 1.0f, 0.0f,
+        1.0f, 1.0f, 1.0f, 1.0f
+    };
+    BufferLayout layout = {
+        {BufferElement::Float2, "a_Position" },
+        {BufferElement::Float2, "a_TexCoord" }
+    };
+    auto vbo = std::make_shared<VertexBuffer>(layout, sizeof(quadVertices), (void*)&quadVertices);
+    screenQuad.addVBuffer(vbo);
 
     // Create lights SSBO
     lightsSSBO = StorageBuffer(sizeof(uint) + MAX_LIGHTS*sizeof(PointLight), 2);
@@ -32,7 +68,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 {
 
     // DRAW pbr objects
-    mainFBO.bind();
+    hdrFBO.bind();
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     auto sceneShader = scene->pbrShader;
     auto sceneCamera = scene->camera;
@@ -99,14 +135,35 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
         }
     }
     lightsSSBO.unbind();
-    glBindTexture(GL_TEXTURE_2D, 0);
 
     // Draw debug graphics
     BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
     scene->debugDraw();
     BatchRenderer::end();
+    hdrFBO.unbind();
 
-    mainFBO.blitToFrontBuffer();
+
+    // Draw final ouput image
+    outputFBO.bind();
+    screenShader->bind();
+    hdrFBO.getTexture(0)->bind(0);
+
+    screenQuad.bind();
+    glDisable(GL_DEPTH_TEST);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    screenQuad.unbind();
+    screenShader->unbind();
+    glEnable(GL_DEPTH_TEST);
+
+    // Draw screenspace graphics
+    BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
+    auto size = (vec2)App::getWindowSize()/5.f;
+    BatchRenderer::drawQuad({0,0}, size, hdrFBO.getTexture(1));
+    BatchRenderer::drawQuad({size.x,0}, size, hdrFBO.getTexture(0));
+    BatchRenderer::end();
+
+    outputFBO.blitToFrontBuffer();
+    outputFBO.unbind();
 
 
 }

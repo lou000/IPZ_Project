@@ -2,6 +2,7 @@
 #version 430 core
 
 layout(location = 0) out vec4 o_Color;
+layout(location = 1) out vec4 o_BloomColor;
 
 in vec4 v_Color;
 in vec3 v_Normal;
@@ -35,9 +36,6 @@ uniform uint u_PointLightCount;
 
 const float PI = 3.14159265359;
 
-vec3 toneMapUncharted2(vec3 color);
-vec3 toneMapFilmic(vec3 x);
-vec3 toneMapACES(vec3 x);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(float NdotV, float NdotL, float roughness);
@@ -66,14 +64,19 @@ void main()
                                      v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     }
   
-    vec3 ambient = vec3(0.03) * v_Color.rgb;
+    vec3 ambient = vec3(0.3) * v_Color.rgb;
     vec3 color = ambient + Lo;
-	
-    // sdr mapping
-    //TODO: Move this to postprocess step
-    color = toneMapACES(color);
    
     o_Color = vec4(color, v_Color.a);
+    float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+    
+    if( brightness >= 1.0 ){
+        o_BloomColor = vec4(color, 1.0);
+    }
+    else
+    {
+        o_BloomColor = vec4(vec3(0.0), 1.0);
+    } 
 }
 
 vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
@@ -131,43 +134,6 @@ vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
     radiance *= (kD * (color / PI) + specular) *nDotL;
 
     return intensity*radiance;
-}
-
-// Narkowicz 2015, "ACES Filmic Tone Mapping Curve"
-vec3 toneMapACES(vec3 x) {
-    const float a = 2.51;
-    const float b = 0.03;
-    const float c = 2.43;
-    const float d = 0.59;
-    const float e = 0.14;
-    return clamp((x * (a * x + b)) / (x * (c * x + d) + e), 0.0, 1.0);
-}
-
-// https://github.com/dmnsgn/glsl-tone-map/blob/master/uncharted2.glsl
-vec3 uncharted2Tonemap(vec3 x) {
-    float A = 0.15;
-    float B = 0.50;
-    float C = 0.10;
-    float D = 0.20;
-    float E = 0.02;
-    float F = 0.30;
-    float W = 11.2;
-    return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
-}
-
-vec3 toneMapUncharted2(vec3 color) {
-    const float W = 11.2;
-    float exposureBias = 2.0;
-    vec3 curr = uncharted2Tonemap(exposureBias * color);
-    vec3 whiteScale = 1.0 / uncharted2Tonemap(vec3(W));
-    return curr * whiteScale;
-}
-
-// Filmic Tonemapping Operators http://filmicworlds.com/blog/filmic-tonemapping-operators
-vec3 toneMapFilmic(vec3 x) {
-    vec3 X = max(vec3(0.0), x - 0.004);
-    vec3 result = (X * (6.2 * X + 0.5)) / (X * (6.2 * X + 1.7) + 0.06);
-    return pow(result, vec3(2.2));
 }
 
 // ----------------------------------------------------------------------------
