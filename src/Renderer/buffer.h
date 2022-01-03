@@ -179,7 +179,6 @@ struct FrameBufferAttachment
 class Texture;
 class FrameBuffer
 {
-    //TODO: fill out the functions, and remember to blit to screen for now
 public:
     FrameBuffer() = default;
     FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
@@ -188,9 +187,14 @@ public:
     std::shared_ptr<Texture> getTexture(uint index){return attachedTextures.at(index);}
     void resize(uint width, uint height);
     void bind();
-    void bind(std::vector<GLenum> attachments);
+    void bindColorAttachment(uint index); // bind specific color attachment
+    void bindDepthAttachment();
     void unbind();
     void blitToFrontBuffer();
+    vec2 getSize() {return vec2(width, height);}
+    void clear(vec3 color);
+    void clearColorAttachment(uint index, vec3 color); // bind specific color attachment
+    void clearDepthAttachment(vec3 color);
 
 private:
     void update();

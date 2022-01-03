@@ -218,10 +218,6 @@ void FrameBuffer::resize(uint width, uint height)
 
 void FrameBuffer::bind()    //binds all attachments
 {
-    // this shouldnt be here
-    auto size = App::getWindowSize();
-    if(size.x != width || size.y != height)
-        resize(size.x, size.y);
     glBindFramebuffer(GL_FRAMEBUFFER, id);
     glViewport(0, 0, width, height);
     if(colorAttachments.size() == 0)
@@ -239,21 +235,22 @@ void FrameBuffer::bind()    //binds all attachments
         buffers.resize(bufferCount);
         for(size_t i=0; i<bufferCount; i++)
         {
-            buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+            buffers[i] = colorAttachments.at(i).type;
         }
         glDrawBuffers(bufferCount, buffers.data());
     }
 }
 
-void FrameBuffer::bind(std::vector<GLenum> attachments) //binds selected attachments
+void FrameBuffer::bindColorAttachment(uint index) //binds specific color attachment
 {
-    // this shouldnt be here
-    auto size = App::getWindowSize();
-    if(size.x != width || size.y != height)
-        resize(size.x, size.y);
+    glBindFramebuffer(GL_FRAMEBUFFER, id);
+    auto colorBuffer = colorAttachments.at(index).type;
+    glDrawBuffer(colorBuffer);
+}
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDrawBuffers(attachments.size(), attachments.data());
+void FrameBuffer::bindDepthAttachment() // bind depth attachment
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, id);
 }
 
 void FrameBuffer::unbind()
@@ -265,6 +262,30 @@ void FrameBuffer::blitToFrontBuffer()
 {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glBlitFramebuffer(0,0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+    unbind();
+}
+
+void FrameBuffer::clear(vec3 color)
+{
+    bind();
+    glClearColor(color.r, color.g, color.b, 1);
+    glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    unbind();
+}
+
+void FrameBuffer::clearColorAttachment(uint index, vec3 color)
+{
+    bindColorAttachment(index);
+    glClearColor(color.r, color.g, color.b, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    unbind();
+}
+
+void FrameBuffer::clearDepthAttachment(vec3 color)
+{
+    bindDepthAttachment();
+    glClearColor(color.r, color.g, color.b, 1);
+    glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     unbind();
 }
 
@@ -302,7 +323,7 @@ void FrameBuffer::update()  // create/recreate framebuffer
             }
             else
             {
-                auto texture = std::make_shared<Texture>(width, height, att.format, samples);
+                auto texture = std::make_shared<Texture>(width, height, 1, att.format, samples);
                 attachedTextures.push_back(texture);
                 glFramebufferTexture2D(GL_FRAMEBUFFER, att.type,
                                        samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texture->id(), 0);
@@ -327,7 +348,7 @@ void FrameBuffer::update()  // create/recreate framebuffer
         else
         {
             ASSERT(depthAttachment.type == GL_DEPTH_ATTACHMENT || depthAttachment.type == GL_DEPTH_STENCIL_ATTACHMENT);
-            auto texture = std::make_shared<Texture>(width, height, depthAttachment.format, samples);
+            auto texture = std::make_shared<Texture>(width, height, 1, depthAttachment.format, samples);
             depthTexture = texture;
             glFramebufferTexture2D(GL_FRAMEBUFFER, depthAttachment.type,
                                    samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texture->id(), 0);

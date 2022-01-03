@@ -24,16 +24,6 @@ void GraphicsContext::x_init()
     MeshRenderer::init();
 }
 
-void GraphicsContext::setClearColor(vec4 color)
-{
-    glClearColor(color.r, color.g, color.b, 1);
-}
-
-void GraphicsContext::clear(GLbitfield buffers)
-{
-    glClear(buffers);
-}
-
 void GraphicsContext::x_setCamera(std::shared_ptr<Camera> camera)
 {
     m_currentCamera = camera;

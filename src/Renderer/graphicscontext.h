@@ -13,8 +13,6 @@ public:
     void operator=(GraphicsContext const&) = delete;
 
     static void init(){getInstance().x_init();}
-    static void setClearColor(vec4 color);
-    static void clear(GLbitfield buffers);
     static void setCamera(std::shared_ptr<Camera> camera){getInstance().x_setCamera(camera);}
     static std::shared_ptr<Camera> getCamera(){return getInstance().x_getCamera();}
     static ivec2 getViewPortSize(){return getInstance().x_getViewPortSize();}
