@@ -8,37 +8,39 @@
 #include <cstdlib> //calloc
 #include "../Renderer/buffer.h" // VAO
 
-Texture::Texture(uint width, uint height, GLenum formatInternal, uint samples, bool loadDebug)
-    : m_width(width), m_height(height), m_samples(samples), m_formatInternal(formatInternal)
+
+Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal, uint samples, bool loadDebug)
+    : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_formatInternal(formatInternal)
 {
+    ASSERT(width*height*depth>0); // none of the dimensions can be zero
     assetType = AssetType::texture;
     initTexture();
     if(loadDebug)
-    {
-        loadDebugTexture(formatInternal, width, height);
-        setTextureData(data, getSize());
-    }
+        clear({0.969f, 0.353f, 0.580f});
 }
 
 Texture::Texture(const std::filesystem::path& path, uint samples)
     :m_samples(samples)
 {
+    //for now we dont load 3d images from files
+    m_depth  = 1;
+    m_width  = 1;
+    m_height = 1;
+
     assetType = AssetType::texture;
-    this->path = path;
-    if(!loadFromFile(path))
-    {
-        m_width = 1;
-        m_height = 1;
-        loadDebugTexture(GL_RGBA, 1, 1);
-    }
+    auto data = loadFromFile(path);
     initTexture();
+    if(!data)
+    {
+        clear({0.969f, 0.353f, 0.580f});
+        return;
+    }
     setTextureData(data, getSize());
+    free(data);
 }
 
 Texture::~Texture()
 {
-    if(data)
-        free(data);
     glDeleteTextures(1, &m_id);
 }
 
@@ -47,73 +49,141 @@ bool Texture::doReload()
     GLenum oldFormat = m_formatInternal;
     uint oldWidth  = m_width;
     uint oldHeight = m_height;
-    if(loadFromFile(path))
+
+    auto data = loadFromFile(path);
+    if(!data) return false;
+
+    if(oldFormat != m_formatInternal)
     {
-        if(oldFormat != m_formatInternal)
-        {
-            WARN("AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
-            glDeleteTextures(1, &m_id);
-            initTexture();
-        }else if(oldWidth != m_width || oldHeight != m_height)
-        {
-            WARN("AssetManager: Reloading texture with a diffirent size, texture storage will be recreated");
-            glDeleteTextures(1, &m_id);
-            initTexture();
-        }
-        setTextureData(data, getSize());
-        return true;
+        WARN("AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
+        glDeleteTextures(1, &m_id);
+        initTexture();
+    }else if(oldWidth != m_width || oldHeight != m_height)
+    {
+        WARN("AssetManager: Reloading texture with a diffirent size, texture storage will be recreated");
+        glDeleteTextures(1, &m_id);
+        initTexture();
     }
-    return false;
+    setTextureData(data, getSize());
+    free(data);
+    return true;
 }
 
-void Texture::loadDebugTexture(GLenum formatInternal, uint width, uint height)
+void Texture::clear(vec3 color)
 {
-    m_formatInternal = formatInternal;
-    data = malloc(sizeof(uvec4)*width*height);
-    for(uint i=0; i<m_width*m_height; i++)
-        ((uvec4*)data)[i] = {247, 90, 148, 255};
+    auto format = textureSizedFormatToFormat(m_formatInternal);
+    glClearTexImage(m_id, 0, format, GL_FLOAT, &color[0]);
 }
 
 void Texture::initTexture()
 {
-    if(m_samples>1)
-    {
-        //this is only for framebuffer for now
-        glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_formatInternal, m_width, m_height, GL_FALSE);
-        glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &m_id);
-    }
-    else{
-        glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
-        glTextureStorage2D(m_id, 1, m_formatInternal, m_width, m_height);
-        glGenerateTextureMipmap(m_id);
-        glTextureParameteri(m_id, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        glTextureParameteri(m_id, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        GLfloat maxAnisotropy = 0.f;
-        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &maxAnisotropy);
-        glTextureParameterf(m_id, GL_TEXTURE_MAX_ANISOTROPY, maxAnisotropy);
-        glTextureParameteri(m_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTextureParameteri(m_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
 
+    auto format = textureSizedFormatToFormat(m_formatInternal);
+    auto type = GL_UNSIGNED_BYTE;
+    if(m_formatInternal == GL_DEPTH24_STENCIL8)
+        type = GL_UNSIGNED_INT_24_8;
+    if(m_depth == 1)
+    {
+        if(m_samples>1)
+        {
+            //this is only for framebuffer for now
+            glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &m_id);
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_id);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_formatInternal, m_width, m_height, GL_FALSE);
+        }
+        else{
+            glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
+            glBindTexture(GL_TEXTURE_2D, m_id);
+            glTexImage2D(GL_TEXTURE_2D, 0, m_formatInternal, m_width, m_height, 0, format, type, nullptr);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        }
+    }
+    else
+    {
+        if(m_samples>1)
+        {
+            //this is only for framebuffer for now
+            glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , 1, &m_id);
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, m_id);
+            glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , m_samples, m_formatInternal, m_width, m_height, m_depth, GL_FALSE);
+        }
+        else{
+            glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &m_id);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, m_id);
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, m_formatInternal, m_width, m_height, m_depth, 0, format, type, nullptr);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        }
+    }
 }
 
 void Texture::setTextureData(void *d, size_t size)
 {
-    if(data != d || data == nullptr)
-    {
-        if(data)
-            free(data);
-        data = malloc(size); //allocate our own memory becouse someone could have given us a pointer thats about to expire
-        memcpy_s(data, size, d, size);
-    }
-    glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_formatInternal), GL_UNSIGNED_BYTE, data);
+    auto s = getSize();
+    ASSERT(size<=s);
+    if(m_depth == 1)
+        glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_formatInternal), GL_UNSIGNED_BYTE, d);
+    else
+        glTextureSubImage3D(m_id, 0, 0, 0, 0, m_width, m_height, m_depth, textureSizedFormatToFormat(m_formatInternal), GL_UNSIGNED_BYTE, d);
 }
 
 size_t Texture::getSize()
 {
     //FIXME: will not work for formats other then GL_RGB and GL_RGBA
     size_t dataSize = m_formatInternal == GL_RGB8 ? sizeof(stbi_uc)*3 : sizeof(stbi_uc)*4;
-    return dataSize*m_width*m_height;
+    return dataSize*m_width*m_height*m_depth;
+}
+
+void Texture::resize(vec3 size)
+{
+    m_width  = size.x;
+    m_height = size.y;
+    m_depth  = size.z;
+    ASSERT(m_width*m_height*m_depth>0); // none of the dimensions can be zero
+
+    auto format = textureSizedFormatToFormat(m_formatInternal);
+    auto type = GL_UNSIGNED_BYTE;
+    if(m_formatInternal == GL_DEPTH24_STENCIL8)
+        type = GL_UNSIGNED_INT_24_8;
+
+    if(m_depth == 1)
+    {
+        if(m_samples > 1)
+        {
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_id);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_formatInternal, m_width, m_height, GL_FALSE);
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D, m_id);
+            glTexImage2D(GL_TEXTURE_2D, 0, m_formatInternal, m_width, m_height, 0, format, type, nullptr);
+        }
+    }
+    else
+    {
+        if(m_samples > 1)
+        {
+            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, m_id);
+            glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , m_samples, m_formatInternal, m_width, m_height, m_depth, GL_FALSE);
+        }
+        else
+        {
+            glBindTexture(GL_TEXTURE_2D_ARRAY, m_id);
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, m_formatInternal, m_width, m_height, m_depth, 0, format, type, nullptr);
+        }
+    }
+}
+
+vec3 Texture::getDimensions()
+{
+    return vec3(m_width, m_height, m_depth);
 }
 
 void Texture::bind(uint slot)
@@ -121,7 +191,12 @@ void Texture::bind(uint slot)
     glBindTextureUnit(slot, m_id);
 }
 
-bool Texture::loadFromFile(const std::filesystem::path& path){
+void Texture::selectLayerForNextDraw(uint layer)
+{
+    m_selectedLayer = layer;
+}
+
+void* Texture::loadFromFile(const std::filesystem::path& path){
 
     //TODO: add error logging
     int w, h, ch;
@@ -129,19 +204,13 @@ bool Texture::loadFromFile(const std::filesystem::path& path){
 
     //Check if the file is still there
     if(!std::filesystem::exists(path))
-        return false;
-
-    //Delete old data
-    if(data != nullptr){
-        free(data);
-        data = nullptr;
-    }
+        return nullptr;
 
     //Try to load file
     // we should log this? it might happen often
-    data = (void*)stbi_load(path.string().c_str(), &w, &h, &ch, 0);
+    auto data = (void*)stbi_load(path.string().c_str(), &w, &h, &ch, 0);
     if(!data)
-        return false;
+        return nullptr;
 
     switch (ch) {
     case 3:
@@ -152,12 +221,12 @@ bool Texture::loadFromFile(const std::filesystem::path& path){
         break;
     default:
         ASSERT(0, "Error: Image format not supported!");
-        return false;
+        return nullptr;
     }
     m_width = w;
     m_height = h;
 
-    return true;
+    return data;
 }
 
 

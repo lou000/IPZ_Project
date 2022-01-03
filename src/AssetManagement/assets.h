@@ -34,31 +34,38 @@ protected:
 class Texture : public Asset
 {
 public:
-    Texture(uint width, uint height, GLenum formatInternal = GL_RGBA8, uint samples = 1, bool loadDebug = false);
+    Texture(uint width, uint height, uint depth = 1, GLenum formatInternal = GL_RGBA8, uint samples = 1, bool loadDebug = false);
     Texture(const std::filesystem::path& path, uint samples = 1);
     ~Texture();
 
-public:
     virtual bool doReload() override;
     void setTextureData(void* data, size_t size);
+    vec3 getDimensions();
     size_t getSize();
+    GLenum formatInternal(){return m_formatInternal;}
+    void resize(vec3 size);
     void bind(uint slot);
+    void bindLayer(uint slot, uint layer);
     uint id() {return m_id;}
+    uint selectedLayer(){return m_selectedLayer;}
+    void selectLayerForNextDraw(uint layer);
 
 private:
     uint m_width   = 0;
     uint m_height  = 0;
+    uint m_depth   = 1;
     uint m_id      = 0;
     uint m_samples = 1;
     GLenum m_formatInternal = 0;
 
-    void* data  = nullptr;
+    // this is a workaround for batchrenderer to draw array textures
+    uint m_selectedLayer = 0;
+
     void initTexture();
-    bool loadFromFile(const std::filesystem::path& path);
-    void loadDebugTexture(GLenum formatInternal, uint width, uint height);
+    void initTexture3D();
+    void* loadFromFile(const std::filesystem::path& path);
+    void clear(vec3 color);
 };
-
-
 
 class ShaderFile : public Asset
 {
