@@ -8,9 +8,7 @@ Graph3d::Graph3d(vec2 rangeX, vec2 rangeY, vec2 rangeZ, float scale)
     m_rangeZ = rangeZ;
     m_scale  = scale;
     sphere = MeshRenderer::createCubeSphere(5);
-    paletteCount = prettyColors.size();
     palette = (vec4*)malloc(paletteCount*sizeof(vec4));
-    memcpy(palette, prettyColors.data(), paletteCount*sizeof(vec4));
 }
 
 void Graph3d::setMesh(uint sizeX, uint sizeZ, bool smooth)

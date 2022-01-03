@@ -16,7 +16,6 @@ Test1::Test1()
 
 void Test1::onStart()
 {
-    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
     auto camera = GraphicsContext::getCamera();
     camera->setFov(50.f);
     camera->setPosition({0,3.0f,0.1f});

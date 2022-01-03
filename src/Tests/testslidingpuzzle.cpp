@@ -21,7 +21,6 @@ TestSlidingPuzzle::TestSlidingPuzzle()
 
 void TestSlidingPuzzle::onStart()
 {
-    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
     auto camera = GraphicsContext::getCamera();
     camera->setFov(50.f);
     camera->setPosition({center, 8, 4});

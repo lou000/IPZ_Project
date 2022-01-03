@@ -149,6 +149,7 @@ void App::x_init(uint width, uint height)
 
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glErrorCallback, 0);
 
     GraphicsContext::init();
