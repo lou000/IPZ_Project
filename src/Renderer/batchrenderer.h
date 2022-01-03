@@ -22,6 +22,7 @@ class BatchRenderer{
         vec4 position;
         vec4 color;
         vec2 texCoord;
+        float texLayer;
         float texIndex;
         float tilingFactor;
     };
@@ -68,12 +69,17 @@ public:
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
 private:
+    struct TextureSlot{
+        std::shared_ptr<Texture> texture;
+        uint selectedLayer;
+    };
     mat4 viewProj3d;
     mat4 viewProjOrtho;
 
     std::shared_ptr<VertexArray> vertexArray = nullptr;
 
-    int* texSamplers     = nullptr;
+    int* texSamplers      = nullptr;
+    int* texSamplersArray = nullptr;
     byte* vertexBuffer    = nullptr;
     byte* vertexBufferPtr = nullptr;
     byte* vertexBufferEnd = nullptr;
@@ -86,10 +92,12 @@ private:
     uint elementCount    = 0;
 
     int maxTextureSlots = 0;
+    int maxTextureSlotsArray = 0;
     int textureCount    = 1;
+    int textureCountArray = 0;
 
     std::shared_ptr<Shader> m_debugShader = nullptr;
-    std::vector<std::shared_ptr<Texture>> textureSlots;
+    std::vector<TextureSlot> textureSlots;
     std::shared_ptr<Texture> whiteTex;
 
     void x_init();
