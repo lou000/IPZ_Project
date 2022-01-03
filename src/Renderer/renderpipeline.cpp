@@ -12,7 +12,13 @@ RenderPipeline::RenderPipeline()
     screenShader = std::make_shared<Shader>("final_composite", shaderSrcs);
     AssetManager::addShader(screenShader);
 
+//    shaderSrcs = {
+//        "../assets/shaders/bloom_compute.cmp"
+//    };
+//    screenShader = std::make_shared<Shader>("bloom_compute", shaderSrcs);
+//    AssetManager::addShader(screenShader);
 
+    winSize = App::getWindowSize();
 
     // Create main framebuffer
     FrameBufferAttachment colorAtt;
@@ -30,17 +36,21 @@ RenderPipeline::RenderPipeline()
     depthAtt.format = GL_DEPTH24_STENCIL8;
     depthAtt.renderBuffer = false;
 
-    auto winSize = App::getWindowSize();
     hdrFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt, bloomTresholdImage}, depthAtt, 0);
 
     // Create output framebuffer
     colorAtt.renderBuffer = true;
-    outputFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt}, {}, 16);
+    outputFBO = FrameBuffer(winSize.x, winSize.y, {colorAtt}, {}, 0);
 
     // Create white texture for non-textured drawing
     whiteTexture = std::make_shared<Texture>(1, 1);
     uint whiteData = 0xffffffff;
     whiteTexture->setTextureData(&whiteData, sizeof(uint));
+
+    // Create textures for bloom computation
+    auto texSize = hdrFBO.getTexture(1)->getDimensions();
+    bloomInputTex  = std::make_shared<Texture>(texSize.x, texSize.y, bloomDepth, GL_R11F_G11F_B10F, 1, true);
+    bloomOutputTex = std::make_shared<Texture>(texSize.x, texSize.y, bloomDepth, GL_R11F_G11F_B10F, 1, true);
 
     // Create VOA for a quad TODO: move this to primitive generation
     const float quadVertices[24] = {
@@ -66,10 +76,26 @@ RenderPipeline::RenderPipeline()
 
 void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 {
+    // Resize FBOs and textures
+    if(winSize != App::getWindowSize())
+    {
+        winSize = App::getWindowSize();
+        hdrFBO.resize(winSize.x, winSize.y);
+        outputFBO.resize(winSize.x, winSize.y);
+
+        //if texture resize is too much we can always preallocate 8k resolution lol
+        bloomInputTex->resize({winSize.x, winSize.y, 5});
+        bloomOutputTex->resize({winSize.x, winSize.y, 5});
+    }
+
+    // Clear FBOs
+    hdrFBO.clearColorAttachment(0, {0.302f, 0.345f, 0.388f});
+    hdrFBO.clearColorAttachment(1, {0, 0, 0});
+    hdrFBO.clearDepthAttachment({1, 1, 1});
+    outputFBO.clear({1, 1, 1});
 
     // DRAW pbr objects
     hdrFBO.bind();
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
     auto sceneShader = scene->pbrShader;
     auto sceneCamera = scene->camera;
     sceneShader->bind();
@@ -135,12 +161,22 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
         }
     }
     lightsSSBO.unbind();
+    hdrFBO.unbind();
 
+    hdrFBO.bindColorAttachment(0);
     // Draw debug graphics
     BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
     scene->debugDraw();
     BatchRenderer::end();
     hdrFBO.unbind();
+
+    // Bloom compute
+    // Copy final texture to bloomInput, we maybe should render straight to 3d texture
+    glCopyImageSubData(hdrFBO.getTexture(1)->id(), GL_TEXTURE_2D, 0, 0, 0, 0,
+                        bloomInputTex->id(), GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, winSize.x, winSize.y, 1);
+
+
+
 
 
     // Draw final ouput image
@@ -155,11 +191,21 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     screenShader->unbind();
     glEnable(GL_DEPTH_TEST);
 
+
     // Draw screenspace graphics
     BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
-    auto size = (vec2)App::getWindowSize()/5.f;
+    auto size = (vec2)winSize/(float)bloomDepth;
     BatchRenderer::drawQuad({0,0}, size, hdrFBO.getTexture(1));
     BatchRenderer::drawQuad({size.x,0}, size, hdrFBO.getTexture(0));
+
+    for(uint i=0; i<bloomDepth; i++)
+    {
+        bloomInputTex->selectLayerForNextDraw(i);
+        BatchRenderer::drawQuad({size.x*i, size.y}, size, bloomInputTex);
+
+//        bloomOutputTex->selectLayerForNextDraw(i);
+//        BatchRenderer::drawQuad({size.x*i, size.y*2}, size, bloomOutputTex);
+    }
     BatchRenderer::end();
 
     outputFBO.blitToFrontBuffer();
