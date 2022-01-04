@@ -4,7 +4,8 @@ out vec4 o_Color;
 
 in vec2 o_TexCoord;
 
-uniform sampler2D screenTexture;
+layout(binding = 0) uniform sampler2D screenTexture;
+layout(binding = 1) uniform sampler2D bloomTexture;
 uniform float exposure;
 
 vec3 toneMapUncharted2(vec3 color);
@@ -15,7 +16,8 @@ vec3 ACESFitted(vec3 color);
 
 void main(){
     vec3 hdrCol = texture(screenTexture, o_TexCoord).rgb;
-    vec3 color = toneMapACES(hdrCol);
+    vec3 bloom = texture(bloomTexture, o_TexCoord).rgb;
+    vec3 color = toneMapACES(hdrCol+bloom);
 
     o_Color = vec4(color, 1) ;
 }

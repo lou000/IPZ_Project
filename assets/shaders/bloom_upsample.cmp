@@ -1,0 +1,53 @@
+#version 430
+layout(local_size_x = 32, local_size_y = 32) in;
+
+layout(r11f_g11f_b10f, binding = 0) uniform image2D output_image;
+layout(binding = 1) uniform sampler2D lower_res_input;
+layout(binding = 2) uniform sampler2D higher_res_input;
+
+vec2 posToUV(ivec2 pos, ivec2 resolution)
+{
+    return (vec2(pos+0.5))/vec2(resolution);
+}
+vec3 safe_color(vec3 c)
+{
+  /* Clamp to avoid black square artifacts if a pixel goes NaN. */
+  return clamp(c, vec3(0.0), vec3(1e20)); /* 1e20 arbitrary. */
+}
+
+vec3 upsample_filter_high(sampler2D tex, vec2 uv, vec2 texelSize)
+{
+  /* 9-tap bilinear upsampler (tent filter) */
+  float sampleScale = 20;
+  vec4 d = texelSize.xyxy * vec4(1, 1, -1, 0) * sampleScale*0.5;
+
+  vec3 s;
+  s = textureLod(tex, uv - d.xy, 0.0).rgb;
+  s += textureLod(tex, uv - d.wy, 0.0).rgb * 2;
+  s += textureLod(tex, uv - d.zy, 0.0).rgb;
+
+  s += textureLod(tex, uv + d.zw, 0.0).rgb * 2;
+  s += textureLod(tex, uv, 0.0).rgb * 4;
+  s += textureLod(tex, uv + d.xw, 0.0).rgb * 2;
+
+  s += textureLod(tex, uv + d.zy, 0.0).rgb;
+  s += textureLod(tex, uv + d.wy, 0.0).rgb * 2;
+  s += textureLod(tex, uv + d.xy, 0.0).rgb;
+
+  return s * (1.0 / 16.0);
+}
+
+void main()
+{
+
+    ivec2 resolution = textureSize(lower_res_input, 0)*2;
+    vec2 texelSize = 1/resolution;
+
+    ivec2 pos = ivec2(gl_WorkGroupID.xy*gl_WorkGroupSize.xy + gl_LocalInvocationID.xy);
+    vec3 col1 = texture(higher_res_input, posToUV(pos, resolution)).rgb;
+
+    vec3 col2 = upsample_filter_high(lower_res_input, posToUV(pos, resolution), texelSize);
+    
+    imageStore(output_image, ivec2(gl_GlobalInvocationID), vec4(col1+col2, 1));
+
+}
