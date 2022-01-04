@@ -35,6 +35,11 @@ void Shader::dispatch(uint x, uint y, uint z)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
+void Shader::bindImage(std::shared_ptr<Texture> texture, uint unit, GLenum access, bool layered, uint layer)
+{
+    glBindImageTexture(unit, texture->id(), 0, layered, layer, access, texture->glFormatSized());
+}
+
 
 void Shader::setUniform(const char* name, BufferElement::DataType type, const std::any& value, bool transpose)
 {

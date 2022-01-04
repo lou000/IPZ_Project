@@ -23,6 +23,7 @@ public:
     void unbind();
     void dispatch(uint x, uint y, uint z);
     uint32 id() {return m_id;}
+    void bindImage(std::shared_ptr<Texture> image, uint unit, GLenum access, bool layered = false, uint layer = 0);
     void setUniform(const char* name, BufferElement::DataType type, const std::any& value, bool transpose = false);
     void setUniformArray(const char* name, BufferElement::DataType type, const std::any& value, uint count, bool transpose = false);
 
