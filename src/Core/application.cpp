@@ -131,6 +131,10 @@ void App::x_init(uint width, uint height)
     glfwSetErrorCallback(error_callback);
 
     glfwWindowHint(GLFW_SAMPLES, 16);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     m_windowHeight = height;
     m_windowWidth  = width;
     m_window = glfwCreateWindow(width, height, "Test", NULL, NULL);
@@ -266,9 +270,9 @@ void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     //this might be called before we initialize the Renderer
     UNUSED(window);
-    m_windowWidth  = width;
-    m_windowHeight = height;
-    GraphicsContext::resizeViewPort(width, height);
+    m_windowWidth  = width<1 ? 1 : width;
+    m_windowHeight = height<1 ? 1 : height;;
+    GraphicsContext::resizeViewPort(m_windowWidth, m_windowHeight);
 }
 
 void App::x_setVsync(uint interval)
