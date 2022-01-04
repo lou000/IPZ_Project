@@ -42,13 +42,16 @@ public:
     void setTextureData(void* data, size_t size);
     vec3 getDimensions();
     size_t getSize();
-    GLenum formatInternal(){return m_formatInternal;}
+    GLenum glFormatSized(){return m_glFormatSized;}
+    GLenum glType(){return m_glType;}
     void resize(vec3 size);
     void bind(uint slot);
     void bindLayer(uint slot, uint layer);
     uint id() {return m_id;}
     uint selectedLayer(){return m_selectedLayer;}
     void selectLayerForNextDraw(uint layer);
+    void copyTo(std::shared_ptr<Texture> target, vec3 srcXYZ, vec3 destXYZ, vec3 size);
+    void clear(vec3 color);
 
 private:
     uint m_width   = 0;
@@ -56,7 +59,8 @@ private:
     uint m_depth   = 1;
     uint m_id      = 0;
     uint m_samples = 1;
-    GLenum m_formatInternal = 0;
+    GLenum m_glType = 0;
+    GLenum m_glFormatSized = 0;
 
     // this is a workaround for batchrenderer to draw array textures
     uint m_selectedLayer = 0;
@@ -64,7 +68,6 @@ private:
     void initTexture();
     void initTexture3D();
     void* loadFromFile(const std::filesystem::path& path);
-    void clear(vec3 color);
 };
 
 class ShaderFile : public Asset
@@ -90,7 +93,7 @@ private:
     const std::string m_shaderName;
     ShaderType type;
     char* loadFile();
-    bool getTypeFromFile();
+    bool getTypeFromFileName();
     char* data;
 };
 

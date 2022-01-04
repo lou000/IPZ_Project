@@ -10,7 +10,7 @@
 
 
 Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal, uint samples, bool loadDebug)
-    : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_formatInternal(formatInternal)
+    : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_glFormatSized(formatInternal)
 {
     ASSERT(width*height*depth>0); // none of the dimensions can be zero
     assetType = AssetType::texture;
@@ -46,14 +46,14 @@ Texture::~Texture()
 
 bool Texture::doReload()
 {
-    GLenum oldFormat = m_formatInternal;
+    GLenum oldFormat = m_glFormatSized;
     uint oldWidth  = m_width;
     uint oldHeight = m_height;
 
     auto data = loadFromFile(path);
     if(!data) return false;
 
-    if(oldFormat != m_formatInternal)
+    if(oldFormat != m_glFormatSized)
     {
         WARN("AssetManager: Reloading texture with a diffirent format, texture storage will be recreated");
         glDeleteTextures(1, &m_id);
@@ -71,55 +71,57 @@ bool Texture::doReload()
 
 void Texture::clear(vec3 color)
 {
-    auto format = textureSizedFormatToFormat(m_formatInternal);
+    auto format = textureSizedFormatToFormat(m_glFormatSized);
     glClearTexImage(m_id, 0, format, GL_FLOAT, &color[0]);
 }
 
 void Texture::initTexture()
 {
 
-    auto format = textureSizedFormatToFormat(m_formatInternal);
-    auto type = GL_UNSIGNED_BYTE;
-    if(m_formatInternal == GL_DEPTH24_STENCIL8)
-        type = GL_UNSIGNED_INT_24_8;
+    auto format = textureSizedFormatToFormat(m_glFormatSized);
+    auto dataType = GL_UNSIGNED_BYTE;
+    if(m_glFormatSized == GL_DEPTH24_STENCIL8)
+        dataType = GL_UNSIGNED_INT_24_8;
     if(m_depth == 1)
     {
         if(m_samples>1)
         {
-            //this is only for framebuffer for now
-            glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE, 1, &m_id);
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_id);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_formatInternal, m_width, m_height, GL_FALSE);
+            m_glType = GL_TEXTURE_2D_MULTISAMPLE;
+            glCreateTextures(m_glType, 1, &m_id);
+            glBindTexture(m_glType, m_id);
+            glTexImage2DMultisample(m_glType, m_samples, m_glFormatSized, m_width, m_height, GL_FALSE);
         }
         else{
-            glCreateTextures(GL_TEXTURE_2D, 1, &m_id);
-            glBindTexture(GL_TEXTURE_2D, m_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, m_formatInternal, m_width, m_height, 0, format, type, nullptr);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            m_glType = GL_TEXTURE_2D;
+            glCreateTextures(m_glType, 1, &m_id);
+            glBindTexture(m_glType, m_id);
+            glTexImage2D(m_glType, 0, m_glFormatSized, m_width, m_height, 0, format, dataType, nullptr);
+            glTexParameteri(m_glType, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(m_glType, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
     else
     {
         if(m_samples>1)
         {
-            //this is only for framebuffer for now
-            glCreateTextures(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , 1, &m_id);
-            glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, m_id);
-            glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , m_samples, m_formatInternal, m_width, m_height, m_depth, GL_FALSE);
+            m_glType = GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+            glCreateTextures(m_glType , 1, &m_id);
+            glBindTexture(m_glType, m_id);
+            glTexImage3DMultisample(m_glType , m_samples, m_glFormatSized, m_width, m_height, m_depth, GL_FALSE);
         }
         else{
-            glCreateTextures(GL_TEXTURE_2D_ARRAY, 1, &m_id);
-            glBindTexture(GL_TEXTURE_2D_ARRAY, m_id);
-            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, m_formatInternal, m_width, m_height, m_depth, 0, format, type, nullptr);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_R, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            m_glType = GL_TEXTURE_2D_ARRAY;
+            glCreateTextures(m_glType, 1, &m_id);
+            glBindTexture(m_glType, m_id);
+            glTexImage3D(m_glType, 0, m_glFormatSized, m_width, m_height, m_depth, 0, format, dataType, nullptr);
+            glTexParameteri(m_glType, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(m_glType, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         }
     }
 }
@@ -129,15 +131,15 @@ void Texture::setTextureData(void *d, size_t size)
     auto s = getSize();
     ASSERT(size<=s);
     if(m_depth == 1)
-        glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_formatInternal), GL_UNSIGNED_BYTE, d);
+        glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_glFormatSized), GL_UNSIGNED_BYTE, d);
     else
-        glTextureSubImage3D(m_id, 0, 0, 0, 0, m_width, m_height, m_depth, textureSizedFormatToFormat(m_formatInternal), GL_UNSIGNED_BYTE, d);
+        glTextureSubImage3D(m_id, 0, 0, 0, 0, m_width, m_height, m_depth, textureSizedFormatToFormat(m_glFormatSized), GL_UNSIGNED_BYTE, d);
 }
 
 size_t Texture::getSize()
 {
     //FIXME: will not work for formats other then GL_RGB and GL_RGBA
-    size_t dataSize = m_formatInternal == GL_RGB8 ? sizeof(stbi_uc)*3 : sizeof(stbi_uc)*4;
+    size_t dataSize = m_glFormatSized == GL_RGB8 ? sizeof(stbi_uc)*3 : sizeof(stbi_uc)*4;
     return dataSize*m_width*m_height*m_depth;
 }
 
@@ -148,9 +150,9 @@ void Texture::resize(vec3 size)
     m_depth  = size.z;
     ASSERT(m_width*m_height*m_depth>0); // none of the dimensions can be zero
 
-    auto format = textureSizedFormatToFormat(m_formatInternal);
+    auto format = textureSizedFormatToFormat(m_glFormatSized);
     auto type = GL_UNSIGNED_BYTE;
-    if(m_formatInternal == GL_DEPTH24_STENCIL8)
+    if(m_glFormatSized == GL_DEPTH24_STENCIL8)
         type = GL_UNSIGNED_INT_24_8;
 
     if(m_depth == 1)
@@ -158,12 +160,12 @@ void Texture::resize(vec3 size)
         if(m_samples > 1)
         {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, m_id);
-            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_formatInternal, m_width, m_height, GL_FALSE);
+            glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, m_samples, m_glFormatSized, m_width, m_height, GL_FALSE);
         }
         else
         {
             glBindTexture(GL_TEXTURE_2D, m_id);
-            glTexImage2D(GL_TEXTURE_2D, 0, m_formatInternal, m_width, m_height, 0, format, type, nullptr);
+            glTexImage2D(GL_TEXTURE_2D, 0, m_glFormatSized, m_width, m_height, 0, format, type, nullptr);
         }
     }
     else
@@ -171,12 +173,12 @@ void Texture::resize(vec3 size)
         if(m_samples > 1)
         {
             glBindTexture(GL_TEXTURE_2D_MULTISAMPLE_ARRAY, m_id);
-            glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , m_samples, m_formatInternal, m_width, m_height, m_depth, GL_FALSE);
+            glTexImage3DMultisample(GL_TEXTURE_2D_MULTISAMPLE_ARRAY , m_samples, m_glFormatSized, m_width, m_height, m_depth, GL_FALSE);
         }
         else
         {
             glBindTexture(GL_TEXTURE_2D_ARRAY, m_id);
-            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, m_formatInternal, m_width, m_height, m_depth, 0, format, type, nullptr);
+            glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, m_glFormatSized, m_width, m_height, m_depth, 0, format, type, nullptr);
         }
     }
 }
@@ -194,6 +196,13 @@ void Texture::bind(uint slot)
 void Texture::selectLayerForNextDraw(uint layer)
 {
     m_selectedLayer = layer;
+}
+
+void Texture::copyTo(std::shared_ptr<Texture> target, vec3 srcXYZ, vec3 destXYZ, vec3 size)
+{
+    glCopyImageSubData(this->m_id, this->m_glType,     0, srcXYZ.x,  srcXYZ.y,  srcXYZ.z,
+                       target->id(), target->glType(), 0, destXYZ.x, destXYZ.y, destXYZ.z,
+                       size.x, size.y, size.z);
 }
 
 void* Texture::loadFromFile(const std::filesystem::path& path){
@@ -214,10 +223,10 @@ void* Texture::loadFromFile(const std::filesystem::path& path){
 
     switch (ch) {
     case 3:
-        m_formatInternal = GL_RGB8;
+        m_glFormatSized = GL_RGB8;
         break;
     case 4:
-        m_formatInternal = GL_RGBA8;
+        m_glFormatSized = GL_RGBA8;
         break;
     default:
         ASSERT(0, "Error: Image format not supported!");
@@ -235,15 +244,8 @@ ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shad
 {
     assetType = AssetType::shaderFile;
     this->path = path;
+    if(!getTypeFromFileName()) return;
     data = loadFile();
-
-    if(data)
-        if(!getTypeFromFile())
-        {
-            free(data);
-            data = nullptr;
-        }
-
 }
 
 ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type, const std::string shaderName)
@@ -296,48 +298,25 @@ char* ShaderFile::loadFile()
     return str;
 }
 
-bool ShaderFile::getTypeFromFile()
+bool ShaderFile::getTypeFromFileName()
 {
-    char* token = strstr (data,"//type");
-    if(!token)
-    {
-        WARN("Failed to load shader: Couldnt find type token in file %s.", path.string().c_str());
-        return false;
-    }
-    char shaderType[50];
+    auto extension = this->path.extension();
 
-    int index = 0;
-    token+=6;
-    while(isspace(*token)) token++;
-    while(*token != '\n')
-    {
-        while(isspace(*token)) token++;
-        if(index >= 50)
-        {
-            WARN("Failed to load shader: Cant have spaces or other characters on the line with shader token");
-            return false;
-        }
-        shaderType[index] = *token;
-        token++;
-        index++;
-    }
-    shaderType[index] = 0;
-
-    if(strcmp(shaderType, "vertex") == 0)
+    if(extension == ".vs")
         type = vertex;
-    else if(strcmp(shaderType, "tessControl") == 0)
+    else if(extension == ".tc")
         type = tessControl;
-    else if(strcmp(shaderType, "tessEval") == 0)
+    else if(extension == ".tes")
         type = tessEval;
-    else if(strcmp(shaderType, "geometry") == 0)
+    else if(extension == ".gs")
         type = geometry;
-    else if(strcmp(shaderType, "fragment") == 0)
+    else if(extension == ".fs")
         type = fragment;
-    else if(strcmp(shaderType, "compute") == 0)
+    else if(extension == ".cmp")
         type = compute;
     else
     {
-        WARN("Failed to load shader: Couldnt match token %s to shader type.", shaderType);
+        WARN("Failed to load shader: Couldnt match file extension %ws to shader type.", extension.c_str());
         return false;
     }
     return true;
