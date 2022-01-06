@@ -1,4 +1,4 @@
-//type fragment
+﻿//type fragment
 #version 430 core
 
 layout(location = 0) out vec4 o_Color;
@@ -31,6 +31,8 @@ layout (std430, binding = 2) buffer pointLightsSSBO
 uniform vec3 u_CameraPosition;
 uniform vec3 u_DirLightDirection;
 uniform float u_DirLightIntensity;
+uniform float u_bloomTreshold;
+uniform float u_exposure;
 uniform vec3 u_DirLightCol;
 uniform uint u_PointLightCount;
 
@@ -40,43 +42,44 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(float NdotV, float NdotL, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
-vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity, 
+vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
                           vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0);
 vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
                             vec3 fragPos, vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0);
 
 void main()
-{		
+{
     vec3 N = normalize(v_Normal);
     vec3 V = normalize(u_CameraPosition - v_Pos);
 
-    vec3 F0 = vec3(0.04); 
+    vec3 F0 = vec3(0.04);
     F0 = mix(F0, v_Color.rgb, u_Metallic);
-	           
+
     // lights contribution TODO: pass intensities and ranges
     vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
-    
-    for(int i = 0; i < u_PointLightCount; ++i) 
+
+    for(int i = 0; i < u_PointLightCount; ++i)
     {
         vec3 pos = pointLights[i].position.xyz;
         vec3 col = pointLights[i].color.rgb;
-        Lo += pointLightContribution(pos, col, pointLights[i].intensity, pointLights[i].range, 
+        Lo += pointLightContribution(pos, col, pointLights[i].intensity, pointLights[i].range,
                                      v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
     }
-  
+
     vec3 ambient = vec3(0.3) * v_Color.rgb;
     vec3 color = ambient + Lo;
-   
+
+    color*=u_exposure;
     o_Color = vec4(color, v_Color.a);
     float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
-    
-    if( brightness >= 1.0 ){
+
+    if( brightness >= u_bloomTreshold ){
         o_BloomColor = vec4(color, 1.0);
     }
     else
     {
         o_BloomColor = vec4(vec3(0.0), 1.0);
-    } 
+    }
 }
 
 vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
@@ -108,7 +111,7 @@ vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity
     return intensity*radiance;
 }
 
-vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity, 
+vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
                           vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0)
 {
     vec3 L = normalize(-lightDirection);
@@ -118,8 +121,8 @@ vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
     float nDotL = max(dot(normal, L), 0.0);
 
     // cook-torrance brdf
-    float NDF = DistributionGGX(normal, H, rough);        
-    float G   = GeometrySmith(nDotV, nDotL, rough);      
+    float NDF = DistributionGGX(normal, H, rough);
+    float G   = GeometrySmith(nDotV, nDotL, rough);
     vec3  F   = FresnelSchlick(max(dot(H, viewDir), 0.0), F0);
 
     //Finding specular and diffuse component

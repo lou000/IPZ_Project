@@ -1,5 +1,6 @@
 ﻿#include "renderpipeline.h"
 #include "../Core/application.h"
+#include "../Core/gui.h"
 
 
 RenderPipeline::RenderPipeline()
@@ -53,26 +54,8 @@ RenderPipeline::RenderPipeline()
     uint whiteData = 0xffffffff;
     whiteTexture->setTextureData(&whiteData, sizeof(uint));
 
-    // Create textures for bloom computation
-//    bloomInputTex  = std::make_shared<Texture>(texSize.x, texSize.y, bloomDepth, GL_R11F_G11F_B10F, 1, true);
-//    bloomOutputTex = std::make_shared<Texture>(texSize.x, texSize.y, bloomDepth, GL_R11F_G11F_B10F, 1, true);
-    downSampleTextures.resize(BLOOM_SAMPLES);
-    upSampleTextures.resize(BLOOM_SAMPLES);
-
-    for(uint i=1; i<BLOOM_SAMPLES+1; i++)
-    {
-        uint width  = (float)winSize.x/(pow(2.f,i));
-        uint height = (float)winSize.y/(pow(2.f,i));
-        downSampleTextures[i-1] = std::make_shared<Texture>(width, height, 1, GL_R11F_G11F_B10F, 1, true);
-        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
-    }
-    for(uint i=0; i<BLOOM_SAMPLES; i++)
-    {
-        uint width  = (float)winSize.x/(pow(2.f,i));
-        uint height = (float)winSize.y/(pow(2.f,i));
-        upSampleTextures[i] = std::make_shared<Texture>(width, height, 1, GL_R11F_G11F_B10F, 1, true);
-        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
-    }
+    // Initialize bloom buffers
+    resizeBloomBuffers();
 
     // Create VOA for a quad TODO: move this to primitive generation
     const float quadVertices[24] = {
@@ -99,42 +82,33 @@ RenderPipeline::RenderPipeline()
 void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 {
     // Resize FBOs and textures
+    if(bloomRadius != oldBloomRadius)
+    {
+        resizeBloomBuffers();
+        oldBloomRadius = bloomRadius;
+    }
     if(winSize != App::getWindowSize())
     {
         winSize = App::getWindowSize();
         hdrFBO.resize(winSize.x, winSize.y);
         outputFBO.resize(winSize.x, winSize.y);
 
-        for(uint i=1; i<BLOOM_SAMPLES+1; i++)
-        {
-            uint width  = (float)winSize.x/(pow(2.f,i));
-            uint height = (float)winSize.y/(pow(2.f,i));
-            downSampleTextures[i-1]->resize({width, height, 1});
-            LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
-        }
-        for(uint i=0; i<BLOOM_SAMPLES; i++)
-        {
-            uint width  = (float)winSize.x/(pow(2.f,i));
-            uint height = (float)winSize.y/(pow(2.f,i));
-            upSampleTextures[i]->resize({width, height, 1});
-            LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
-        }
+        resizeBloomBuffers();
     }
-
-    // Clear FBOs
-    hdrFBO.clearColorAttachment(0, {0.302f, 0.345f, 0.388f});
-    hdrFBO.clearColorAttachment(1, {0, 0, 0});
-    hdrFBO.clearDepthAttachment({1, 1, 1});
-    outputFBO.clear({1, 1, 1});
-    for(uint i=1; i<BLOOM_SAMPLES+1; i++)
+    else
     {
-        downSampleTextures[i-1]->clear({0.969f, 0.353f, 0.580f});
-        upSampleTextures[i-1]->clear({0.969f, 0.353f, 0.580f});
-    }
+        // Clear FBOs and textures if we didnt resize the window
+        hdrFBO.clearColorAttachment(0, {0.302f, 0.345f, 0.388f});
+        hdrFBO.clearColorAttachment(1, {0, 0, 0});
+        hdrFBO.clearDepthAttachment({1, 1, 1});
+        outputFBO.clear({1, 1, 1});
 
-    // Clear textures, this can go away after debugging is done
-//    bloomInputTex->clear({0.969f, 0.353f, 0.580f});
-//    bloomOutputTex->clear({0.969f, 0.353f, 0.580f});
+        for(uint i=1; i<bloomSamples+1; i++)
+        {
+            downSampleTextures[i-1]->clear({0.969f, 0.353f, 0.580f});
+            upSampleTextures[i-1]->clear({0.969f, 0.353f, 0.580f});
+        }
+    }
 
     // DRAW pbr objects
     hdrFBO.bind();
@@ -185,6 +159,10 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
                 }
                 else
                 {
+                    // this below should probably go to separate draw call
+                    sceneShader->setUniform("u_bloomTreshold", BufferElement::Float, bloomTreshold);
+                    sceneShader->setUniform("u_exposure", BufferElement::Float, exposure);
+
                     //draw with basic_pbr
                     sceneShader->setUniform("u_Metallic", BufferElement::Float, mesh->material.metallic);
                     sceneShader->setUniform("u_Roughness", BufferElement::Float, mesh->material.roughness);
@@ -214,7 +192,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     // Bloom compute
 
-    for(uint i=0; i<BLOOM_SAMPLES; i++)
+    for(uint i=0; i<bloomSamples; i++)
     {
         //Downsample and blur
         //TODO: figure out how to calculate number of samples based on resolution
@@ -238,7 +216,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         downsampleAndBlur->unbind();
     }
-    for(int i=BLOOM_SAMPLES-1; i>=0; i--)
+    for(int i=bloomSamples-1; i>=0; i--)
     {
         // Upsample
         tentUpsampleAndAdd->bind();
@@ -254,7 +232,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
             size = downSampleTextures[i-1]->getDimensions();
         }
 
-        if(i==BLOOM_SAMPLES-1)
+        if(i==bloomSamples-1)
             downSampleTextures[i]->bind(1);
         else
             upSampleTextures[i+1]->bind(1);
@@ -270,6 +248,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     // Draw final ouput image
     outputFBO.bind();
     screenShader->bind();
+    screenShader->setUniform("u_bloomIntensity", BufferElement::Float, bloomIntensity);
     hdrFBO.getTexture(0)->bind(0);
     upSampleTextures[0]->bind(1);
 
@@ -283,11 +262,11 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     // Draw screenspace graphics
     BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
-    auto size = (vec2)winSize/(float)BLOOM_SAMPLES;
+    auto size = (vec2)winSize/(float)bloomSamples;
 
 //    BatchRenderer::drawQuad({size.x,0}, size, downSampleTextures[5]);
 //    BatchRenderer::drawQuad({0,0}, size, hdrFBO.getTexture(1));
-//    for(uint i=0; i<BLOOM_SAMPLES; i++)
+//    for(uint i=0; i<bloomSamples; i++)
 //    {
 //        BatchRenderer::drawQuad({size.x*i,size.y}, size, downSampleTextures[i]);
 //        BatchRenderer::drawQuad({size.x*i,size.y*2}, size, upSampleTextures[i]);
@@ -297,5 +276,65 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     outputFBO.blitToFrontBuffer();
     outputFBO.unbind();
 
+    bool show = true;
+    ImGui::SetNextWindowSize(ImVec2(200, 400), ImGuiCond_FirstUseEver);
+    if (ImGui::Begin("Render settings", &show))
+    {
+        TWEAK_FLOAT(bloomRadius, 0.01f, 0, 8);
+        TWEAK_FLOAT(bloomIntensity, 0.01f);
+        TWEAK_FLOAT(bloomTreshold, 0.01f);
+        TWEAK_FLOAT(exposure, 0.01f);
+        ImGui::End();
+    }
 
+}
+
+void RenderPipeline::resizeBloomBuffers()
+{
+    float minDim = min(winSize.x, winSize.y);
+    float bSamples = (bloomRadius - 8.0f) + log(minDim) / log(2.f);
+    bloomSamples = (int)bSamples < MAX_BLOOM_SAMPLES ? (int)bSamples : MAX_BLOOM_SAMPLES;
+
+    uint prevSize = (uint)downSampleTextures.size();
+
+    LOG("Resizing bloom buffers:\n    prevSize: %d, newSize: %d\n", prevSize, bloomSamples);
+
+    downSampleTextures.resize(bloomSamples);
+    upSampleTextures.resize(bloomSamples);
+
+    // resize textures that are left after the resize
+    uint size = prevSize>bloomSamples ? bloomSamples : prevSize;
+    for(uint i=0; i<size; i++)
+    {
+        uint width  = (float)winSize.x/(pow(2.f,i+1));
+        uint height = (float)winSize.y/(pow(2.f,i+1));
+        downSampleTextures[i]->resize({width, height, 1});
+        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
+    }
+    for(uint i=0; i<size; i++)
+    {
+        uint width  = (float)winSize.x/(pow(2.f,i));
+        uint height = (float)winSize.y/(pow(2.f,i));
+        upSampleTextures[i]->resize({width, height, 1});
+        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
+    }
+
+    if(prevSize>=bloomSamples)
+        return;
+
+    // add new textures if the new size is bigger
+    for(uint i=prevSize; i<bloomSamples; i++)
+    {
+        uint width  = (float)winSize.x/(pow(2.f,i+1));
+        uint height = (float)winSize.y/(pow(2.f,i+1));
+        downSampleTextures[i] = std::make_shared<Texture>(width, height, 1, GL_R11F_G11F_B10F, 1, true);
+        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
+    }
+    for(uint i=prevSize; i<bloomSamples; i++)
+    {
+        uint width  = (float)winSize.x/(pow(2.f,i));
+        uint height = (float)winSize.y/(pow(2.f,i));
+        upSampleTextures[i] = std::make_shared<Texture>(width, height, 1, GL_R11F_G11F_B10F, 1, true);
+        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
+    }
 }
