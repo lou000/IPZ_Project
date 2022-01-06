@@ -1,5 +1,6 @@
 ﻿#include "Core/application.h"
 #include "Core/scene.h"
+#include "Core/gui.h"
 #include "Renderer/renderpipeline.h"
 #include "Tests/testconnect4.h"
 
@@ -18,6 +19,7 @@ int main(void)
     {
         AssetManager::checkForChanges();
         AssetManager::tryReloadAssets();
+        imguiBegin();
 
         float dt = App::getTimeStep();
         dtSum+=dt;
@@ -35,6 +37,7 @@ int main(void)
         GraphicsContext::getCamera()->onUpdate(dt);
         test3->onUpdate(dt);
         renderer.drawScene(test3);
+        imguiEnd();
         App::submitFrame();
     }
 }

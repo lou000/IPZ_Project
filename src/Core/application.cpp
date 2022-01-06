@@ -1,5 +1,6 @@
 ﻿#include "utilities.h"
 #include "application.h"
+#include "gui.h"
 #include "../Renderer/graphicscontext.h"
 
 static void error_callback(int error, const char* description)
@@ -157,12 +158,14 @@ void App::x_init(uint width, uint height)
     glDebugMessageCallback(glErrorCallback, 0);
 
     GraphicsContext::init();
-
     glfwSwapInterval(1);
+    imguiInit();
 }
 
 bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
 {
+    if(ImGui::GetIO().WantCaptureKeyboard)
+        return false;
     UNUSED(mods); // this will not work for mods, maybe we can make it work?
     int action = glfwGetKey(m_window, key);
     action = action == 0 ? 1 : action<<1;
@@ -230,6 +233,8 @@ void App::x_disableCursor(bool disable)
 
 void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+    if(ImGui::GetIO().WantCaptureKeyboard)
+        return;
     UNUSED(window);
     UNUSED(scancode);
     //just jam them in one var
@@ -243,6 +248,8 @@ void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, i
 }
 void App::x_mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
+    if(ImGui::GetIO().WantCaptureMouse)
+        return;
     UNUSED(window);
     //just jam them in one var
     uint16 hash = 0;
@@ -349,6 +356,8 @@ float App::x_getMouseScrollChange()
 
 void App::x_mouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
+    if(ImGui::GetIO().WantCaptureMouse)
+        return;
     UNUSED(window);
     UNUSED(xoffset);
     mouseScrollYOffset += (float)yoffset;
