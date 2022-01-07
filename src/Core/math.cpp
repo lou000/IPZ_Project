@@ -1,9 +1,9 @@
 ﻿#include "math.h"
 #include "../Renderer/camera.h"
 #include "../Renderer/light.h"
-std::vector<vec4> calcFrustumCornersWS(std::shared_ptr<Camera> camera)
+std::vector<vec4> calcFrustumCornersWS(const mat4& proj, const mat4& cameraView)
 {
-    const mat4 inv = inverse(camera->getViewProjectionMatrix());
+    const mat4 inv = inverse(proj*cameraView);
 
     std::vector<vec4> corners;
 
@@ -20,20 +20,20 @@ std::vector<vec4> calcFrustumCornersWS(std::shared_ptr<Camera> camera)
     return corners;
 }
 
-mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, std::shared_ptr<DirectionalLight> dirLight,
+mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, DirectionalLight dirLight,
                                 float nearPlane, float farPlane, float zCorrection)
 {
     mat4 proj = perspective(glm::radians(camera->getFov()), camera->getAspectRatio(),
                                          nearPlane, farPlane);
-    const auto corners = calcFrustumCornersWS(camera);
+    const auto corners = calcFrustumCornersWS(proj, camera->getViewMatrix());
 
     vec3 center = vec3(0.f);
 
     for(auto c : corners)
         center += vec3(c);
+    center /= corners.size();
 
-    center = center/4.f;
-    const mat4 lightView = lookAt(center+dirLight->direction, center, vec3(0,1,0));
+    const mat4 lightView = lookAt(center-dirLight.direction, center, vec3(0,1,0));
 
     float minX = std::numeric_limits<float>::max();
     float maxX = std::numeric_limits<float>::min();

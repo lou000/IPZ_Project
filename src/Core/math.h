@@ -59,4 +59,5 @@ inline std::string vecToString(vec<2,T> v)
 class Camera;
 struct DirectionalLight;
 std::vector<vec4> calcFrustumCornersWS(std::shared_ptr<Camera> camera);
-mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, std::shared_ptr<DirectionalLight> dirLight);
+mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, DirectionalLight dirLight,
+                                float nearPlane, float farPlane, float zCorrection);
