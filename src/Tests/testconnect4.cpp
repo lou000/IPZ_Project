@@ -67,15 +67,6 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(testMesh2);
     AssetManager::addAsset(testMesh3);
 
-
-    std::vector<std::filesystem::path> shaderSrcs1 = {
-        "../assets/shaders/basic_pbr.fs",
-        "../assets/shaders/basic_pbr.vs"
-    };
-    AssetManager::addShader(std::make_shared<Shader>("basic_pbr", shaderSrcs1));
-
-    pbrShader = AssetManager::getShader("basic_pbr");
-
     camera = GraphicsContext::getCamera();
     camera->setFov(50.f);
     camera->setPosition({0, 7, 20});
@@ -101,7 +92,7 @@ TestConnect4::TestConnect4()
     previewPuck->setOverrideColor(yellow);
     previewPuck->overrideColor.a = 0.2f;
 
-    skyLight.direction = {-3, -5, -1.33f};
+    skyLight.direction = normalize(vec3(-6, -5, -1.33f));
     skyLight.color = {1,1,1};
     skyLight.intensity = 1.f;
 
