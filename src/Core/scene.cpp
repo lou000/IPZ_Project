@@ -19,13 +19,14 @@ PointLight *Scene::createLight(vec3 pos, vec3 color, float range, float intensit
     return light;
 }
 
-Entity *Scene::createEntity(std::shared_ptr<Model> model, vec3 pos, quat rotation)
+Entity *Scene::createEntity(std::shared_ptr<Model> model, vec3 pos, vec3 scale, quat rotation)
 {
     auto ent = &entities[activeEntityCount];
     ent->enabled = true;
     ent->renderable = true;
     ent->model = model;
     ent->pos = pos;
+    ent->scale = scale;
     ent->rotation = rotation;
     activeEntityCount++;
     return ent;

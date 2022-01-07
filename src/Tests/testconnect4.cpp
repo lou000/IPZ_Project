@@ -55,6 +55,8 @@ TestConnect4::TestConnect4()
 
     auto testMesh1 = std::make_shared<Model>("../assets/meshes/obelisk1.fbx");
     auto testMesh2 = std::make_shared<Model>("../assets/meshes/wolf.fbx");
+    auto testMesh3 = std::make_shared<Model>("../assets/meshes/campfire.fbx");
+    auto testMesh4 = Model::makeUnitQuad();
 //    auto testMesh3 = std::make_shared<MeshFile>("../assets/meshes/tree.blend");
 
     AssetManager::addAsset(mesh1);
@@ -63,7 +65,7 @@ TestConnect4::TestConnect4()
 
     AssetManager::addAsset(testMesh1);
     AssetManager::addAsset(testMesh2);
-//    AssetManager::addAsset(testMesh3);
+    AssetManager::addAsset(testMesh3);
 
 
     std::vector<std::filesystem::path> shaderSrcs1 = {
@@ -88,21 +90,20 @@ TestConnect4::TestConnect4()
     auto puck2 = createEntity(mesh3, {-1,0,3});
     puck2->setOverrideColor(yellow);
 
-    auto test1 = createEntity(testMesh1, {5,0,5}, quat({-radians(90.f), 0, 0}));
-    auto test2 = createEntity(testMesh2, {-5,0,5}, quat({-radians(90.f), 0, 0}));
-//    auto test3 = getEntity(testMesh3, {1,0,3});
+    auto test1 = createEntity(testMesh1, {5,0,5}, vec3(1), quat({-radians(90.f), 0, 0}));
+    auto test2 = createEntity(testMesh2, {-5,0,5}, vec3(1),  quat({-radians(90.f), 0, 0}));
+    auto test3 = createEntity(testMesh3, {1,0,3}, vec3(0.3), quat({-radians(90.f), 0, 0}));
+    auto test4 = createEntity(testMesh4, {0,0,0}, vec3(100));
 
-    for(uint row=0; row<4; row++)
-        for(uint col=0; col<4; col++)
-            createLight({-10.f+row*5.f, 5, -10.f+col*5.f}, {1,1,1}, 60.f, 5.f);
+    createLight({1, 2 ,3}, {1,0.05,0}, 60.f, 200.f);
 
-    previewPuck = createEntity(mesh3, {0, 0, 0}, quat({radians(90.f), 0, 0}));
+    previewPuck = createEntity(mesh3, {0, 0, 0}, vec3(1), quat({radians(90.f), 0, 0}));
     previewPuck->setOverrideColor(yellow);
     previewPuck->overrideColor.a = 0.2f;
 
     skyLight.direction = {-3, -5, -1.33f};
     skyLight.color = {1,1,1};
-    skyLight.intensity = 5.f;
+    skyLight.intensity = 1.f;
 
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
@@ -138,7 +139,7 @@ void TestConnect4::onUpdate(float dt)
                     {
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
                         {
-                            puckInPlay = createEntity(mesh3, {hPositions[i],11,-0.45}, quat({radians(90.f), 0, 0}));
+                            puckInPlay = createEntity(mesh3, {hPositions[i],11,-0.45}, vec3(1), quat({radians(90.f), 0, 0}));
                             puckInPlay->setOverrideColor(yellow);
                             animating = true;
                         }
@@ -157,7 +158,7 @@ void TestConnect4::onUpdate(float dt)
         auto moves = searcher->get_scores();
         currentMove = pickRandomTopMove(moves);
 
-        puckInPlay = createEntity(mesh3, {0,0,0}, quat({radians(90.f), 0, 0}));
+        puckInPlay = createEntity(mesh3, {0,0,0}, vec3(1), quat({radians(90.f), 0, 0}));
         puckInPlay->setOverrideColor(red);
 
         animating = true;

@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "buffer.h"
 #include "mesh.h"
+#include "../Core/utilities.h"
 #include "graphicscontext.h"
 #define MAX_VERTEX_BUFFER_SIZE 0xFFFFFF
 #define MAX_INDEX_BUFFER_SIZE 0xFFFE //this is max for uint16 which we use

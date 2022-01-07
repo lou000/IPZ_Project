@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "utilities.h"
+#include "math.h"
 #include "../AssetManagement/assets.h"
 
 using namespace glm;

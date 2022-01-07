@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../Core/utilities.h"
+#include "../Core/math.h"
 
 using namespace glm;
 class Camera{

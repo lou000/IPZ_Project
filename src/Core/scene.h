@@ -30,7 +30,7 @@ public:
     uint activeLightCount = 0;
     Entity* createEntity();
     PointLight* createLight(vec3 pos, vec3 color, float range, float intensity);
-    Entity* createEntity(std::shared_ptr<Model> model, vec3 pos = {0, 0, 0}, quat rotation = {1, 0, 0, 0});
+    Entity* createEntity(std::shared_ptr<Model> model, vec3 pos = {0, 0, 0}, vec3 scale = {1, 1, 1}, quat rotation = {1, 0, 0, 0});
     std::array<Entity, 100> entities;
     std::array<PointLight, MAX_LIGHTS> lights;
     DirectionalLight skyLight;

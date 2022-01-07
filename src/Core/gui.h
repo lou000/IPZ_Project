@@ -15,7 +15,7 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include "imgui.h"
 
 #define TWEAK_FLOAT(f, ...) \
-ImGui::TextUnformatted(#f); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragFloat("##"###f, &f, __VA_ARGS__);
+ImGui::TextUnformatted(#f); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragFloat("##"#f, &f, __VA_ARGS__);
 
 inline void imguiInit()
 {
