@@ -1,10 +1,11 @@
 ﻿#include "shader.h"
+#include <string.h>
 #include "../AssetManagement/asset_manager.h"
 
-Shader::Shader(const std::string &name, std::vector<std::filesystem::path> filePaths)
+Shader::Shader(const std::string &name, std::vector<std::filesystem::path> filePaths, ShaderReplacementStrings replacementStrings)
     :name(name)
 {
-    loadFiles(filePaths);
+    loadFiles(filePaths, replacementStrings);
     compile();
 }
 
@@ -89,12 +90,12 @@ void Shader::setUniformArray(const char *name, BufferElement::DataType type, con
     }
 }
 
-void Shader::loadFiles(std::vector<std::filesystem::path> filePaths)
+void Shader::loadFiles(std::vector<std::filesystem::path> filePaths, ShaderReplacementStrings replacementStrings)
 {
     for(auto& path : filePaths)
     {
-        auto shaderFile = std::make_shared<ShaderFile>(path, name);
-        if(shaderFile->data != nullptr)
+        auto shaderFile = std::make_shared<ShaderFile>(path, name, replacementStrings);
+        if(shaderFile->text.length()>0)
         {
             files.push_back(shaderFile);
             AssetManager::addAsset(shaderFile);
@@ -126,11 +127,16 @@ void Shader::compile()
             isCompute = true;
 
         GLuint shader = glCreateShader(file->type);
-        glShaderSource(shader, 1, &file->data, 0);
+
+        char * cstr = new char [file->text.length()+1];
+        strcpy_s(cstr, file->text.length()+1, file->text.c_str());
+
+        glShaderSource(shader, 1, &cstr, 0);
         glCompileShader(shader);
 
         GLint success = 0;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+        free(cstr);
 
         if(success == 0)
         {

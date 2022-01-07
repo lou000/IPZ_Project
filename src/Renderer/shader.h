@@ -10,13 +10,15 @@
 
 
 using namespace glm;
+using ShaderReplacementStrings = std::vector<std::pair<std::string, std::string>>;
+
 class Shader
 {
     friend class ShaderFile;
     friend class AssetManager;
 
 public:
-    Shader(const std::string& name, std::vector<std::filesystem::path> filePaths);
+    Shader(const std::string& name, std::vector<std::filesystem::path> filePaths, ShaderReplacementStrings replacementStrings = {});
     ~Shader();
 
     void bind();
@@ -33,7 +35,7 @@ private:
     std::string name;
     std::vector<std::shared_ptr<ShaderFile>> files;
 
-    void loadFiles(std::vector<std::filesystem::path> filePaths);
+    void loadFiles(std::vector<std::filesystem::path> filePaths, ShaderReplacementStrings replacementStrings = {});
     void compile();
 };
 
