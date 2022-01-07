@@ -48,9 +48,9 @@ void BatchRenderer::x_init()
     auto vBuffer = {std::make_shared<VertexBuffer>(layout, MAX_VERTEX_BUFFER_SIZE)};
     vertexArray = std::make_shared<VertexArray>(vBuffer, iBuffer);
 
-    std::vector<std::filesystem::path> shaderSrcs2 = {
-        "../assets/shaders/default_batch.fs",
-        "../assets/shaders/default_batch.vs"
+    std::vector<ShaderFileDef> shaderSrcs2 = {
+        {"../assets/shaders/default_batch.fs"},
+        {"../assets/shaders/default_batch.vs"}
     };
     m_debugShader = std::make_shared<Shader>("batch", shaderSrcs2);
     AssetManager::addShader(m_debugShader);
