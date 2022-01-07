@@ -18,7 +18,7 @@ void GraphicsContext::x_init()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_LESS);
 
     BatchRenderer::init();
     MeshRenderer::init();

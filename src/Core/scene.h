@@ -23,7 +23,6 @@ public:
 
     std::shared_ptr<Camera> camera;
     std::shared_ptr<Camera> editorCamera;
-    std::shared_ptr<Shader> pbrShader;
 
     //TODO: Entity manager
     uint activeEntityCount = 0;

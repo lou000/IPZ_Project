@@ -23,10 +23,22 @@ struct PointLight{
     float range;
 };
 
-layout (std430, binding = 2) buffer pointLightsSSBO
+layout (std430, binding = 0) buffer pointLightsSSBO
 {
     PointLight pointLights[];
 };
+
+layout (std430, binding = 1) buffer LightSpaceMatrices
+{
+    mat4 lightSpaceMatrices[];
+};
+
+layout(binding = 3) uniform sampler2DArray csmTex;
+uniform sampler2DArray shadowMap;
+uniform mat4 u_View;
+uniform float u_farPlane;
+uniform int u_cascadeCount;
+uniform float u_cascadePlaneDistances[20];
 
 uniform vec3 u_CameraPosition;
 uniform vec3 u_DirLightDirection;
@@ -42,10 +54,11 @@ float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySchlickGGX(float NdotV, float roughness);
 float GeometrySmith(float NdotV, float NdotL, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
-vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
+vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity, float shadow,
                           vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0);
 vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
                             vec3 fragPos, vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0);
+float dirLightShadow(vec3 fPos);
 
 void main()
 {
@@ -56,7 +69,9 @@ void main()
     F0 = mix(F0, v_Color.rgb, u_Metallic);
 
     // lights contribution TODO: pass intensities and ranges
-    vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
+    float dirShadow = dirLightShadow(v_Pos);
+    vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, dirShadow, 
+                                   V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
 
     for(int i = 0; i < u_PointLightCount; ++i)
     {
@@ -80,6 +95,87 @@ void main()
     {
         o_BloomColor = vec4(vec3(0.0), 1.0);
     }
+}
+
+float dirLightShadow(vec3 fPos)
+{
+    vec4 pos = u_View * vec4(fPos, 1.0);
+    float depth = abs(pos.z);
+
+    int layer = -1;
+    for (int i = 0; i < u_cascadeCount; ++i)
+        if (depth < u_cascadePlaneDistances[i])
+        {
+            layer = i;
+            break;
+        }
+
+    if (layer == -1)
+        layer = u_cascadeCount;
+    
+    vec4 posLightSpace = lightSpaceMatrices[layer] * vec4(fPos, 1.0);
+    vec3 projCoords = posLightSpace.xyz / posLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+
+    float currentDepth = projCoords.z;
+    if (currentDepth  > 1.0)
+        return 0.0;
+    
+    vec3 normal = normalize(v_Normal);          //maybe should be lightDir
+    float bias = max(0.05 * (1.0 - dot(normal, -u_DirLightDirection)), 0.005);
+    
+    if (layer == u_cascadeCount)
+        bias *= 1 / (u_farPlane * 0.5f);
+    else
+        bias *= 1 / (u_cascadePlaneDistances[layer] * 0.5f);
+
+    // PCF
+    float shadow = 0.0;
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
+    for(int x = -1; x <= 1; ++x)
+    {
+        for(int y = -1; y <= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap, vec3(projCoords.xy + vec2(x, y) * texelSize, layer)).r; 
+            shadow += (currentDepth - bias) > pcfDepth ? 1.0 : 0.0;        
+        }    
+    }
+    shadow /= 9.0;
+
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
+    return shadow;
+}
+
+vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity, float shadow,
+                          vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0)
+{
+    vec3 L = normalize(-lightDirection);
+    vec3 H = normalize(viewDir + L);
+    vec3 radiance = lightColor;
+    float nDotV = max(dot(normal, viewDir), 0.0);
+    float nDotL = max(dot(normal, L), 0.0);
+
+    // cook-torrance brdf
+    float NDF = DistributionGGX(normal, H, rough);
+    float G   = GeometrySmith(nDotV, nDotL, rough);
+    vec3  F   = FresnelSchlick(max(dot(H, viewDir), 0.0), F0);
+
+    //Finding specular and diffuse component
+    vec3 kS = F;
+    vec3 kD = vec3(1.0) - kS;
+    kD *= 1.0 - metal;
+
+    vec3  numerator   = NDF * G * F;
+    float denominator = 4.0 * nDotV * nDotL + 0.0001;
+    vec3  specular    = numerator / max(denominator, 0.0001);
+
+    radiance *= (kD * (color / PI) + specular) *nDotL;
+    radiance *= intensity;
+    radiance *= (1.0 - shadow);
+
+    return radiance;
 }
 
 vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity, float range,
@@ -107,34 +203,6 @@ vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity
     vec3 specular = numerator / max(denominator, 0.0000001);
 
     radiance *= (kD * (color / PI) + specular ) * nDotL;
-
-    return intensity*radiance;
-}
-
-vec3 dirLightContribution(vec3 lightDirection, vec3 lightColor, float intensity,
-                          vec3 viewDir, vec3 normal, vec3 color, float rough, float metal, vec3 F0)
-{
-    vec3 L = normalize(-lightDirection);
-    vec3 H = normalize(viewDir + L);
-    vec3 radiance = lightColor;
-    float nDotV = max(dot(normal, viewDir), 0.0);
-    float nDotL = max(dot(normal, L), 0.0);
-
-    // cook-torrance brdf
-    float NDF = DistributionGGX(normal, H, rough);
-    float G   = GeometrySmith(nDotV, nDotL, rough);
-    vec3  F   = FresnelSchlick(max(dot(H, viewDir), 0.0), F0);
-
-    //Finding specular and diffuse component
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - metal;
-
-    vec3  numerator   = NDF * G * F;
-    float denominator = 4.0 * nDotV * nDotL + 0.0001;
-    vec3  specular    = numerator / max(denominator, 0.0001);
-
-    radiance *= (kD * (color / PI) + specular) *nDotL;
 
     return intensity*radiance;
 }
