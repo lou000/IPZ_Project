@@ -70,8 +70,6 @@ private:
     void* loadFromFile(const std::filesystem::path& path);
 };
 
-using ShaderReplacementStrings = std::vector<std::pair<std::string, std::string>>;
-
 class ShaderFile : public Asset
 {
     friend class Shader;
@@ -85,7 +83,7 @@ class ShaderFile : public Asset
     };
 
 public:
-    ShaderFile(const std::filesystem::path& path, const std::string shaderName, ShaderReplacementStrings replacementStrings = {});
+    ShaderFile(const std::filesystem::path& path, const std::string shaderName);
     ShaderFile(const std::filesystem::path& path, ShaderType type, const std::string shaderName);
 
     virtual bool doReload() override;
@@ -93,7 +91,6 @@ public:
 
 private:
     const std::string m_shaderName;
-    ShaderReplacementStrings m_replacementStrings;
     ShaderType type;
     std::string loadFile();
     bool getTypeFromFileName();

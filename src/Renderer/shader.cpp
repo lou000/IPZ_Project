@@ -2,10 +2,10 @@
 #include <string.h>
 #include "../AssetManagement/asset_manager.h"
 
-Shader::Shader(const std::string &name, std::vector<std::filesystem::path> filePaths, ShaderReplacementStrings replacementStrings)
-    :name(name)
+Shader::Shader(const std::string &name, std::vector<ShaderFileDef> files)
+    :name(name), m_files(files)
 {
-    loadFiles(filePaths, replacementStrings);
+    loadFiles();
     compile();
 }
 
@@ -90,18 +90,33 @@ void Shader::setUniformArray(const char *name, BufferElement::DataType type, con
     }
 }
 
-void Shader::loadFiles(std::vector<std::filesystem::path> filePaths, ShaderReplacementStrings replacementStrings)
+void Shader::updateRuntimeModifiedStrings(ShaderFileDef def)
 {
-    for(auto& path : filePaths)
+    for(auto& fDef : m_files)
     {
-        auto shaderFile = std::make_shared<ShaderFile>(path, name, replacementStrings);
+        if(fDef.filepath == def.filepath)
+        {
+            fDef.stringsToReplace = def.stringsToReplace;
+            fDef.replacementStrings = def.replacementStrings;
+            LOG("Shader: Shader modified at runtime, recompiling...\n");
+            compile();
+            return;
+        }
+    }
+}
+
+void Shader::loadFiles()
+{
+    for(auto& shaderDef : m_files)
+    {
+        auto shaderFile = std::make_shared<ShaderFile>(shaderDef.filepath, name);
         if(shaderFile->text.length()>0)
         {
-            files.push_back(shaderFile);
+            shaderDef.file = shaderFile;
             AssetManager::addAsset(shaderFile);
         }
         else
-            WARN("Shader: Failed to load shader file %s.", path.string().c_str());
+            WARN("Shader: Failed to load shader file %s.", shaderDef.filepath.string().c_str());
     }
 }
 
@@ -110,7 +125,7 @@ void Shader::compile()
     // We never delete the program even if we fail, in hope that
     // user will fix their shader and recompile the program.
 
-    if(files.size() == 0)
+    if(m_files.size() == 0)
     {
         WARN("Shader: There are no files to compile.");
         return;
@@ -121,33 +136,47 @@ void Shader::compile()
     std::vector<uint> shaders;
 
     bool greatSuccess = true;
-    for(auto& file : files)
+    for(auto& fileDef : m_files)
     {
-        if(file->type == ShaderFile::ShaderType::compute)
+        auto sFile = fileDef.file;
+
+        if(sFile->type == ShaderFile::ShaderType::compute)
             isCompute = true;
 
-        GLuint shader = glCreateShader(file->type);
+        GLuint shader = glCreateShader(sFile->type);
 
-        char * cstr = new char [file->text.length()+1];
-        strcpy_s(cstr, file->text.length()+1, file->text.c_str());
+        auto text = sFile->text;
+        ASSERT_ERROR(fileDef.stringsToReplace.size() == fileDef.replacementStrings.size(),
+         "Shader: String replacement arrays are not equal size!");
+        for(uint i=0; i<fileDef.stringsToReplace.size(); i++)
+        {
+            auto mark = fileDef.stringsToReplace[i];
+            auto repl = fileDef.replacementStrings[i];
+            size_t pos = text.find(mark);
+            while( pos != std::string::npos)
+            {
+                text.replace(pos, mark.size(), repl);
+                pos =text.find(mark, pos + mark.size());
+            }
+        }
+
+        const char* cstr = text.c_str();
 
         glShaderSource(shader, 1, &cstr, 0);
         glCompileShader(shader);
 
         GLint success = 0;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-        free(cstr);
 
         if(success == 0)
         {
             GLint logSize = 0;
             glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
-            ASSERT(logSize>0); //should never happen
 
             std::vector<GLchar> errorLog(logSize);
             glGetShaderInfoLog(shader, logSize, &logSize, &errorLog[0]);
             glDeleteShader(shader);
-            WARN("Shader: Shader %s compilation failed with error:\n%s", file->path.string().c_str(), errorLog.data());
+            WARN("Shader: Shader %s compilation failed with error:\n%s", sFile->path.string().c_str(), errorLog.data());
             greatSuccess = false;
         }
         else
@@ -177,3 +206,9 @@ void Shader::compile()
     }
 }
 
+
+ShaderFileDef::ShaderFileDef(std::filesystem::path filepath, std::vector<std::string> strToReplace, std::vector<std::string> replStrings)
+    :filepath(filepath), stringsToReplace(strToReplace), replacementStrings(replStrings)
+{
+
+}

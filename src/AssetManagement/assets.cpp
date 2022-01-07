@@ -240,8 +240,8 @@ void* Texture::loadFromFile(const std::filesystem::path& path){
 }
 
 
-ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName,  ShaderReplacementStrings replacementStrings)
-    : m_shaderName(shaderName), m_replacementStrings(replacementStrings)
+ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName)
+    : m_shaderName(shaderName)
 {
     assetType = AssetType::shaderFile;
     this->path = path;
@@ -278,16 +278,6 @@ std::string ShaderFile::loadFile()
     }
 
     auto str = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
-
-    for(auto& [mark, repl] : m_replacementStrings)
-    {
-        size_t pos = text.find(mark);
-        while( pos != std::string::npos)
-        {
-            text.replace(pos, mark.size(), repl);
-            pos =text.find(mark, pos + mark.size());
-        }
-    }
 
 //    for(uint64 i=0; i<size+1; i++)
 //        std::cout<<str[i];

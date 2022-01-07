@@ -75,8 +75,8 @@ void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
 void AssetManager::x_addShader(std::shared_ptr<Shader> shader)
 {
     shaders.insert({shader->name, shader});
-    for (auto &file : shader->files)
-        x_addAsset(file);
+    for (auto &file : shader->m_files)
+        x_addAsset(file.file);
 }
 
 void AssetManager::x_removeShader(uint id)
@@ -86,10 +86,10 @@ void AssetManager::x_removeShader(uint id)
         auto shader = shaderIt.second;
         if (shader->id() == id)
         {
-            auto shaderFilesVector = shader->files;
-            for (std::shared_ptr<Asset> sf : shaderFilesVector)
+            auto shaderFilesVector = shader->m_files;
+            for (auto& sf : shaderFilesVector)
             {
-                auto shaderFilePath = sf->path;
+                auto shaderFilePath = sf.file->path;
                 fileAssets.erase(shaderFilePath);
                 auto dirPath = shaderFilePath.remove_filename();
                 auto dir = dirs.find(dirPath);
@@ -97,7 +97,7 @@ void AssetManager::x_removeShader(uint id)
                 if (dir != dirs.end())
                 {
                     auto &mapAssets = dir->second->assets;
-                    auto asset = mapAssets.find(sf->path);
+                    auto asset = mapAssets.find(sf.file->path);
 
                     if (asset != mapAssets.end())
                         mapAssets.erase(asset->first);
