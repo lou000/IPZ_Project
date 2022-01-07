@@ -23,10 +23,12 @@ public:
     void setFocusPoint(vec3 point){m_focusPoint = point; pointAt(point);}
     void pointAt(vec3 pos);
 
-    vec3 getPos()          {return m_pos;}
-    float getFov()         {return m_fov;}
-    float getAspectRatio(){return m_aspectRatio;}
-    quat getRotation()    {return m_rotation;}
+    vec3 getPos()           {return m_pos;}
+    float getFov()          {return m_fov;}
+    float getAspectRatio()  {return m_aspectRatio;}
+    quat getRotation()      {return m_rotation;}
+    float getNearClip()     {return m_nearClip;}
+    float getFarClip()      {return m_farClip;}
     float getRotationX();
     float getRotationY();
     float getRotationZ();
