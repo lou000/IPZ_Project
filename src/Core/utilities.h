@@ -36,20 +36,20 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
     case 0/*LOG */: std::cout<<color(cyan)<<message; return AssertAction::None;
     case 1/*WARN*/: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
     case 2/*OPENGL_LOG  */: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
-    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Throw;
+    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Break;
     case 4/*GLFW_LOG    */: std::cout<<color(cyan)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::None;
-    case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::Throw;
-    case 6/*GLFW_THROW  */: std::cout<<color(red)<<file<<" : "<<line<<"\n ASSERT_NOT_REACHED: Shouldn't be here!\n"; return AssertAction::Throw;
+    case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::Break;
+    case 6/*NOT_REACHED */: std::cout<<color(red)<<file<<" : "<<line<<"\n ASSERT_NOT_REACHED: Shouldn't be here!\n"; return AssertAction::Break;
 
     case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;
     case AssertLevel::Debug:
     case AssertLevel::Error:
     case AssertLevel::Fatal:
         std::cout<<file<<line<<message;
-        return AssertAction::Throw;
+        return AssertAction::Break;
     }
     std::cout<<file<<" "<<line<<"Invalid Assert level:"<<level<<"\n\n"<<message;
-    return AssertAction::Throw;
+    return AssertAction::Break;
 }
 
 #define UNUSED(x) (void)(x)
@@ -119,7 +119,8 @@ inline GLenum textureSizedFormatToFormat(GLenum internalFormat)
     case GL_RGBA16UI:       return GL_RGBA;
     case GL_RGBA32I:        return GL_RGBA;
     case GL_RGBA32UI:       return GL_RGBA;
-    case GL_DEPTH24_STENCIL8: return GL_DEPTH_STENCIL;
+    case GL_DEPTH24_STENCIL8:   return GL_DEPTH_STENCIL;
+    case GL_DEPTH_COMPONENT32F: return GL_DEPTH_COMPONENT;
     default: ASSERT_NOT_REACHED();
         return 0;
     }
