@@ -5,7 +5,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <unordered_set>
-#include <cstdlib> //calloc
+#include <fstream>
+#include <sstream>
 #include "../Renderer/buffer.h" // VAO
 
 
@@ -239,13 +240,13 @@ void* Texture::loadFromFile(const std::filesystem::path& path){
 }
 
 
-ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName)
-    : m_shaderName(shaderName)
+ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName,  ShaderReplacementStrings replacementStrings)
+    : m_shaderName(shaderName), m_replacementStrings(replacementStrings)
 {
     assetType = AssetType::shaderFile;
     this->path = path;
     if(!getTypeFromFileName()) return;
-    data = loadFile();
+    text = loadFile();
 }
 
 ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type, const std::string shaderName)
@@ -253,46 +254,41 @@ ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType
 {
     assetType = AssetType::shaderFile;
     this->path = path;
-    data = loadFile();
+    text = loadFile();
 }
 
 bool ShaderFile::doReload()
 {
-    char* temp = loadFile();
-    if(temp)
-    {
-        if(data)
-            free(data);
-        data = temp;
-        return true;
-    }
+    text = loadFile();
     return false;
 }
 
-char* ShaderFile::loadFile()
+std::string ShaderFile::loadFile()
 {
     if(!std::filesystem::exists(path))
     {
         WARN("Failed to load shader: File %s doesnt exist.", path.string().c_str());
         return nullptr;
     }
-    FILE* file;
-    if(_wfopen_s(&file, path.c_str(), L"r"))
-    {
+
+    std::ifstream input_file(path);
+    if (!input_file.is_open()) {
         WARN("Failed to load shader: Couldnt open file %s for reading.", path.string().c_str());
         return nullptr;
     }
-    fseek(file, 0, SEEK_END);
-    uint64 size = ftell(file);
-    fseek(file, 0, SEEK_SET);
-    uint64 offset = ftell(file);
-    size-=offset;
-    // size of the file will be bigger than number of chars becouse of the windows \r\n bullshit
-    // the solution is to just calloc the memory so we have zero termination in the right place anyway
-    char* str = (char*)calloc(size+1, sizeof (char));
-    fread(str, 1, size, file);
-    fclose(file);
-    str[size] = 0;
+
+    auto str = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
+
+    for(auto& [mark, repl] : m_replacementStrings)
+    {
+        size_t pos = text.find(mark);
+        while( pos != std::string::npos)
+        {
+            text.replace(pos, mark.size(), repl);
+            pos =text.find(mark, pos + mark.size());
+        }
+    }
+
 //    for(uint64 i=0; i<size+1; i++)
 //        std::cout<<str[i];
     return str;
@@ -328,9 +324,75 @@ Model::Model(const std::filesystem::path &path)
     loadModel();
 }
 
+Model::Model(std::vector<std::shared_ptr<Mesh> > meshes)
+{
+    AABB modelBB;
+    for(const auto& m : meshes)
+    {
+        auto bb = m->boundingBox;
+        if(modelBB.max.x<bb.max.x)
+            modelBB.max.x = bb.max.x;
+        if(modelBB.max.y<bb.max.y)
+            modelBB.max.y = bb.max.y;
+        if(modelBB.max.z<bb.max.z)
+            modelBB.max.z = bb.max.z;
+
+        if(modelBB.min.x>bb.min.x)
+            modelBB.min.x = bb.min.x;
+        if(modelBB.min.y>bb.min.y)
+            modelBB.min.y = bb.min.y;
+        if(modelBB.min.z>bb.min.z)
+            modelBB.min.z = bb.min.z;
+        m_meshes.push_back(m);
+    }
+}
+
 bool Model::doReload()
 {
     return loadModel();
+}
+
+std::shared_ptr<Model> Model::makeUnitQuad()
+{
+    constexpr vec2 textureCoords[4]={
+        {0.0f, 0.0f},
+        {1.0f, 0.0f},
+        {1.0f, 1.0f},
+        {0.0f, 1.0f}
+    };
+
+    constexpr vec3 vertexPos[4]={
+        {-0.5f,  0.0f,  0.5f},
+        { 0.5f,  0.0f,  0.5f},
+        { 0.5f,  0.0f, -0.5f},
+        {-0.5f,  0.0f, -0.5f}
+    };
+
+    constexpr vec3 normals[4]={
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f}
+    };
+
+    constexpr uint16 indices[6]={
+        0,1,3,3,1,2
+    };
+
+    MeshVertex vertices[4];
+    for(uint i=0; i<4; i++)
+    {
+        vertices[i].position  = vertexPos[i];
+        vertices[i].normal    = normals[i];
+        vertices[i].texCoords = textureCoords[i];
+    }
+    Material mat;
+    mat.metallic = 0;
+    mat.roughness = 0.2;
+    mat.color = {1,1,1,1};
+    auto m = std::make_shared<Mesh>((float*)&vertices[0], 4, (uint16*)&indices[0], 6, mat);
+
+    return std::make_shared<Model>(std::vector<std::shared_ptr<Mesh>>{m});
 }
 
 bool Model::loadModel()
@@ -344,6 +406,11 @@ bool Model::loadModel()
         return false;
     }
 
+    if(path.extension() != ".fbx" && path.extension() != ".obj")
+    {
+        WARN("Asset: Couldnt load the asset file %s extension is not supported.", c_str);
+        return false;
+    }
 
     auto importer = AssetManager::getAssimpImporter();
     importer->SetPropertyFloat("PP_GSN_MAX_SMOOTHING_ANGLE", 1);
@@ -382,11 +449,26 @@ bool Model::loadModel()
             material.color = {matColor.r, matColor.g, matColor.b, 1};
         }
 
+        //Doesnt work with blender fbx
+//        aiColor3D emissiveColor;
+//        if(AI_SUCCESS != mat->Get(AI_MATKEY_COLOR_EMISSIVE, emissiveColor))
+//        {
+//            WARN("Couldnt read emmisive color of asset %s", c_str);
+//        }
+//        else
+//        {
+//            material.colorEmissive = {matColor.r, matColor.g, matColor.b, 1};
+//        }
+
         if(AI_SUCCESS != mat->Get(AI_MATKEY_REFLECTIVITY, material.metallic))
         {
             WARN("Couldnt read material metallnes of asset %s", c_str);
         }
-
+        //Doesnt work with blender fbx
+//        if(AI_SUCCESS != mat->Get(AI_MATKEY_EMISSIVE_INTENSITY, material.emissiveIntensity))
+//        {
+//            WARN("Couldnt read material emmisiveIntensity of asset %s", c_str);
+//        }
         if(AI_SUCCESS != mat->Get(AI_MATKEY_SHININESS, material.roughness))
         {
             WARN("Couldnt read material roughness of asset %s", c_str);
