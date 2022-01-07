@@ -66,6 +66,8 @@ void main()
 		case 31: texColor = texture(u_TextureArrays[4], arrayUV); break;
 	}
     texColor*=v_Color;
+    if(texColor.r>0 && texColor.g == 0 && texColor.b == 0)
+        texColor = vec4(texColor.r, texColor.r, texColor.r, 1);
 	color = texColor;
     // if(v_TexIndex == 2)
     //     color = colorize(texColor, vec4(0.965, 0.827, 0.502, 0.95));
