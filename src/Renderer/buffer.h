@@ -181,11 +181,12 @@ class FrameBuffer
 {
 public:
     FrameBuffer() = default;
-    FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
+    FrameBuffer(uint width, uint height, uint depth, std::vector<FrameBufferAttachment> colorAtachments,
                 FrameBufferAttachment depthAttachment = {}, uint samples = 1);
 
-    std::shared_ptr<Texture> getTexture(uint index){return attachedTextures.at(index);}
-    void resize(uint width, uint height);
+    std::shared_ptr<Texture> getTexture(uint index);
+    std::shared_ptr<Texture> getDepthTex();
+    void resize(uint width, uint height, uint depth);
     void bind();
     void bindColorAttachment(uint index); // bind specific color attachment
     void bindDepthAttachment();
@@ -194,7 +195,7 @@ public:
     vec2 getSize() {return vec2(width, height);}
     void clear(vec3 color);
     void clearColorAttachment(uint index, vec3 color); // bind specific color attachment
-    void clearDepthAttachment(vec3 color);
+    void clearDepthAttachment();
 
 private:
     void update();
@@ -202,6 +203,7 @@ private:
     uint id      = 0;
     uint width   = 0;
     uint height  = 0;
+    uint depth   = 0;
     uint samples = 1;
     int maxAttachments = 0;
 
