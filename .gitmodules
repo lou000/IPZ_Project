@@ -12,11 +12,14 @@
 	path = external/ppk_assert
 	url = https://github.com/gpakosz/PPK_ASSERT
 [submodule "external/assimp"]
+	ignore = dirty
 	path = external/assimp
 	url = https://github.com/assimp/assimp
 [submodule "external/imgui"]
+	ignore = dirty
 	path = external/imgui
 	url = https://github.com/ocornut/imgui
 [submodule "external/yaml-cpp"]
+	ignore = dirty
 	path = external/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp/
