@@ -158,7 +158,6 @@ TestMLP::TestMLP()
 
 void TestMLP::onStart()
 {
-    GraphicsContext::setClearColor({0.184f, 0.200f, 0.329f, 1.f});
     auto camera = GraphicsContext::getCamera();
     camera->setFov(50.f);
     camera->setPosition({20.f,15.f,40.f});

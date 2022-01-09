@@ -12,6 +12,7 @@ class BufferElement{
 
 public:
     enum DataType{
+        Uint,
         Int,
         Float,
         Float2,
@@ -27,6 +28,7 @@ public:
     inline static uint typeComponentCount(DataType type){
         switch (type)
         {
+        case Uint:   return 1;
         case Int:    return 1;
         case Float:  return 1;
         case Float2: return 2;
@@ -40,6 +42,7 @@ public:
     inline static uint typeComponentSize(DataType type){
         switch (type)
         {
+        case Uint:   return 4;
         case Int:    return 4;
         case Float:  return 4;
         case Float2: return 4*2;
@@ -54,6 +57,7 @@ public:
     inline static uint typeToNative(DataType type){
         switch (type)
         {
+        case Uint:   return GL_UNSIGNED_INT;
         case Int:    return GL_INT;
         case Float:
         case Float2:
@@ -175,16 +179,23 @@ struct FrameBufferAttachment
 class Texture;
 class FrameBuffer
 {
-    //TODO: fill out the functions, and remember to blit to screen for now
 public:
-    FrameBuffer(){};
-    FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAtachments,
+    FrameBuffer() = default;
+    FrameBuffer(uint width, uint height, uint depth, std::vector<FrameBufferAttachment> colorAtachments,
                 FrameBufferAttachment depthAttachment = {}, uint samples = 1);
-    void resize(uint width, uint height);
+
+    std::shared_ptr<Texture> getTexture(uint index);
+    std::shared_ptr<Texture> getDepthTex();
+    void resize(uint width, uint height, uint depth);
     void bind();
-    void bind(std::vector<GLenum> attachments);
+    void bindColorAttachment(uint index); // bind specific color attachment
+    void bindDepthAttachment();
     void unbind();
     void blitToFrontBuffer();
+    vec2 getSize() {return vec2(width, height);}
+    void clear(vec3 color);
+    void clearColorAttachment(uint index, vec3 color); // bind specific color attachment
+    void clearDepthAttachment();
 
 private:
     void update();
@@ -192,6 +203,7 @@ private:
     uint id      = 0;
     uint width   = 0;
     uint height  = 0;
+    uint depth   = 0;
     uint samples = 1;
     int maxAttachments = 0;
 
@@ -202,4 +214,21 @@ private:
 
     std::vector<std::shared_ptr<Texture>> attachedTextures; //give weak pointer if we take from here
     std::shared_ptr<Texture> depthTexture = nullptr; //could be depth+stencil
+};
+
+class StorageBuffer
+{
+public:
+    StorageBuffer() = default;
+    StorageBuffer(size_t size, uint bufferIndex, void* data = nullptr, uint usage = GL_DYNAMIC_DRAW);
+    void bind();
+    void unbind();
+    void setData(const void* data, size_t size);
+    void setSubData(const void* data, size_t offset, size_t size); // this does not bind the buffer beforehand
+
+private:
+    uint id = 0;
+    uint size = 0;
+    uint bufferIndex = 0;
+
 };

@@ -5,6 +5,7 @@
 #include "camera.h"
 #include "buffer.h"
 #include "mesh.h"
+#include "../Core/utilities.h"
 #include "graphicscontext.h"
 #define MAX_VERTEX_BUFFER_SIZE 0xFFFFFF
 #define MAX_INDEX_BUFFER_SIZE 0xFFFE //this is max for uint16 which we use
@@ -22,6 +23,7 @@ class BatchRenderer{
         vec4 position;
         vec4 color;
         vec2 texCoord;
+        float texLayer;
         float texIndex;
         float tilingFactor;
     };
@@ -37,7 +39,7 @@ public:
     void operator=(BatchRenderer const&) = delete;
 
     static void init(){getInstance().x_init();}
-    static void begin(){getInstance().x_begin();}
+    static void begin(mat4 viewProj){getInstance().x_begin(viewProj);}
     static void end(){getInstance().x_end();}
     static void drawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
@@ -54,6 +56,9 @@ public:
     static void drawTris(vec3* verts, uint16* indices, uint iCount, float lWidth, const vec4& color)
     {getInstance().x_drawTris(verts, indices, iCount, lWidth, color);}
 
+    static void drawQuad(const vec2 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture = nullptr,
+                  float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
+    {getInstance().x_drawQuad(pos, size, texture, tilingFactor, tintColor);}
     static void drawQuad(const vec2 &pos, const vec2 &size, const vec4 &tintColor)
     {getInstance().x_drawQuad(pos, size, tintColor);}
     static void drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color)
@@ -65,12 +70,17 @@ public:
     static void setShader(std::shared_ptr<Shader> shader){getInstance().x_setShader(shader);}
 
 private:
+    struct TextureSlot{
+        std::shared_ptr<Texture> texture;
+        uint selectedLayer;
+    };
     mat4 viewProj3d;
     mat4 viewProjOrtho;
 
     std::shared_ptr<VertexArray> vertexArray = nullptr;
 
-    int* texSamplers     = nullptr;
+    int* texSamplers      = nullptr;
+    int* texSamplersArray = nullptr;
     byte* vertexBuffer    = nullptr;
     byte* vertexBufferPtr = nullptr;
     byte* vertexBufferEnd = nullptr;
@@ -83,14 +93,16 @@ private:
     uint elementCount    = 0;
 
     int maxTextureSlots = 0;
+    int maxTextureSlotsArray = 0;
     int textureCount    = 1;
+    int textureCountArray = 0;
 
-    std::shared_ptr<Shader> m_currentShader = nullptr;
-    std::vector<std::shared_ptr<Texture>> textureSlots;
+    std::shared_ptr<Shader> m_debugShader = nullptr;
+    std::vector<TextureSlot> textureSlots;
     std::shared_ptr<Texture> whiteTex;
 
     void x_init();
-    void x_begin();
+    void x_begin(mat4 viewProj);
     void x_end();
 
 
@@ -103,12 +115,14 @@ private:
     void x_drawPoint(const vec3& pos, float lWidth, float lLen, const vec4& color);
     void x_drawTris(vec3* verts, uint16* indices, uint iCount, float lWidth, const vec4& color);
 
+    void x_drawQuad(const vec2 &pos, const vec2 &size, const std::shared_ptr<Texture> &texture,
+                    float tilingFactor, const vec4 &tintColor);
     void x_drawQuad(const vec2 &pos, const vec2 &size, const vec4 &tintColor);
     void x_drawLine(const vec2& posStart, const vec2& posEnd, float width, const vec4& color);
     void x_drawCircle(const vec2& pos, float radius, int triangles, const vec4& color);
 
 
-    void x_setShader(std::shared_ptr<Shader> shader){m_currentShader = shader;}
+    void x_setShader(std::shared_ptr<Shader> shader){m_debugShader = shader;}
 
     int addTexture(const std::shared_ptr<Texture>& texture);
     void startBatch();

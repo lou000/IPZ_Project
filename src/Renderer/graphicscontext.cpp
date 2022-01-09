@@ -18,20 +18,10 @@ void GraphicsContext::x_init()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glDepthMask(GL_TRUE);
-    glDepthFunc(GL_LEQUAL);
+    glDepthFunc(GL_LESS);
 
     BatchRenderer::init();
     MeshRenderer::init();
-}
-
-void GraphicsContext::setClearColor(vec4 color)
-{
-    glClearColor(color.r, color.g, color.b, 1);
-}
-
-void GraphicsContext::clear(GLbitfield buffers)
-{
-    glClear(buffers);
 }
 
 void GraphicsContext::x_setCamera(std::shared_ptr<Camera> camera)

@@ -1,0 +1,82 @@
+//type compute
+#version 430
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(r11f_g11f_b10f, binding = 0) uniform image2D output_image;
+layout(binding = 1) uniform sampler2D input_image;
+
+shared vec4 storedPixels[16][16];
+
+vec4 blurPixels(vec4 m4, vec4 m3, vec4 m2, vec4 m1, vec4 mid, vec4 p1, vec4 p2, vec4 p3, vec4 p4)
+{
+    return 0.27343750 * (mid  )
+         + 0.21875000 * (m1 + p1)
+         + 0.10937500 * (m2 + p2)
+         + 0.03125000 * (m3 + p3)
+         + 0.00390625 * (m4 + p4);
+}
+
+vec4 horizontalBlur(uint x, uint y)
+{
+    vec4 m4 = storedPixels[x  ][y];
+    vec4 m3 = storedPixels[x+1][y];
+    vec4 m2 = storedPixels[x+2][y];
+    vec4 m1 = storedPixels[x+3][y];
+    vec4 mid= storedPixels[x+4][y];
+    vec4 p1 = storedPixels[x+5][y];
+    vec4 p2 = storedPixels[x+6][y];
+    vec4 p3 = storedPixels[x+7][y];
+    vec4 p4 = storedPixels[x+8][y];
+    return blurPixels(m4, m3, m2, m1, mid, p1, p2, p3, p4);
+}
+
+vec4 verticalBlur(uint x, uint y)
+{
+    vec4 m4 = storedPixels[x][y  ];
+    vec4 m3 = storedPixels[x][y+1];
+    vec4 m2 = storedPixels[x][y+2];
+    vec4 m1 = storedPixels[x][y+3];
+    vec4 mid= storedPixels[x][y+4];
+    vec4 p1 = storedPixels[x][y+5];
+    vec4 p2 = storedPixels[x][y+6];
+    vec4 p3 = storedPixels[x][y+7];
+    vec4 p4 = storedPixels[x][y+8];
+    return blurPixels(m4, m3, m2, m1, mid, p1, p2, p3, p4);
+}
+
+vec2 posToUV(ivec2 pos, ivec2 resolution)
+{
+    return (vec2(pos)+0.5)/vec2(resolution);
+}
+
+void main()
+{
+    //Downsample
+    ivec2 resolution = imageSize(output_image);
+
+    ivec2 pos = ivec2(gl_WorkGroupID.xy*gl_WorkGroupSize.xy + gl_LocalInvocationID.xy*2)-4;
+    
+
+    vec4 tl = texture(input_image, posToUV(pos, resolution));
+    vec4 tr = texture(input_image, posToUV(pos+ivec2(1,0), resolution));
+    vec4 bl = texture(input_image, posToUV(pos+ivec2(0,1), resolution));
+    vec4 br = texture(input_image, posToUV(pos+ivec2(1,1), resolution));
+
+
+    storedPixels[gl_LocalInvocationID.x*2]  [gl_LocalInvocationID.y*2]   = tl;
+    storedPixels[gl_LocalInvocationID.x*2+1][gl_LocalInvocationID.y*2]   = tr;
+    storedPixels[gl_LocalInvocationID.x*2]  [gl_LocalInvocationID.y*2+1] = bl;
+    storedPixels[gl_LocalInvocationID.x*2+1][gl_LocalInvocationID.y*2+1] = br;
+    barrier();
+
+
+    // Blur horizontal
+    uvec2 centerPos = gl_LocalInvocationID.xy+4;
+    storedPixels[centerPos.x][centerPos.y] = horizontalBlur(centerPos.x-4, centerPos.y);
+    barrier();
+
+    //Blur vertical
+    vec4 outColor  = verticalBlur(centerPos.x, centerPos.y-4);
+
+    imageStore(output_image, ivec2(gl_GlobalInvocationID), outColor);
+}

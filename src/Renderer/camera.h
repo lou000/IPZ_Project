@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../Core/utilities.h"
+#include "../Core/math.h"
 
 using namespace glm;
 class Camera{
@@ -23,10 +23,12 @@ public:
     void setFocusPoint(vec3 point){m_focusPoint = point; pointAt(point);}
     void pointAt(vec3 pos);
 
-    vec3 getPos()          {return m_pos;}
-    float getFov()         {return m_fov;}
-    float getAspectRatio(){return m_aspectRatio;}
-    quat getRotation()    {return m_rotation;}
+    vec3 getPos()           {return m_pos;}
+    float getFov()          {return m_fov;}
+    float getAspectRatio()  {return m_aspectRatio;}
+    quat getRotation()      {return m_rotation;}
+    float getNearClip()     {return m_nearClip;}
+    float getFarClip()      {return m_farClip;}
     float getRotationX();
     float getRotationY();
     float getRotationZ();
@@ -50,6 +52,7 @@ private:
     float m_aspectRatio = 1;
     float m_nearClip    = 0.1f;
     float m_farClip     = 1000;
+    bool isActive = false;
     vec3 m_focusPoint = {0,0,0};
 
     quat m_rotation = {1,0,0,0};

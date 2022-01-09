@@ -1,5 +1,6 @@
 ﻿#include "utilities.h"
 #include "application.h"
+#include "gui.h"
 #include "../Renderer/graphicscontext.h"
 
 static void error_callback(int error, const char* description)
@@ -17,7 +18,7 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
     UNUSED(userParam);
     UNUSED(message);
 
-    if(id == 131185)
+    if(id == 131185 || id == 131204 || 131076)
         return;
 
     const char* _source;
@@ -131,6 +132,10 @@ void App::x_init(uint width, uint height)
     glfwSetErrorCallback(error_callback);
 
     glfwWindowHint(GLFW_SAMPLES, 16);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     m_windowHeight = height;
     m_windowWidth  = width;
     m_window = glfwCreateWindow(width, height, "Test", NULL, NULL);
@@ -149,15 +154,18 @@ void App::x_init(uint width, uint height)
 
     gladLoadGL();
     glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glErrorCallback, 0);
 
     GraphicsContext::init();
-
     glfwSwapInterval(1);
+    imguiInit();
 }
 
 bool App::x_getKey(int key, KeyActionFlags actionFlags, int mods)
 {
+    if(ImGui::GetIO().WantCaptureKeyboard)
+        return false;
     UNUSED(mods); // this will not work for mods, maybe we can make it work?
     int action = glfwGetKey(m_window, key);
     action = action == 0 ? 1 : action<<1;
@@ -225,6 +233,8 @@ void App::x_disableCursor(bool disable)
 
 void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 {
+    if(ImGui::GetIO().WantCaptureKeyboard)
+        return;
     UNUSED(window);
     UNUSED(scancode);
     //just jam them in one var
@@ -238,6 +248,8 @@ void App::x_keyCallback(GLFWwindow *window, int key, int scancode, int action, i
 }
 void App::x_mouseButtonCallback(GLFWwindow *window, int button, int action, int mods)
 {
+    if(ImGui::GetIO().WantCaptureMouse)
+        return;
     UNUSED(window);
     //just jam them in one var
     uint16 hash = 0;
@@ -265,9 +277,9 @@ void App::x_frameBufferSizeCallback(GLFWwindow *window, int width, int height)
 {
     //this might be called before we initialize the Renderer
     UNUSED(window);
-    m_windowWidth  = width;
-    m_windowHeight = height;
-    GraphicsContext::resizeViewPort(width, height);
+    m_windowWidth  = width<1 ? 1 : width;
+    m_windowHeight = height<1 ? 1 : height;;
+    GraphicsContext::resizeViewPort(m_windowWidth, m_windowHeight);
 }
 
 void App::x_setVsync(uint interval)
@@ -344,6 +356,8 @@ float App::x_getMouseScrollChange()
 
 void App::x_mouseScrollCallback(GLFWwindow *window, double xoffset, double yoffset)
 {
+    if(ImGui::GetIO().WantCaptureMouse)
+        return;
     UNUSED(window);
     UNUSED(xoffset);
     mouseScrollYOffset += (float)yoffset;

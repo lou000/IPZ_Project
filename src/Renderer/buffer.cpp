@@ -190,15 +190,16 @@ void VertexArray::setIBuffer(std::shared_ptr<IndexBuffer> buffer)
     iBuffer = buffer;
 }
 
-
-FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachment> colorAttachments,
+FrameBuffer::FrameBuffer(uint width, uint height, uint depth, std::vector<FrameBufferAttachment> colorAttachments,
                          FrameBufferAttachment depthAttachment, uint samples)
-    :width(width), height(height), samples(samples), colorAttachments(colorAttachments), depthAttachment(depthAttachment)
+    :width(width), height(height), depth(depth), samples(samples),
+    colorAttachments(colorAttachments), depthAttachment(depthAttachment)
 {
-    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAttachments);
+    glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &maxAttachments); // TODO: Move this somewhere where its not called everytime
     ASSERT((GLint)colorAttachments.size()<=maxAttachments);
+    ASSERT(width>0 && height>0 && depth>0);
     int maxSamples = 0;
-    glGetIntegerv (GL_MAX_SAMPLES, &maxSamples);
+    glGetIntegerv (GL_MAX_SAMPLES, &maxSamples); // TODO: Move this somewhere where its not called everytime
     if(samples>(uint)maxSamples)
     {
         this->samples = maxSamples;
@@ -207,27 +208,37 @@ FrameBuffer::FrameBuffer(uint width, uint height, std::vector<FrameBufferAttachm
     update();
 }
 
-void FrameBuffer::resize(uint width, uint height)
+std::shared_ptr<Texture> FrameBuffer::getTexture(uint index)
 {
-    if(width>0 && height>0)
+    ASSERT(index<attachedTextures.size());
+    return attachedTextures.at(index);
+}
+
+std::shared_ptr<Texture> FrameBuffer::getDepthTex()
+{
+    ASSERT(depthTexture);
+    return depthTexture;
+}
+
+void FrameBuffer::resize(uint width, uint height, uint depth)
+{
+    if(width>0 && height>0 && depth>0)
     {
         this->width = width;
         this->height = height;
+        this->depth = depth;
         update();
     }
 }
 
 void FrameBuffer::bind()    //binds all attachments
 {
-    // this shouldnt be here
-    auto size = App::getWindowSize();
-    if(size.x != width || size.y != height)
-        resize(size.x, size.y);
     glBindFramebuffer(GL_FRAMEBUFFER, id);
     glViewport(0, 0, width, height);
     if(colorAttachments.size() == 0)
     {
         glDrawBuffer(GL_NONE);
+        glReadBuffer(GL_NONE);
     }
     else if(colorAttachments.size() == 1)
     {
@@ -240,21 +251,22 @@ void FrameBuffer::bind()    //binds all attachments
         buffers.resize(bufferCount);
         for(size_t i=0; i<bufferCount; i++)
         {
-            buffers[i] = GL_COLOR_ATTACHMENT0 + i;
+            buffers[i] = colorAttachments.at(i).type;
         }
         glDrawBuffers(bufferCount, buffers.data());
     }
 }
 
-void FrameBuffer::bind(std::vector<GLenum> attachments) //binds selected attachments
+void FrameBuffer::bindColorAttachment(uint index) //binds specific color attachment
 {
-    // this shouldnt be here
-    auto size = App::getWindowSize();
-    if(size.x != width || size.y != height)
-        resize(size.x, size.y);
+    glBindFramebuffer(GL_FRAMEBUFFER, id);
+    auto colorBuffer = colorAttachments.at(index).type;
+    glDrawBuffer(colorBuffer);
+}
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDrawBuffers(attachments.size(), attachments.data());
+void FrameBuffer::bindDepthAttachment() // bind depth attachment
+{
+    glBindFramebuffer(GL_FRAMEBUFFER, id);
 }
 
 void FrameBuffer::unbind()
@@ -269,13 +281,36 @@ void FrameBuffer::blitToFrontBuffer()
     unbind();
 }
 
+void FrameBuffer::clear(vec3 color)
+{
+    bind();
+    glClearColor(color.r, color.g, color.b, 1);
+    glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    unbind();
+}
+
+void FrameBuffer::clearColorAttachment(uint index, vec3 color)
+{
+    bindColorAttachment(index);
+    glClearColor(color.r, color.g, color.b, 1);
+    glClear(GL_COLOR_BUFFER_BIT);
+    unbind();
+}
+
+void FrameBuffer::clearDepthAttachment()
+{
+    bindDepthAttachment();
+    glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    unbind();
+}
+
 void FrameBuffer::update()  // create/recreate framebuffer
 {
     uint texCount = (uint)colorAttachments.size();
     if(id)  // delete all data if framebuffer exists
     {
         glDeleteFramebuffers(1, &id);
-        depthTexture = 0;   //should auto delete from texture destructors
+        depthTexture = nullptr;   //should auto delete from texture destructors
         attachedTextures.clear();
         glDeleteRenderbuffers(rboIds.size(), rboIds.data());
     }
@@ -287,7 +322,8 @@ void FrameBuffer::update()  // create/recreate framebuffer
         for (size_t i=0; i<texCount; i++)
         {
             auto att = colorAttachments[i];
-            ASSERT(att.type>=GL_COLOR_ATTACHMENT0 && att.type <= GL_COLOR_ATTACHMENT0+(uint)maxAttachments-1);
+            ASSERT(!(att.renderBuffer && depth>1), "Framebuffer: Renderbuffer cant be 3D");
+            ASSERT(att.type >= GL_COLOR_ATTACHMENT0 && att.type <= (GL_COLOR_ATTACHMENT0+(uint)maxAttachments-1));
             if(att.renderBuffer)
             {
                 uint rbo;
@@ -303,15 +339,19 @@ void FrameBuffer::update()  // create/recreate framebuffer
             }
             else
             {
-                auto texture = std::make_shared<Texture>(width, height, att.format, samples);
+                auto texture = std::make_shared<Texture>(width, height, depth, att.format, samples);
                 attachedTextures.push_back(texture);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, att.type,
-                                       samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texture->id(), 0);
+                if(depth>1)
+                    glFramebufferTexture(GL_FRAMEBUFFER, att.type, texture->id(), 0);
+                else
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, att.type,
+                                           samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texture->id(), 0);
             }
         }
     }
     if(depthAttachment.format>0) //if initialized
     {
+        ASSERT(!(depthAttachment.renderBuffer && depth>1), "Framebuffer: Renderbuffer cant be 3D");
         if(depthAttachment.renderBuffer)
         {
             uint rbo;
@@ -328,13 +368,50 @@ void FrameBuffer::update()  // create/recreate framebuffer
         else
         {
             ASSERT(depthAttachment.type == GL_DEPTH_ATTACHMENT || depthAttachment.type == GL_DEPTH_STENCIL_ATTACHMENT);
-            auto texture = std::make_shared<Texture>(width, height, depthAttachment.format, samples);
+            auto texture = std::make_shared<Texture>(width, height, depth, depthAttachment.format, samples);
             depthTexture = texture;
-            glFramebufferTexture2D(GL_FRAMEBUFFER, depthAttachment.type,
-                                   samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texture->id(), 0);
+            if(depth>1)
+                glFramebufferTexture(GL_FRAMEBUFFER, depthAttachment.type, texture->id(), 0);
+            else
+                glFramebufferTexture2D(GL_FRAMEBUFFER, depthAttachment.type,
+                                       samples>1 ? GL_TEXTURE_2D_MULTISAMPLE : GL_TEXTURE_2D, texture->id(), 0);
         }
     }
     auto status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     ASSERT(status == GL_FRAMEBUFFER_COMPLETE, "OpenGL: Framebuffer is incomplete!\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+StorageBuffer::StorageBuffer(size_t size, uint bufferIndex, void *data, uint usage)
+    :size(size), bufferIndex(bufferIndex)
+{
+    glGenBuffers(1, &id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void StorageBuffer::bind()
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+}
+
+void StorageBuffer::unbind()
+{
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void StorageBuffer::setData(const void *data, size_t size)
+{
+    ASSERT(size<=this->size);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, data);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+}
+
+void StorageBuffer::setSubData(const void *data, size_t offset, size_t size)
+{
+    ASSERT(size+offset<=this->size);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);
 }

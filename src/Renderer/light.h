@@ -8,21 +8,22 @@ using namespace glm;
 
 struct DirectionalLight
 {
-    vec3 pos;
+    vec3 direction;
     vec3 color;
 
-    bool enabled = true;
+    bool enabled = false;
     bool shadowCasting = true;
     float intensity = 1.0f;
 };
 
 struct PointLight
 {
-    vec3 pos;
-    vec3 col;
+    vec4 pos = {0,0,0,0};
+    vec4 color = {1,1,1,1};
 
-    bool enabled = true;
-    bool shadowCasting = true;
+    uint enabled = false;
+    uint shadowCasting = true;
+
     float intensity = 1.0f;
     float range = 10.0f;
 };

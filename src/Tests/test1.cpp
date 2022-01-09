@@ -16,7 +16,6 @@ Test1::Test1()
 
 void Test1::onStart()
 {
-    GraphicsContext::setClearColor({0.302f, 0.345f, 0.388f, 1.f});
     auto camera = GraphicsContext::getCamera();
     camera->setFov(50.f);
     camera->setPosition({0,3.0f,0.1f});
@@ -26,7 +25,7 @@ void Test1::onStart()
 void Test1::onUpdate(float dt)
 {
 
-    BatchRenderer::begin();
+    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
     float w = 0.09f;
     float z = w/2;
     float x = w/2;

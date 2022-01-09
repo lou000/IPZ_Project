@@ -10,9 +10,10 @@ public:
     ~TestConnect4(){/*dontcare*/};
     virtual void onStart() override;
     virtual void onUpdate(float dt) override;
+    virtual void debugDraw() override;
 
 private:
-    std::shared_ptr<MeshFile> mesh1, mesh2, mesh3;
+    std::shared_ptr<Model> mesh1, mesh2, mesh3;
     Entity* previewPuck = nullptr;
     Entity* puckInPlay = nullptr;
     vec4 red = {0.882, 0.192, 0.161, 1};

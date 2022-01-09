@@ -1,6 +1,6 @@
 ﻿#include "batchrenderer.h"
 #include "gtx/vector_angle.hpp"
-#include "../AssetManagement/assets.h"
+#include "../AssetManagement/asset_manager.h"
 
 extern "C" {    // this should help select dedicated gpu?
 _declspec(dllexport) DWORD NvOptimusEnablement = 1;
@@ -12,16 +12,23 @@ void BatchRenderer::x_init()
     // get max texture count and setup storage
     glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxTextureSlots);
     ASSERT(maxTextureSlots>0);
+    maxTextureSlots = maxTextureSlots-5;
+    maxTextureSlotsArray = 5;
     texSamplers = (int*)malloc(maxTextureSlots * sizeof(int));
     for(int i=0; i<maxTextureSlots; i++)
         texSamplers[i] = i;
-    textureSlots.resize(maxTextureSlots, nullptr);
+
+    texSamplersArray = (int*)malloc(maxTextureSlotsArray * sizeof(int));
+    for(int i=0; i<maxTextureSlotsArray; i++)
+        texSamplersArray[i] = i+27;
+
+    textureSlots.resize(maxTextureSlots+maxTextureSlotsArray);
 
     // setup white texture used for colored, untextured drawing
     whiteTex = std::make_shared<Texture>(1, 1);
     uint whiteData = 0xffffffff;
     whiteTex->setTextureData(&whiteData, sizeof(uint));
-    textureSlots[0] = whiteTex;
+    textureSlots[0] = {whiteTex, 0};
 
     // setup buffers
     vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
@@ -33,24 +40,33 @@ void BatchRenderer::x_init()
         {BufferElement::Float4, "a_Position"    },
         {BufferElement::Float4, "a_Color"       },
         {BufferElement::Float2, "a_TexCoord"    },
+        {BufferElement::Float , "a_TexLayer"    },
         {BufferElement::Float , "a_TexIndex"    },
         {BufferElement::Float , "a_TilingFactor"}
     };
     auto iBuffer = std::make_shared<IndexBuffer>(MAX_INDEX_BUFFER_SIZE);
     auto vBuffer = {std::make_shared<VertexBuffer>(layout, MAX_VERTEX_BUFFER_SIZE)};
     vertexArray = std::make_shared<VertexArray>(vBuffer, iBuffer);
+
+    std::vector<ShaderFileDef> shaderSrcs2 = {
+        {"../assets/shaders/default_batch.fs"},
+        {"../assets/shaders/default_batch.vs"}
+    };
+    m_debugShader = std::make_shared<Shader>("batch", shaderSrcs2);
+    AssetManager::addShader(m_debugShader);
 }
 
-void BatchRenderer::x_begin()
+void BatchRenderer::x_begin(mat4 viewProj)
 {
     // bind all uniforms
 //    glDisable(GL_CULL_FACE);
-    m_currentShader->bind();
-    m_currentShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
+    viewProj3d = viewProj;
+    m_debugShader->bind();
+    m_debugShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
+    m_debugShader->setUniformArray("u_TextureArrays", BufferElement::Int, texSamplersArray, maxTextureSlotsArray);
 
     // setup projections
-    viewProj3d = GraphicsContext::getCamera()->getViewProjectionMatrix();
-    m_currentShader->setUniform("u_ViewProjection", BufferElement::Mat4, viewProj3d);
+    m_debugShader->setUniform("u_ViewProjection", BufferElement::Mat4, viewProj3d);
     auto viewSize = GraphicsContext::getViewPortSize();
     viewProjOrtho = glm::ortho(0.f, (float)viewSize.x, (float)viewSize.y, 0.f, -1.f, 1.f)*glm::lookAt(vec3(0,0,1),vec3(0,0,0),vec3(0,1,0));
 
@@ -61,16 +77,17 @@ void BatchRenderer::x_begin()
 void BatchRenderer::x_end()
 {
     flush();
-    m_currentShader->unbind();
+    m_debugShader->unbind();
     vertexArray->unbind();
 }
 
 int BatchRenderer::addTexture(const std::shared_ptr<Texture>& texture)
 {
     int textureIndex = 0;
-    for (int i = 1; i < textureCount; i++)
+    for (int i = 1; i < maxTextureSlotsArray + maxTextureSlots; i++)
     {
-        if (textureSlots[i]->id() == texture->id()) // texture is in use
+        auto tex = textureSlots[i].texture;
+        if (tex && tex->id() == texture->id()) // texture is in use
         {
             textureIndex = i;
             break;
@@ -78,11 +95,19 @@ int BatchRenderer::addTexture(const std::shared_ptr<Texture>& texture)
     }
     if(textureIndex == 0) // texture was not already in use
     {
-        if (textureCount >= maxTextureSlots) // if we exceed maxTextureSlots
+        if (textureCount >= maxTextureSlots || textureCountArray >= maxTextureSlotsArray) // if we exceed maxTextureSlots
             nextBatch();
-        textureIndex = textureCount;
-        textureSlots[textureCount] = texture;
-        textureCount++;
+        if(texture->getDimensions().z>1)
+        {
+            textureIndex = maxTextureSlots+textureCountArray;
+            textureCountArray++;
+        }
+        else
+        {
+            textureIndex = textureCount;
+            textureCount++;
+        }
+        textureSlots[textureIndex] = {texture, texture->selectedLayer()};
     }
     return textureIndex;
 }
@@ -93,6 +118,7 @@ void BatchRenderer::startBatch()
     indexCount      = 0;
     elementCount    = 0;
     textureCount    = 1;
+    textureCountArray = 0;
     vertexBufferPtr = vertexBuffer;
     indexBufferPtr  = indexBuffer;
 }
@@ -108,10 +134,15 @@ void BatchRenderer::flush()
     if (indexCount == 0) // if we didnt submit anything
         return;
 
-    // bind all the textures
+    //bind all the textures
     for (uint32_t i = 0; i < textureSlots.size(); i++)
-        if(textureSlots[i])
-            textureSlots[i]->bind(i);
+    {
+        auto textureSlot = textureSlots[i];
+        if(textureSlot.texture)
+        {
+            textureSlot.texture->bind(i);
+        }
+    }
 
     // set buffers data
     uint sizeVB = (uint)((uint8*)vertexBufferPtr - (uint8*)vertexBuffer);
@@ -153,6 +184,19 @@ void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const vec4& ti
         viewProjOrtho * vec4(pos.x,        pos.y,        1, 1),
     };
     x_drawQuad_internal(quadVertexPos, nullptr, 1, tintColor);
+}
+
+void BatchRenderer::x_drawQuad(const vec2& pos, const vec2& size, const std::shared_ptr<Texture>& texture,
+                               float tilingFactor, const vec4& tintColor)
+{
+    const vec4 quadVertexPos[4] =
+    {
+        viewProjOrtho * vec4(pos.x,        pos.y+size.y, 1, 1),
+        viewProjOrtho * vec4(pos.x+size.x, pos.y+size.y, 1, 1),
+        viewProjOrtho * vec4(pos.x+size.x, pos.y,        1, 1),
+        viewProjOrtho * vec4(pos.x,        pos.y,        1, 1),
+    };
+    x_drawQuad_internal(quadVertexPos, texture, tilingFactor, tintColor);
 }
 
 void BatchRenderer::x_drawQuad(const mat4& transform, const std::shared_ptr<Texture>& texture,
@@ -291,10 +335,12 @@ void BatchRenderer::x_drawQuad_internal(const vec4* vertices, const std::shared_
         nextBatch();
 
     int textureIndex = 0;
-    if(texture == nullptr)
-        textureIndex = 0;                   // use white texture
-    else
+    float layer = 0;
+    if(texture)
+    {
+        layer = (float)texture->selectedLayer();
         textureIndex = addTexture(texture); // add new texture
+    }
 
     constexpr vec2 textureCoords[] = {
         {0.0f, 0.0f},
@@ -309,6 +355,7 @@ void BatchRenderer::x_drawQuad_internal(const vec4* vertices, const std::shared_
         bPtr->position = vertices[i];
         bPtr->color = color;
         bPtr->texCoord = textureCoords[i];
+        bPtr->texLayer = layer;
         bPtr->texIndex = (float)textureIndex;
         bPtr->tilingFactor = tilingFactor;
         bPtr++;
