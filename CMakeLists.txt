@@ -21,6 +21,7 @@ set(client_INCLUDE_DIRS
     external/SIplusplus_wchar
     external/thread_pool
     external/assimp/include
+    external/yaml-cpp/include/yaml-cpp
     external/imgui
     )
 include_directories(${client_INCLUDE_DIRS})
@@ -72,6 +73,22 @@ else()
    add_subdirectory(external/assimp)
    target_link_libraries(Primor assimp)
 endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib")
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_libraries(Primor
+            ${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Debug/yaml-cpp.lib
+            )
+    else()
+        target_link_libraries(Primor
+            ${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib
+            )
+    endif()
+else()
+   add_subdirectory(external/yaml-cpp)
+   target_link_libraries(Primor yaml-cpp)
+endif()
+
 
 target_link_libraries(Primor glfw glad opengl32)
 
