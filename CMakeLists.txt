@@ -21,7 +21,7 @@ set(client_INCLUDE_DIRS
     external/SIplusplus_wchar
     external/thread_pool
     external/assimp/include
-    external/yaml-cpp/include/yaml-cpp
+    external/yaml-cpp/include
     external/imgui
     )
 include_directories(${client_INCLUDE_DIRS})
@@ -77,7 +77,7 @@ endif()
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib")
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_link_libraries(Primor
-            ${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Debug/yaml-cpp.lib
+            ${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Debug/yaml-cppd.lib
             )
     else()
         target_link_libraries(Primor

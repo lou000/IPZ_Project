@@ -5,21 +5,8 @@
 #define MAX_SHADOW_CASCADES 20
 #define MAX_SSAO_KERNEL_SIZE 256
 
-class RenderPipeline
+struct RenderConfig
 {
-public:
-    RenderPipeline();
-    void drawScene(std::shared_ptr<Scene> scene);
-
-private:
-    void initFBOs();
-    void initSSBOs();
-    void initShaders();
-    void resizeBloomBuffers();
-    void updateSSBOs(std::shared_ptr<Scene> scene);
-    void updateCascadeRanges();
-
-    // tweakies
     bool enableBloom = true;
     float bloomRadius = 8;
     float bloomIntensity = 1;
@@ -37,8 +24,25 @@ private:
     int blurKernelSize = 4;
     float ssaoRadius = 0.6;
     float ssaoBias = 0.2;
+};
+
+class RenderPipeline
+{
+public:
+    RenderPipeline();
+    void drawScene(std::shared_ptr<Scene> scene);
+    void serialize();
+private:
+    void initFBOs();
+    void initSSBOs();
+    void initShaders();
+    void resizeBloomBuffers();
+    void updateSSBOs(std::shared_ptr<Scene> scene);
+    void updateCascadeRanges();
+
 
     // no touchy
+    RenderConfig config;
     uvec2 winSize;
     uvec2 oldWinSize;
     uint enabledPointLightCount = 0;

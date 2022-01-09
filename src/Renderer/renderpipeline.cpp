@@ -1,14 +1,16 @@
 ﻿#include "renderpipeline.h"
-#include "../Core/application.h"
 #include "../Core/gui.h"
+#include "../Core/application.h"
+#include"../Core/yamlserialization.h"
 #include <random>
-
 
 
 RenderPipeline::RenderPipeline()
 {
     winSize = App::getWindowSize();
     oldWinSize = winSize;
+
+    config = deserializeRenderConfig("../Config/render_config.pc");
 
     initShaders();
     initFBOs();
@@ -66,15 +68,15 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
 
     glEnable(GL_DEPTH_TEST);
-    if(enableCSM)
+    if(config.enableCSM)
         CSMdepthPrePass(scene, entitiesToDraw);
     pbrPass(scene, entitiesToDraw);
     glDisable(GL_DEPTH_TEST);
 
-    if(enableBloom)
+    if(config.enableBloom)
         bloomComputePass();
 
-    if(enableSSAO)
+    if(config.enableSSAO)
     {
         ssaoPass(scene);
         ssaoBlur();
@@ -86,6 +88,11 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     outputFBO.bind();
     outputFBO.blitToFrontBuffer();
     drawImgui();
+}
+
+void RenderPipeline::serialize()
+{
+    serializeRenderConfig(config, "../Config/render_config.pc");
 }
 
 void RenderPipeline::initShaders()
@@ -110,7 +117,10 @@ void RenderPipeline::initShaders()
     AssetManager::addShader(tentUpsampleAndAdd);
 
     shaderSrcs = {
-        {"../assets/shaders/cascading_sm.gs", {"/*invocations*/"}, {", invocations = "+std::to_string(shadowCascadeCount+1)}},
+        {
+         "../assets/shaders/cascading_sm.gs", {"/*invocations*/"},
+         {", invocations = "+std::to_string(config.shadowCascadeCount+1)}
+        },
         {"../assets/shaders/cascading_sm.vs"},
         {"../assets/shaders/passthrough.fs"}
     };
@@ -163,7 +173,7 @@ void RenderPipeline::initFBOs()
     smDepthAtt.type = GL_DEPTH_ATTACHMENT;
     smDepthAtt.format = GL_DEPTH_COMPONENT32F;
     smDepthAtt.renderBuffer = false;
-    csmFBO = FrameBuffer(csmResolution, csmResolution, shadowCascadeCount+1, {}, smDepthAtt, 0);
+    csmFBO = FrameBuffer(config.csmResolution, config.csmResolution, config.shadowCascadeCount+1, {}, smDepthAtt, 0);
 
     FrameBufferAttachment ssaoAtt;
     ssaoAtt.type = GL_COLOR_ATTACHMENT0;
@@ -198,13 +208,13 @@ void RenderPipeline::updateSSAOKernel()
     std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
     std::default_random_engine generator;
     ssaoKernel.clear();
-    ssaoKernel.resize(ssaoKernelSize);
-    for(int i=0; i<ssaoKernelSize; ++i)
+    ssaoKernel.resize(config.ssaoKernelSize);
+    for(int i=0; i<config.ssaoKernelSize; ++i)
     {
         glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
         sample = glm::normalize(sample);
         sample *= randomFloats(generator);
-        float scale = float(i / (float)ssaoKernelSize);
+        float scale = float(i / (float)config.ssaoKernelSize);
 
         // scale samples s.t. they're more aligned to center of kernel
         scale = lerp(0.1f, 1.0f, scale * scale);
@@ -223,17 +233,18 @@ void RenderPipeline::initSSBOs()
 
     // Create light space matrix for DirLight
     ssaoKernelSSBO = StorageBuffer(MAX_SSAO_KERNEL_SIZE*sizeof(vec3), 4);
-    ssaoKernelSSBO.setData(ssaoKernel.data(), ssaoKernelSize*sizeof(vec3));
+    ssaoKernelSSBO.setData(ssaoKernel.data(), config.ssaoKernelSize*sizeof(vec3));
 }
 
 void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
 {
     // Update runtime modified shaders
-    if(shadowCascadeCount!=oldShadowCascadeCount)
+    if(config.shadowCascadeCount!=oldShadowCascadeCount)
     {
-        ShaderFileDef def = {"../assets/shaders/cascading_sm.gs", {"/*invocations*/"}, {", invocations = "+std::to_string(shadowCascadeCount)}};
+        ShaderFileDef def = {"../assets/shaders/cascading_sm.gs",
+                             {"/*invocations*/"}, {", invocations = "+std::to_string(config.shadowCascadeCount)}};
         csmShader->updateRuntimeModifiedStrings(def);
-        oldShadowCascadeCount = shadowCascadeCount;
+        oldShadowCascadeCount = config.shadowCascadeCount;
 
         LOG("Camera near:%f\n", scene->camera->getNearClip());
         updateCascadeRanges();
@@ -244,11 +255,11 @@ void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
 void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
 {
     // SSAO kernel update
-    if(oldSsaoKernelSize != ssaoKernelSize)
+    if(oldSsaoKernelSize != config.ssaoKernelSize)
     {
         updateSSAOKernel();
         ssaoKernelSSBO.setData(ssaoKernel.data(), ssaoKernel.size()*sizeof(vec3));
-        oldSsaoKernelSize = ssaoKernelSize;
+        oldSsaoKernelSize = config.ssaoKernelSize;
     }
 
     // Set point lights data
@@ -266,12 +277,12 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
 
     std::vector<glm::mat4> cascades;
 
-    cascades.resize(shadowCascadeCount+1);
-    for (int i=0; i<shadowCascadeCount+1; ++i)
+    cascades.resize(config.shadowCascadeCount+1);
+    for (int i=0; i<config.shadowCascadeCount+1; ++i)
     {
         float cascade = 0;
         float prevCascade = 0;
-        if(shadowCascadeCount == 1)
+        if(config.shadowCascadeCount == 1)
         {
             cascade = camera->getFarClip();
             prevCascade = camera->getNearClip();
@@ -283,7 +294,7 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
                 cascade = cascadeRanges[i];
                 prevCascade = camera->getNearClip();
             }
-            else if (i<shadowCascadeCount)
+            else if (i<config.shadowCascadeCount)
             {
                 cascade = cascadeRanges[i];
                 prevCascade = camera->getNearClip();
@@ -294,7 +305,8 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
                 prevCascade = camera->getNearClip();
             }
         }
-        cascades[i] = calcDirLightViewProjMatrix(camera, scene->skyLight, prevCascade, cascade, cascadeZextra);
+        cascades[i] = calcDirLightViewProjMatrix(camera, scene->skyLight, prevCascade,
+                                                 cascade, config.cascadeZextra);
     }
     csmSSBO.setData(cascades.data(), sizeof(mat4)*cascades.size());
 }
@@ -302,7 +314,7 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
 void RenderPipeline::resizeBloomBuffers()
 {
     float minDim = (float)glm::min(winSize.x, winSize.y);
-    float bSamples = (bloomRadius - 8.0f) + log(minDim) / log(2.f);
+    float bSamples = (config.bloomRadius - 8.0f) + log(minDim) / log(2.f);
     bloomSamples = (int)bSamples < MAX_BLOOM_SAMPLES ? (int)bSamples : MAX_BLOOM_SAMPLES;
 
     uint prevSize = (uint)bloomDownSampleTextures.size();
@@ -352,10 +364,10 @@ void RenderPipeline::resizeBloomBuffers()
 
 void RenderPipeline::updateCascadeRanges()
 {
-    cascadeRanges.resize(shadowCascadeCount);
-    for (int i=0; i<shadowCascadeCount; ++i)
+    cascadeRanges.resize(config.shadowCascadeCount);
+    for (int i=0; i<config.shadowCascadeCount; ++i)
     {
-        cascadeRanges[i] = (uint)glm::pow(3, i+1)+firstCascadeOffset;
+        cascadeRanges[i] = (uint)glm::pow(3, i+1)+config.firstCascadeOffset;
         LOG("Cascade %d: %f\n", i, cascadeRanges[i]);
     }
 }
@@ -409,7 +421,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<Entity> e
 
     // CSM data
     pbrShader->setUniform("u_farPlane", BufferElement::Float, scene->camera->getFarClip());
-    pbrShader->setUniform("u_cascadeCount", BufferElement::Int, shadowCascadeCount+1);
+    pbrShader->setUniform("u_cascadeCount", BufferElement::Int, config.shadowCascadeCount+1);
     pbrShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
     csmFBO.getDepthTex()->bind(3);
 
@@ -424,8 +436,8 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<Entity> e
         {
             auto vao = mesh->vao();
             // this below should probably go to separate draw call
-            pbrShader->setUniform("u_bloomTreshold", BufferElement::Float, bloomTreshold);
-            pbrShader->setUniform("u_exposure", BufferElement::Float, exposure);
+            pbrShader->setUniform("u_bloomTreshold", BufferElement::Float, config.bloomTreshold);
+            pbrShader->setUniform("u_exposure", BufferElement::Float, config.exposure);
 
             //draw with basic_pbr
             pbrShader->setUniform("u_Metallic", BufferElement::Float, mesh->material.metallic);
@@ -508,9 +520,9 @@ void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
     auto sceneCamera = scene->camera;
     ssaoFBO.bind();
     ssaoShader->bind();
-    ssaoShader->setUniform("kernelSize", BufferElement::Int, ssaoKernelSize);
-    ssaoShader->setUniform("radius", BufferElement::Float, ssaoRadius);
-    ssaoShader->setUniform("bias", BufferElement::Float, ssaoBias);
+    ssaoShader->setUniform("kernelSize", BufferElement::Int, config.ssaoKernelSize);
+    ssaoShader->setUniform("radius", BufferElement::Float, config.ssaoRadius);
+    ssaoShader->setUniform("bias", BufferElement::Float, config.ssaoBias);
     ssaoShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
     hdrFBO.getDepthTex()->bind(0);
     ssaoNoiseTex->bind(1);
@@ -530,7 +542,7 @@ void RenderPipeline::ssaoBlur()
     simpleBlur->bind();
     blurFBO.bind();
     ssaoFBO.getTexture(0)->bind(0);
-    simpleBlur->setUniform("kernelSize", BufferElement::Int, blurKernelSize);
+    simpleBlur->setUniform("kernelSize", BufferElement::Int, config.blurKernelSize);
 
     screenQuad.bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -545,7 +557,7 @@ void RenderPipeline::compositePass()
     // Draw final ouput image
     outputFBO.bind();
     screenShader->bind();
-    screenShader->setUniform("u_bloomIntensity", BufferElement::Float, bloomIntensity);
+    screenShader->setUniform("u_bloomIntensity", BufferElement::Float, config.bloomIntensity);
     hdrFBO.getTexture(0)->bind(0);
     blurFBO.getTexture(0)->bind(1);
     if(bloomUpSampleTextures.size()>0)
@@ -561,15 +573,15 @@ void RenderPipeline::compositePass()
 
 void RenderPipeline::resizeOrClearResources()
 {
-    if(!enableBloom && bloomUpSampleTextures.size()>0)
+    if(!config.enableBloom && bloomUpSampleTextures.size()>0)
         bloomUpSampleTextures[0]->clear({0,0,0});
-    if(!enableSSAO)
+    if(!config.enableSSAO)
         blurFBO.getTexture(0)->clear({1,1,1});
     // Resize FBOs and textures
-    if(bloomRadius != oldBloomRadius)
+    if(config.bloomRadius != oldBloomRadius)
     {
         resizeBloomBuffers();
-        oldBloomRadius = bloomRadius;
+        oldBloomRadius = config.bloomRadius;
     }
     if(winSize != oldWinSize)
     {
@@ -635,24 +647,24 @@ void RenderPipeline::drawImgui()
 
 
         // CSM
-        TWEAK_BOOL(enableCSM);
-        TWEAK_INT(shadowCascadeCount, 1, 0, 10);
-        TWEAK_FLOAT(firstCascadeOffset, 0.01f);
-        TWEAK_FLOAT(cascadeZextra, 0.01f);
+        TWEAK_BOOL(config.enableCSM);
+        TWEAK_INT(config.shadowCascadeCount, 1, 0, 10);
+        TWEAK_FLOAT(config.firstCascadeOffset, 0.01f);
+        TWEAK_FLOAT(config.cascadeZextra, 0.01f);
 
         // BLOOM
-        TWEAK_BOOL(enableBloom);
-        TWEAK_FLOAT(bloomRadius, 0.01f, 0, 8);
-        TWEAK_FLOAT(bloomIntensity, 0.01f);
-        TWEAK_FLOAT(bloomTreshold, 0.01f);
-        TWEAK_FLOAT(exposure, 0.01f);
+        TWEAK_BOOL(config.enableBloom);
+        TWEAK_FLOAT(config.bloomRadius, 0.01f, 0, 8);
+        TWEAK_FLOAT(config.bloomIntensity, 0.01f);
+        TWEAK_FLOAT(config.bloomTreshold, 0.01f);
+        TWEAK_FLOAT(config.exposure, 0.01f);
 
         // SSAO
-        TWEAK_BOOL(enableSSAO);
-        TWEAK_INT(blurKernelSize, 2, 2, 20);
-        TWEAK_INT(ssaoKernelSize, 2, 2, 256);
-        TWEAK_FLOAT(ssaoRadius, 0.01f);
-        TWEAK_FLOAT(ssaoBias, 0.01f);
+        TWEAK_BOOL(config.enableSSAO);
+        TWEAK_INT(config.blurKernelSize, 2, 2, 20);
+        TWEAK_INT(config.ssaoKernelSize, 2, 2, 256);
+        TWEAK_FLOAT(config.ssaoRadius, 0.01f);
+        TWEAK_FLOAT(config.ssaoBias, 0.01f);
 
 
 //        ImGui::ShowDemoWindow(&show);

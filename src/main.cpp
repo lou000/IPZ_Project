@@ -40,4 +40,5 @@ int main(void)
         imguiEnd();
         App::submitFrame();
     }
+    renderer.serialize();
 }
