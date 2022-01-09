@@ -20,6 +20,9 @@ ImGui::TextUnformatted(#v); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui:
 #define TWEAK_INT(v, ...) \
 ImGui::TextUnformatted(#v); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragInt("##"#v, &v, __VA_ARGS__);
 
+#define TWEAK_BOOL(v) \
+ImGui::TextUnformatted(#v); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::Checkbox("##"#v, &v);
+
 inline void imguiInit()
 {
     // Setup Dear ImGui context

@@ -4,6 +4,10 @@
 layout(location = 0) out vec4 o_Color;
 
 in vec2 o_TexCoord;
+
+uniform int kernelSize;
+uniform float radius;
+uniform float bias;
 uniform mat4 u_Projection;
 
 layout(binding = 0) uniform sampler2D depthTexture;
@@ -13,11 +17,6 @@ layout (std430, binding = 4) buffer LightSpaceMatrices
 {
     vec3 u_Samples[];
 };
-
-int kernelSize = 64;
-float radius = 0.8;
-float bias = 0.03;
-
 
 vec3 reconstructPosition(vec2 uv, float z, mat4 invVP)
 {

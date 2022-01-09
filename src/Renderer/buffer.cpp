@@ -339,7 +339,7 @@ void FrameBuffer::update()  // create/recreate framebuffer
             }
             else
             {
-                auto texture = std::make_shared<Texture>(width, height, depth, att.format, samples);
+                auto texture = std::make_shared<Texture>(width, height, depth, att.format, GL_CLAMP_TO_EDGE, samples);
                 attachedTextures.push_back(texture);
                 if(depth>1)
                     glFramebufferTexture(GL_FRAMEBUFFER, att.type, texture->id(), 0);
@@ -368,7 +368,7 @@ void FrameBuffer::update()  // create/recreate framebuffer
         else
         {
             ASSERT(depthAttachment.type == GL_DEPTH_ATTACHMENT || depthAttachment.type == GL_DEPTH_STENCIL_ATTACHMENT);
-            auto texture = std::make_shared<Texture>(width, height, depth, depthAttachment.format, samples);
+            auto texture = std::make_shared<Texture>(width, height, depth, depthAttachment.format, GL_CLAMP_TO_EDGE, samples);
             depthTexture = texture;
             if(depth>1)
                 glFramebufferTexture(GL_FRAMEBUFFER, depthAttachment.type, texture->id(), 0);
