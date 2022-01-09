@@ -18,7 +18,7 @@ static void glErrorCallback(GLenum source, GLenum type, GLuint id,
     UNUSED(userParam);
     UNUSED(message);
 
-    if(id == 131185)
+    if(id == 131185 || id == 131204 || 131076)
         return;
 
     const char* _source;
