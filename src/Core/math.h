@@ -1,4 +1,5 @@
 ﻿#pragma once
+#define NOMINMAX
 #include <gtc/matrix_transform.hpp>
 #include <gtx/compatibility.hpp>
 #include <gtc/type_ptr.hpp>
