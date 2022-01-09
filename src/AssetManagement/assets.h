@@ -34,7 +34,8 @@ protected:
 class Texture : public Asset
 {
 public:
-    Texture(uint width, uint height, uint depth = 1, GLenum formatInternal = GL_RGBA8, uint samples = 1, bool loadDebug = false);
+    Texture(uint width, uint height, uint depth = 1, GLenum formatInternal = GL_RGBA8,
+            GLenum textureWrap = GL_CLAMP_TO_EDGE, uint samples = 1, bool loadDebug = false);
     Texture(const std::filesystem::path& path, uint samples = 1);
     ~Texture();
 
@@ -61,6 +62,7 @@ private:
     uint m_samples = 1;
     GLenum m_glType = 0;
     GLenum m_glFormatSized = 0;
+    GLenum m_textureWrap = 0;
 
     // this is a workaround for batchrenderer to draw array textures
     uint m_selectedLayer = 0;

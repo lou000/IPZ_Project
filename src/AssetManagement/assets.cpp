@@ -10,8 +10,8 @@
 #include "../Renderer/buffer.h" // VAO
 
 
-Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal, uint samples, bool loadDebug)
-    : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_glFormatSized(formatInternal)
+Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal,  GLenum textureWrap, uint samples, bool loadDebug)
+    : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_glFormatSized(formatInternal), m_textureWrap(textureWrap)
 {
     ASSERT(width*height*depth>0); // none of the dimensions can be zero
     assetType = AssetType::texture;
@@ -81,8 +81,12 @@ void Texture::initTexture()
 
     auto format = textureSizedFormatToFormat(m_glFormatSized);
     auto dataType = GL_UNSIGNED_BYTE;
+
     if(m_glFormatSized == GL_DEPTH24_STENCIL8)
         dataType = GL_UNSIGNED_INT_24_8;
+    else if(m_glFormatSized == GL_RGB16F)
+        dataType = GL_HALF_FLOAT;
+
     if(m_depth == 1)
     {
         if(m_samples>1)
@@ -99,9 +103,9 @@ void Texture::initTexture()
             glTexImage2D(m_glType, 0, m_glFormatSized, m_width, m_height, 0, format, dataType, nullptr);
             glTexParameteri(m_glType, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(m_glType, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(m_glType, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(m_glType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(m_glType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_R, m_textureWrap);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_S, m_textureWrap);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_T, m_textureWrap);
         }
     }
     else
@@ -120,21 +124,28 @@ void Texture::initTexture()
             glTexImage3D(m_glType, 0, m_glFormatSized, m_width, m_height, m_depth, 0, format, dataType, nullptr);
             glTexParameteri(m_glType, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(m_glType, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexParameteri(m_glType, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-            glTexParameteri(m_glType, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            glTexParameteri(m_glType, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_R, m_textureWrap);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_S, m_textureWrap);
+            glTexParameteri(m_glType, GL_TEXTURE_WRAP_T, m_textureWrap);
         }
     }
 }
 
 void Texture::setTextureData(void *d, size_t size)
 {
-    auto s = getSize();
-    ASSERT(size<=s);
+//    auto s = getSize();
+//    ASSERT(size<=s);
+    auto dataType = GL_UNSIGNED_BYTE;
+
+    if(m_glFormatSized == GL_DEPTH24_STENCIL8)
+        dataType = GL_UNSIGNED_INT_24_8;
+    else if(m_glFormatSized == GL_RGB16F)
+        dataType = GL_FLOAT;
+
     if(m_depth == 1)
-        glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_glFormatSized), GL_UNSIGNED_BYTE, d);
+        glTextureSubImage2D(m_id, 0, 0, 0, m_width, m_height, textureSizedFormatToFormat(m_glFormatSized), dataType, d);
     else
-        glTextureSubImage3D(m_id, 0, 0, 0, 0, m_width, m_height, m_depth, textureSizedFormatToFormat(m_glFormatSized), GL_UNSIGNED_BYTE, d);
+        glTextureSubImage3D(m_id, 0, 0, 0, 0, m_width, m_height, m_depth, textureSizedFormatToFormat(m_glFormatSized), dataType, d);
 }
 
 size_t Texture::getSize()
