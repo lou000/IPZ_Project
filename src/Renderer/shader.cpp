@@ -82,11 +82,11 @@ void Shader::setUniformArray(const char *name, BufferElement::DataType type, con
     case BufferElement::Int:    glUniform1iv(loc, count, std::any_cast<int*>(values)); return;
     case BufferElement::Float:  glUniform1fv(loc, count, std::any_cast<float*>(values)); return;
         //everything below is untested, i have no clue if this works
-    case BufferElement::Float2: glUniform2fv(loc, count, value_ptr(*std::any_cast<vec2*>(values))); return;
-    case BufferElement::Float3: glUniform3fv(loc, count, value_ptr(*std::any_cast<vec3*>(values))); return;
-    case BufferElement::Float4: glUniform4fv(loc, count, value_ptr(*std::any_cast<vec4*>(values))); return;
-    case BufferElement::Mat3:   glUniformMatrix3fv(loc, count, transpose, value_ptr(*std::any_cast<mat3*>(values))); return;
-    case BufferElement::Mat4:   glUniformMatrix4fv(loc, count, transpose, value_ptr(*std::any_cast<mat4*>(values))); return;
+    case BufferElement::Float2: glUniform2fv(loc, count*2, std::any_cast<float*>(values)); return;
+    case BufferElement::Float3: glUniform3fv(loc, count*3, std::any_cast<float*>(values)); return;
+    case BufferElement::Float4: glUniform4fv(loc, count*4, std::any_cast<float*>(values)); return;
+    case BufferElement::Mat3:   glUniformMatrix3fv(loc, count*9, transpose, std::any_cast<float*>(values)); return;
+    case BufferElement::Mat4:   glUniformMatrix4fv(loc, count*16, transpose, std::any_cast<float*>(values)); return;
     }
 }
 
