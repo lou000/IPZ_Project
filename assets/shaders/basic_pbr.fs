@@ -121,8 +121,8 @@ float dirLightShadow(vec3 fPos)
     if (currentDepth  > 1.0)
         return 0.0;
     
-    vec3 normal = normalize(v_Normal);          //maybe should be lightDir
-    float bias = max(0.05 * (1.0 - dot(normal, -u_DirLightDirection)), 0.005);
+    vec3 normal = normalize(v_Normal);
+    float bias = max(0.001 * (1.0 - dot(normal, -u_DirLightDirection)), 0.001);
     
     if (layer == u_cascadeCount)
         bias *= 1 / (u_farPlane * 0.5f);
