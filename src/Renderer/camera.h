@@ -3,6 +3,7 @@
 
 using namespace glm;
 class Camera{
+    friend class Serializer;
 
 public:
     Camera(float fov, float aspectRatio, float nearClip, float farClip);
@@ -45,17 +46,28 @@ public:
     void onUpdate(float dt); // should be in entity
     void onCreate(); // should be in entity
 
+protected:
+    enum Type{
+        Base,
+        EditorCamera,
+        GameCamera
+    };
 
-private:
-    vec3 m_pos = {0, 0, 0};// should be in entity
+
+    //       serialized      //
+    //-----------------------//
+    Type type = Base;
+    vec3 m_pos = {0, 0, 0};
     float m_fov  = 90;
     float m_aspectRatio = 1;
     float m_nearClip    = 0.1f;
     float m_farClip     = 1000;
     bool isActive = false;
     vec3 m_focusPoint = {0,0,0};
-
     quat m_rotation = {1,0,0,0};
+    //----------------------=-//
+
+private:
     mat4 m_viewMat;
     mat4 m_projMat;
 

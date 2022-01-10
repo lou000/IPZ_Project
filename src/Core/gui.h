@@ -14,14 +14,14 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
 
-#define TWEAK_FLOAT(v, ...) \
-ImGui::TextUnformatted(#v); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragFloat("##"#v, &v, __VA_ARGS__);
+#define TWEAK_FLOAT(label, v, ...) \
+ImGui::TextUnformatted(label); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragFloat("##"#v, &v, __VA_ARGS__);
 
-#define TWEAK_INT(v, ...) \
-ImGui::TextUnformatted(#v); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragInt("##"#v, &v, __VA_ARGS__);
+#define TWEAK_INT(label, v, ...) \
+ImGui::TextUnformatted(label); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragInt("##"#v, &v, __VA_ARGS__);
 
-#define TWEAK_BOOL(v) \
-ImGui::TextUnformatted(#v); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::Checkbox("##"#v, &v);
+#define TWEAK_BOOL(label, v) \
+ImGui::TextUnformatted(label); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::Checkbox("##"#v, &v);
 
 inline void imguiInit()
 {

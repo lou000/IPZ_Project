@@ -66,3 +66,22 @@ mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, DirectionalLight
 
     return lightProjection * lightView;
 }
+
+bool intersectPlane(const vec3 &planeNormal, const vec3 &planePos,
+                    const vec3 &rayStartPos, const vec3 &ray, vec3 &intersection)
+{
+    // assuming vectors are all normalized
+    float denom = dot(planeNormal, ray);
+    if (denom > 1e-6) {
+        vec3 p0l0 = planePos - rayStartPos;
+        float t = dot(p0l0, planeNormal) / denom;
+        if(t>=0)
+        {
+            intersection = rayStartPos + t*ray;
+            return true;
+        }
+        else
+            return false;
+    }
+    return false;
+}

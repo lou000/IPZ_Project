@@ -62,3 +62,5 @@ struct DirectionalLight;
 std::vector<vec4> calcFrustumCornersWS(std::shared_ptr<Camera> camera);
 mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, DirectionalLight dirLight,
                                 float nearPlane, float farPlane, float zCorrection);
+bool intersectPlane(const vec3 &planeNormal, const vec3 &planePos,
+                    const vec3 &rayStartPos, const vec3 &ray, vec3 &intersection);

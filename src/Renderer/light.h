@@ -11,7 +11,6 @@ struct DirectionalLight
     vec3 color;
 
     bool enabled = false;
-    bool shadowCasting = true;
     float intensity = 1.0f;
 };
 

@@ -3,6 +3,7 @@
 #include "Core/gui.h"
 #include "Renderer/renderpipeline.h"
 #include "Tests/testconnect4.h"
+#include"Core/yamlserialization.h"
 
 int main(void)
 {
@@ -14,6 +15,7 @@ int main(void)
     float dtSum = 0;
     int frameCount = 0;
     auto test3 = std::make_shared<TestConnect4>();
+    Serializer::deserializeScene(test3, "../Config/scene.pc");
     RenderPipeline renderer;
     while (!App::shouldClose())
     {
@@ -40,5 +42,6 @@ int main(void)
         imguiEnd();
         App::submitFrame();
     }
+    Serializer::serializeScene(test3, "../Config/scene.pc");
     renderer.serialize();
 }

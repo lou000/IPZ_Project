@@ -10,7 +10,7 @@ RenderPipeline::RenderPipeline()
     winSize = App::getWindowSize();
     oldWinSize = winSize;
 
-    config = deserializeRenderConfig("../Config/render_config.pc");
+    config = Serializer::deserializeRenderConfig("../Config/render_config.pc");
 
     initShaders();
     initFBOs();
@@ -92,7 +92,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
 void RenderPipeline::serialize()
 {
-    serializeRenderConfig(config, "../Config/render_config.pc");
+    Serializer::serializeRenderConfig(config, "../Config/render_config.pc");
 }
 
 void RenderPipeline::initShaders()
@@ -647,24 +647,24 @@ void RenderPipeline::drawImgui()
 
 
         // CSM
-        TWEAK_BOOL(config.enableCSM);
-        TWEAK_INT(config.shadowCascadeCount, 1, 0, 10);
-        TWEAK_FLOAT(config.firstCascadeOffset, 0.01f);
-        TWEAK_FLOAT(config.cascadeZextra, 0.01f);
+        TWEAK_BOOL("enableCSM", config.enableCSM);
+        TWEAK_INT("shadowCascadeCount", config.shadowCascadeCount, 1, 0, 10);
+        TWEAK_FLOAT("firstCascadeOffset", config.firstCascadeOffset, 0.01f);
+        TWEAK_FLOAT("cascadeZextra", config.cascadeZextra, 0.01f);
 
         // BLOOM
-        TWEAK_BOOL(config.enableBloom);
-        TWEAK_FLOAT(config.bloomRadius, 0.01f, 0, 8);
-        TWEAK_FLOAT(config.bloomIntensity, 0.01f);
-        TWEAK_FLOAT(config.bloomTreshold, 0.01f);
-        TWEAK_FLOAT(config.exposure, 0.01f);
+        TWEAK_BOOL("enableBloom", config.enableBloom);
+        TWEAK_FLOAT("bloomRadius", config.bloomRadius, 0.01f, 0, 8);
+        TWEAK_FLOAT("bloomIntensity", config.bloomIntensity, 0.01f);
+        TWEAK_FLOAT("bloomTreshold", config.bloomTreshold, 0.01f);
+        TWEAK_FLOAT("exposure", config.exposure, 0.01f);
 
         // SSAO
-        TWEAK_BOOL(config.enableSSAO);
-        TWEAK_INT(config.blurKernelSize, 2, 2, 20);
-        TWEAK_INT(config.ssaoKernelSize, 2, 2, 256);
-        TWEAK_FLOAT(config.ssaoRadius, 0.01f);
-        TWEAK_FLOAT(config.ssaoBias, 0.01f);
+        TWEAK_BOOL("enableSSAO", config.enableSSAO);
+        TWEAK_INT("blurKernelSize", config.blurKernelSize, 2, 2, 20);
+        TWEAK_INT("ssaoKernelSize", config.ssaoKernelSize, 2, 2, 256);
+        TWEAK_FLOAT("ssaoRadius", config.ssaoRadius, 0.01f);
+        TWEAK_FLOAT("ssaoBias", config.ssaoBias, 0.01f);
 
 
 //        ImGui::ShowDemoWindow(&show);

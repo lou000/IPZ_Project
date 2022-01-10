@@ -3,18 +3,12 @@
 #include "../Core/application.h"
 
 
-
 Scene::Scene()
 {
     auto winSize = App::getWindowSize();
     m_editorCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
-    m_sceneCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+    m_gameCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     m_activeCamera = m_editorCamera;
-}
-
-void Scene::serialize()
-{
-
 }
 
 std::vector<std::shared_ptr<Entity>> Scene::enabledEntities()
