@@ -290,7 +290,7 @@ std::string ShaderFile::loadFile()
 
     auto str = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
 
-    std::cout<<str;
+//    std::cout<<str;
     return str;
 }
 

@@ -53,10 +53,6 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(testMesh2);
     AssetManager::addAsset(testMesh3);
 
-    activeCamera()->setFov(50.f);
-    activeCamera()->setPosition({0, 7, 20});
-    activeCamera()->setFocusPoint({0,6,0});
-
     auto board = createEntity(mesh1, {0,0,0});
     board->color = {0.165, 0.349, 1.000, 1};
 
@@ -77,9 +73,7 @@ TestConnect4::TestConnect4()
     previewPuck->color = yellow;
     previewPuck->color.a = 0.2f;
 
-    directionalLight.direction = normalize(vec3(-6, -5, -1.33f));
-    directionalLight.color = {1,1,1};
-    directionalLight.intensity = 1.f;
+
 
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;

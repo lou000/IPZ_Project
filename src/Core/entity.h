@@ -9,7 +9,6 @@ class Entity
     friend class Serializer;
 
 public:
-    Entity(){}
     Entity(vec3 pos, std::shared_ptr<Model> model);
     mat4 getModelMatrix();
     void setOverrideColor(vec4 color);
@@ -35,6 +34,7 @@ public:
 protected:
     bool m_enabled = false;
 private:
+    Entity(uint64 id){}
     uint64 id = 0; //SERIALIZED
 };
 

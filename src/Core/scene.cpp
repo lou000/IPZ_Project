@@ -7,22 +7,25 @@
 Scene::Scene(std::string name, bool serialize)
     : m_name(name), m_serialize(serialize)
 {
+    //Deserialize if enabled and succesful
+    if(m_serialize && Serializer::deserializeScene(this, "../Config/"+m_name+".pc"))
+        return;
+
+    //Default values in case there is no file or serialization is off
     auto winSize = App::getWindowSize();
     m_editorCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     m_gameCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     m_activeCamera = m_editorCamera;
+
+    directionalLight.direction = normalize(vec3(-6, -5, -1.33f));
+    directionalLight.color = {1,1,1};
+    directionalLight.intensity = 1.f;
 }
 
 Scene::~Scene()
 {
     if(m_serialize)
-        serialize();
-}
-
-void Scene::serialize()
-{
-    //TODO: dont overwrite the file, derived class will write first
-    Serializer::serializeScene(this, "../Config/"+m_name+".pc");
+        Serializer::serializeScene(this, "../Config/"+m_name+".pc");
 }
 
 std::vector<std::shared_ptr<Entity>> Scene::enabledEntities()

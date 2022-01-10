@@ -644,8 +644,6 @@ void RenderPipeline::drawImgui()
     ImGui::SetNextWindowSize(ImVec2(200, 400), ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Render settings", &show))
     {
-
-
         // CSM
         TWEAK_BOOL("enableCSM", config.enableCSM);
         TWEAK_INT("shadowCascadeCount", config.shadowCascadeCount, 1, 0, 10);

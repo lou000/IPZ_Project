@@ -27,6 +27,6 @@ public:
     static std::shared_ptr<Entity> deserializeEntity(const YAML::Node& node);
 
     static bool serializeScene(Scene* scene, const std::filesystem::path &filepath);
-    static void deserializeScene(std::shared_ptr<Scene> scene, const std::filesystem::path &filepath);
+    static bool deserializeScene(Scene* scene, const std::filesystem::path &filepath);
 
 };

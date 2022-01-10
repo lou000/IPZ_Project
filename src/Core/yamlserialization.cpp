@@ -312,10 +312,11 @@ bool Serializer::serializeScene(Scene* scene, const std::filesystem::path &filep
     return false;
 }
 
-void Serializer::deserializeScene(std::shared_ptr<Scene> scene, const std::filesystem::path &filepath)
+bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &filepath)
 {
     std::string in;
-    readFile(&in, filepath);
+    if(!readFile(&in, filepath))
+        return false;
 
     Node node = Load(in);
     scene->directionalLight = deserializeDirLight(node["directionalLight"]);
@@ -323,5 +324,6 @@ void Serializer::deserializeScene(std::shared_ptr<Scene> scene, const std::files
     scene->m_editorCamera = deserializeCamera(node["m_editorCamera"]);
     if(node["m_activeCamera"].as<bool>())
         scene->m_activeCamera = scene->m_editorCamera;
+    return true;
 }
 
