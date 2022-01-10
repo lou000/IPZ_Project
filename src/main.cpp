@@ -15,7 +15,7 @@ int main(void)
     float dtSum = 0;
     int frameCount = 0;
     auto test3 = std::make_shared<TestConnect4>();
-    Serializer::deserializeScene(test3, "../Config/scene.pc");
+    Serializer::deserializeScene(test3, "../Config/testConnect4.pc");
     RenderPipeline renderer;
     while (!App::shouldClose())
     {
@@ -42,6 +42,6 @@ int main(void)
         imguiEnd();
         App::submitFrame();
     }
-    Serializer::serializeScene(test3, "../Config/scene.pc");
+//    Serializer::serializeScene(test3, "../Config/scene.pc");
     renderer.serialize();
 }

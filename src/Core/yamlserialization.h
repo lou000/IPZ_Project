@@ -8,6 +8,7 @@ struct RenderConfig;
 struct DirectionalLight;
 class Scene;
 class Camera;
+class Entity;
 
 
 class Serializer
@@ -22,7 +23,10 @@ public:
     static bool serializeCamera(YAML::Emitter& e, std::shared_ptr<Camera> camera);
     static std::shared_ptr<Camera> deserializeCamera(const YAML::Node& node);
 
-    static bool serializeScene(std::shared_ptr<Scene> scene, const std::filesystem::path &filepath);
+    static bool serializeEntity(YAML::Emitter& e, std::shared_ptr<Entity> entity);
+    static std::shared_ptr<Entity> deserializeEntity(const YAML::Node& node);
+
+    static bool serializeScene(Scene* scene, const std::filesystem::path &filepath);
     static void deserializeScene(std::shared_ptr<Scene> scene, const std::filesystem::path &filepath);
 
 };

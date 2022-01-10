@@ -2,15 +2,11 @@
 #include "../Renderer/renderpipeline.h"
 #include <fstream>
 
-#define SERIALIZE_VALUE(e, k) \
+#define SERIALIZE_PRIMITIVE(e, k) \
     e << Key << #k << Value << k;
 
-#define DESERIALIZE_IF_PRESENT(node, dest, type)\
-do{                                             \
-        auto maybe = node[#dest];               \
-        if(maybe)                               \
-            dest = maybe.as<type>();            \
-} while(0);
+#define DESERIALIZE_PRIMITIVE(node, dest, type)\
+    dest = node[#dest].as<type>();
 
 using namespace YAML;
 
@@ -157,23 +153,23 @@ bool Serializer::serializeRenderConfig(const RenderConfig &config, const std::fi
         filepath.string().c_str());
     Emitter e;
     e << BeginMap;
-    SERIALIZE_VALUE(e, config.enableBloom);
-    SERIALIZE_VALUE(e, config.bloomRadius);
-    SERIALIZE_VALUE(e, config.bloomIntensity);
-    SERIALIZE_VALUE(e, config.bloomTreshold);
-    SERIALIZE_VALUE(e, config.exposure);
+    SERIALIZE_PRIMITIVE(e, config.enableBloom);
+    SERIALIZE_PRIMITIVE(e, config.bloomRadius);
+    SERIALIZE_PRIMITIVE(e, config.bloomIntensity);
+    SERIALIZE_PRIMITIVE(e, config.bloomTreshold);
+    SERIALIZE_PRIMITIVE(e, config.exposure);
 
-    SERIALIZE_VALUE(e, config.enableCSM);
-    SERIALIZE_VALUE(e, config.shadowCascadeCount);
-    SERIALIZE_VALUE(e, config.cascadeZextra);
-    SERIALIZE_VALUE(e, config.firstCascadeOffset);
-    SERIALIZE_VALUE(e, config.csmResolution);
+    SERIALIZE_PRIMITIVE(e, config.enableCSM);
+    SERIALIZE_PRIMITIVE(e, config.shadowCascadeCount);
+    SERIALIZE_PRIMITIVE(e, config.cascadeZextra);
+    SERIALIZE_PRIMITIVE(e, config.firstCascadeOffset);
+    SERIALIZE_PRIMITIVE(e, config.csmResolution);
 
-    SERIALIZE_VALUE(e, config.enableSSAO);
-    SERIALIZE_VALUE(e, config.ssaoKernelSize);
-    SERIALIZE_VALUE(e, config.blurKernelSize);
-    SERIALIZE_VALUE(e, config.ssaoRadius);
-    SERIALIZE_VALUE(e, config.ssaoBias);
+    SERIALIZE_PRIMITIVE(e, config.enableSSAO);
+    SERIALIZE_PRIMITIVE(e, config.ssaoKernelSize);
+    SERIALIZE_PRIMITIVE(e, config.blurKernelSize);
+    SERIALIZE_PRIMITIVE(e, config.ssaoRadius);
+    SERIALIZE_PRIMITIVE(e, config.ssaoBias);
     e << EndMap;
     return writeFile(e.c_str(), filepath);
 }
@@ -186,23 +182,23 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
         return config;
 
     Node data = Load(in);
-    DESERIALIZE_IF_PRESENT(data, config.enableBloom,    bool);
-    DESERIALIZE_IF_PRESENT(data, config.bloomRadius,    float);
-    DESERIALIZE_IF_PRESENT(data, config.bloomIntensity, float);
-    DESERIALIZE_IF_PRESENT(data, config.bloomTreshold,  float);
-    DESERIALIZE_IF_PRESENT(data, config.exposure,       float);
+    DESERIALIZE_PRIMITIVE(data, config.enableBloom,    bool);
+    DESERIALIZE_PRIMITIVE(data, config.bloomRadius,    float);
+    DESERIALIZE_PRIMITIVE(data, config.bloomIntensity, float);
+    DESERIALIZE_PRIMITIVE(data, config.bloomTreshold,  float);
+    DESERIALIZE_PRIMITIVE(data, config.exposure,       float);
 
-    DESERIALIZE_IF_PRESENT(data, config.enableCSM,          bool);
-    DESERIALIZE_IF_PRESENT(data, config.shadowCascadeCount, int);
-    DESERIALIZE_IF_PRESENT(data, config.cascadeZextra,      float);
-    DESERIALIZE_IF_PRESENT(data, config.firstCascadeOffset, float);
-    DESERIALIZE_IF_PRESENT(data, config.csmResolution,      uint);
+    DESERIALIZE_PRIMITIVE(data, config.enableCSM,          bool);
+    DESERIALIZE_PRIMITIVE(data, config.shadowCascadeCount, int);
+    DESERIALIZE_PRIMITIVE(data, config.cascadeZextra,      float);
+    DESERIALIZE_PRIMITIVE(data, config.firstCascadeOffset, float);
+    DESERIALIZE_PRIMITIVE(data, config.csmResolution,      uint);
 
-    DESERIALIZE_IF_PRESENT(data, config.enableSSAO,     bool);
-    DESERIALIZE_IF_PRESENT(data, config.ssaoKernelSize, int);
-    DESERIALIZE_IF_PRESENT(data, config.blurKernelSize, int);
-    DESERIALIZE_IF_PRESENT(data, config.ssaoRadius,     float);
-    DESERIALIZE_IF_PRESENT(data, config.ssaoBias,       float);
+    DESERIALIZE_PRIMITIVE(data, config.enableSSAO,     bool);
+    DESERIALIZE_PRIMITIVE(data, config.ssaoKernelSize, int);
+    DESERIALIZE_PRIMITIVE(data, config.blurKernelSize, int);
+    DESERIALIZE_PRIMITIVE(data, config.ssaoRadius,     float);
+    DESERIALIZE_PRIMITIVE(data, config.ssaoBias,       float);
 
     return config;
 }
@@ -210,17 +206,17 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
 bool Serializer::serializeCamera(Emitter& e, std::shared_ptr<Camera> camera)
 {
     e << BeginMap;
-    SERIALIZE_VALUE(e, camera->type);
-    SERIALIZE_VALUE(e, camera->m_pos);
-    SERIALIZE_VALUE(e, camera->m_fov);
-    SERIALIZE_VALUE(e, camera->m_aspectRatio);
-    SERIALIZE_VALUE(e, camera->m_nearClip);
-    SERIALIZE_VALUE(e, camera->m_farClip);
-    SERIALIZE_VALUE(e, camera->isActive);
-    SERIALIZE_VALUE(e, camera->m_focusPoint);
-    SERIALIZE_VALUE(e, camera->m_rotation);
+    SERIALIZE_PRIMITIVE(e, camera->type);
+    SERIALIZE_PRIMITIVE(e, camera->m_pos);
+    SERIALIZE_PRIMITIVE(e, camera->m_fov);
+    SERIALIZE_PRIMITIVE(e, camera->m_aspectRatio);
+    SERIALIZE_PRIMITIVE(e, camera->m_nearClip);
+    SERIALIZE_PRIMITIVE(e, camera->m_farClip);
+    SERIALIZE_PRIMITIVE(e, camera->isActive);
+    SERIALIZE_PRIMITIVE(e, camera->m_focusPoint);
+    SERIALIZE_PRIMITIVE(e, camera->m_rotation);
     e << EndMap;
-    return false;
+    return true;
 }
 
 std::shared_ptr<Camera> Serializer::deserializeCamera(const Node& node)
@@ -244,21 +240,42 @@ std::shared_ptr<Camera> Serializer::deserializeCamera(const Node& node)
         camera = std::make_shared<Camera>(fov, aspectRatio, nearClip, farClip); //TODO: fix after implementing
     }
 
-    DESERIALIZE_IF_PRESENT(node, camera->m_pos, vec3);
-    DESERIALIZE_IF_PRESENT(node, camera->isActive, bool);
-    DESERIALIZE_IF_PRESENT(node, camera->m_focusPoint, vec3);
-    DESERIALIZE_IF_PRESENT(node, camera->m_rotation, quat);
+    DESERIALIZE_PRIMITIVE(node, camera->m_pos, vec3);
+    DESERIALIZE_PRIMITIVE(node, camera->isActive, bool);
+    DESERIALIZE_PRIMITIVE(node, camera->m_focusPoint, vec3);
+    DESERIALIZE_PRIMITIVE(node, camera->m_rotation, quat);
 
     return std::static_pointer_cast<Camera>(camera);
+}
+
+bool Serializer::serializeEntity(YAML::Emitter &e, std::shared_ptr<Entity> entity)
+{
+//    e << BeginMap;
+//    SERIALIZE_PRIMITIVE(e, entity->type);
+//    SERIALIZE_PRIMITIVE(e, camera->m_pos);
+//    SERIALIZE_PRIMITIVE(e, camera->m_fov);
+//    SERIALIZE_PRIMITIVE(e, camera->m_aspectRatio);
+//    SERIALIZE_PRIMITIVE(e, camera->m_nearClip);
+//    SERIALIZE_PRIMITIVE(e, camera->m_farClip);
+//    SERIALIZE_PRIMITIVE(e, camera->isActive);
+//    SERIALIZE_PRIMITIVE(e, camera->m_focusPoint);
+//    SERIALIZE_PRIMITIVE(e, camera->m_rotation);
+//    e << EndMap;
+    return true;
+}
+
+std::shared_ptr<Entity> Serializer::deserializeEntity(const YAML::Node &node)
+{
+    return nullptr;
 }
 
 bool Serializer::serializeDirLight(Emitter& e, DirectionalLight dirLight)
 {
     e << BeginMap;
-    SERIALIZE_VALUE(e, dirLight.direction);
-    SERIALIZE_VALUE(e, dirLight.color);
-    SERIALIZE_VALUE(e, dirLight.enabled);
-    SERIALIZE_VALUE(e, dirLight.intensity);
+    SERIALIZE_PRIMITIVE(e, dirLight.direction);
+    SERIALIZE_PRIMITIVE(e, dirLight.color);
+    SERIALIZE_PRIMITIVE(e, dirLight.enabled);
+    SERIALIZE_PRIMITIVE(e, dirLight.intensity);
     e << EndMap;
     return false;
 }
@@ -266,14 +283,14 @@ bool Serializer::serializeDirLight(Emitter& e, DirectionalLight dirLight)
 DirectionalLight Serializer::deserializeDirLight(const Node& node)
 {
     DirectionalLight dirLight;
-    DESERIALIZE_IF_PRESENT(node, dirLight.direction, vec3);
-    DESERIALIZE_IF_PRESENT(node, dirLight.color,     vec3);
-    DESERIALIZE_IF_PRESENT(node, dirLight.enabled,   bool);
-    DESERIALIZE_IF_PRESENT(node, dirLight.intensity, float);
+    DESERIALIZE_PRIMITIVE(node, dirLight.direction, vec3);
+    DESERIALIZE_PRIMITIVE(node, dirLight.color,     vec3);
+    DESERIALIZE_PRIMITIVE(node, dirLight.enabled,   bool);
+    DESERIALIZE_PRIMITIVE(node, dirLight.intensity, float);
     return dirLight;
 }
 
-bool Serializer::serializeScene(std::shared_ptr<Scene> scene, const std::filesystem::path &filepath)
+bool Serializer::serializeScene(Scene* scene, const std::filesystem::path &filepath)
 {
     //TODO: serialize entities!
     LOG("Config: Serializing scene to file %s\n",

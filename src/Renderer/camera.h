@@ -54,7 +54,7 @@ protected:
     };
 
 
-    //       serialized      //
+    //       SERIALIZED      //
     //-----------------------//
     Type type = Base;
     vec3 m_pos = {0, 0, 0};
@@ -65,7 +65,7 @@ protected:
     bool isActive = false;
     vec3 m_focusPoint = {0,0,0};
     quat m_rotation = {1,0,0,0};
-    //----------------------=-//
+    //------------------------//
 
 private:
     mat4 m_viewMat;

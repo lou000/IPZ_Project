@@ -33,6 +33,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
     return bestMoves[random].first;
 }
 TestConnect4::TestConnect4()
+    :Scene("testConnect4", true)
 {
     mesh1 = std::make_shared<Model>("../assets/meshes/connect4_board.fbx");
     mesh2 = std::make_shared<Model>("../assets/meshes/connect4Puck1.obj");

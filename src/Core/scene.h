@@ -14,13 +14,14 @@ class Scene
 {
     friend class Serializer;
 public:
-    Scene();
-    virtual ~Scene(){};
+    Scene(std::string name, bool serialize = true);
+    virtual ~Scene();
     virtual void onUpdate(float dt) = 0;
     virtual void onStart() = 0;
     virtual void debugDraw() = 0;
+    void serialize();
 
-    DirectionalLight directionalLight;
+    DirectionalLight directionalLight; //serialized
     std::vector<std::shared_ptr<Entity>> enabledEntities();
     std::vector<std::shared_ptr<PointLight>> enabledLights();
     std::shared_ptr<Camera> activeCamera(){return m_activeCamera;}
@@ -35,12 +36,17 @@ protected:
     std::shared_ptr<T> createEntity();
 
 private:
+    //             SERIALIZED            //
+    //-----------------------------------//
     std::shared_ptr<Camera> m_activeCamera;
     std::shared_ptr<Camera> m_gameCamera;
     std::shared_ptr<Camera> m_editorCamera;
+    std::string m_name;
+    bool m_serialize;
+    //-----------------------------------//
 
 
-    //TODO: Entity manager
+    // these are serialized by the inheriting classes
     std::vector<std::shared_ptr<Entity>> entities;
     std::vector<std::shared_ptr<PointLight>> lights;
 };
