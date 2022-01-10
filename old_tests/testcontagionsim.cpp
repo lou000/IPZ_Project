@@ -194,7 +194,7 @@ void TestContagionSim::simulate(float dt)
 void TestContagionSim::draw()
 {
     vec2 winSize = App::getWindowSize();
-    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
+    activeCamera();
     for(auto& member : population)
     {
         auto pos = vec2(mapToRange({0, ARENA_X}, {0, winSize.x}, member.pos.x),

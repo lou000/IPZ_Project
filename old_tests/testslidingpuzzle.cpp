@@ -21,7 +21,7 @@ TestSlidingPuzzle::TestSlidingPuzzle()
 
 void TestSlidingPuzzle::onStart()
 {
-    auto camera = GraphicsContext::getCamera();
+    auto camera = activeCamera();
     camera->setFov(50.f);
     camera->setPosition({center, 8, 4});
     camera->setFocusPoint({center,0,center});
