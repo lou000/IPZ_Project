@@ -34,7 +34,7 @@ int main(void)
             dtSum = 0;
         }
 
-        GraphicsContext::getCamera()->onUpdate(dt);
+        test3->activeCamera()->onUpdate(dt);
         test3->onUpdate(dt);
         renderer.drawScene(test3);
         imguiEnd();

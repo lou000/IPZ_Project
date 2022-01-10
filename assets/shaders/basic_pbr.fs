@@ -17,8 +17,6 @@ uniform float u_Roughness;
 struct PointLight{
     vec4 position;
     vec4 color;
-    bool enabled;
-    bool shadowCasting;
     float intensity;
     float range;
 };

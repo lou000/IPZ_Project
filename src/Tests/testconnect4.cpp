@@ -43,7 +43,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
             stream<<"  ("<<move.first.x<<","<<move.first.y<<") g:"<<move.second<<"   ";
     }
     std::wcout<<stream.str()<<"\n";
-    int random = glm::linearRand<int>(0, bestMoves.size()-1);
+    int random = (int) glm::linearRand<int>(0, bestMoves.size()-1);
     ASSERT(bestMoves.size());
     return bestMoves[random].first;
 }
@@ -67,19 +67,18 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(testMesh2);
     AssetManager::addAsset(testMesh3);
 
-    camera = GraphicsContext::getCamera();
-    camera->setFov(50.f);
-    camera->setPosition({0, 7, 20});
-    camera->setFocusPoint({0,6,0});
+    activeCamera()->setFov(50.f);
+    activeCamera()->setPosition({0, 7, 20});
+    activeCamera()->setFocusPoint({0,6,0});
 
     auto board = createEntity(mesh1, {0,0,0});
-    board->setOverrideColor({0.165, 0.349, 1.000, 1});
+    board->color = {0.165, 0.349, 1.000, 1};
 
     auto puck1 = createEntity(mesh2, {1,0,3});
-    puck1->setOverrideColor(red);
+    puck1->color = red;
 
     auto puck2 = createEntity(mesh3, {-1,0,3});
-    puck2->setOverrideColor(yellow);
+    puck2->color = yellow;
 
     auto test1 = createEntity(testMesh1, {5,0,5}, vec3(1), quat({-radians(90.f), 0, 0}));
     auto test2 = createEntity(testMesh2, {-5,0,5}, vec3(1),  quat({-radians(90.f), 0, 0}));
@@ -89,12 +88,12 @@ TestConnect4::TestConnect4()
     createLight({1, 2 ,3}, {1,0.05,0}, 60.f, 200.f);
 
     previewPuck = createEntity(mesh3, {0, 0, 0}, vec3(1), quat({radians(90.f), 0, 0}));
-    previewPuck->setOverrideColor(yellow);
-    previewPuck->overrideColor.a = 0.2f;
+    previewPuck->color = yellow;
+    previewPuck->color.a = 0.2f;
 
-    skyLight.direction = normalize(vec3(-6, -5, -1.33f));
-    skyLight.color = {1,1,1};
-    skyLight.intensity = 1.f;
+    directionalLight.direction = normalize(vec3(-6, -5, -1.33f));
+    directionalLight.color = {1,1,1};
+    directionalLight.intensity = 1.f;
 
     for(int i=0;i<7; i++)
         hPositions[i] = leftSlot + i*hOffset;
@@ -113,8 +112,8 @@ void TestConnect4::onStart()
 
 void TestConnect4::onUpdate(float dt)
 {
-    auto mouseRay  = camera->getMouseRay();
-    auto cameraPos = camera->getPos();
+    auto mouseRay  = activeCamera()->getMouseRay();
+    auto cameraPos = activeCamera()->getPos();
     vec3 intersection = {};
 
     previewPuck->renderable = false;
@@ -131,7 +130,7 @@ void TestConnect4::onUpdate(float dt)
                         if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
                         {
                             puckInPlay = createEntity(mesh3, {hPositions[i],11,-0.45}, vec3(1), quat({radians(90.f), 0, 0}));
-                            puckInPlay->setOverrideColor(yellow);
+                            puckInPlay->color = yellow;
                             animating = true;
                         }
                         else
@@ -150,7 +149,7 @@ void TestConnect4::onUpdate(float dt)
         currentMove = pickRandomTopMove(moves);
 
         puckInPlay = createEntity(mesh3, {0,0,0}, vec3(1), quat({radians(90.f), 0, 0}));
-        puckInPlay->setOverrideColor(red);
+        puckInPlay->color = red;
 
         animating = true;
     }
@@ -178,32 +177,29 @@ void TestConnect4::onUpdate(float dt)
 
 void TestConnect4::debugDraw()
 {
-    for(auto ent : entities)
+    for(auto ent : enabledEntities())
     {
-        if(ent.enabled)
-        {
-            auto model = ent.getModelMatrix();
-            auto bb = ent.model->boundingBox();
-            bb.max = model*vec4(bb.max, 1);
-            bb.min = model*vec4(bb.min, 1);
-            BatchRenderer::drawLine(bb.min, {bb.max.x, bb.min.y, bb.min.z}, 0.05, {1,0,0,1});
-            BatchRenderer::drawLine(bb.min, {bb.min.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
-            BatchRenderer::drawLine(bb.min, {bb.min.x, bb.min.y, bb.max.z}, 0.05, {1,0,0,1});
+        auto model = ent->getModelMatrix();
+        auto bb = ent->model->boundingBox();
+        bb.max = model*vec4(bb.max, 1);
+        bb.min = model*vec4(bb.min, 1);
+        BatchRenderer::drawLine(bb.min, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
+        BatchRenderer::drawLine(bb.min, {bb.min.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
+        BatchRenderer::drawLine(bb.min, {bb.min.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
 
-            BatchRenderer::drawLine(bb.max, {bb.min.x, bb.max.y, bb.max.z}, 0.05, {1,0,0,1});
-            BatchRenderer::drawLine(bb.max, {bb.max.x, bb.min.y, bb.max.z}, 0.05, {1,0,0,1});
-            BatchRenderer::drawLine(bb.max, {bb.max.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+        BatchRenderer::drawLine(bb.max, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
+        BatchRenderer::drawLine(bb.max, {bb.max.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
+        BatchRenderer::drawLine(bb.max, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
 
-            BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05, {1,0,0,1});
-            BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+        BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
+        BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
 
-            BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.max.x, bb.min.y, bb.min.z}, 0.05, {1,0,0,1});
-            BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.min.x, bb.min.y, bb.max.z}, 0.05, {1,0,0,1});
+        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
+        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.min.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
 
-            BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05, {1,0,0,1});
+        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
 
-            BatchRenderer::drawLine({bb.min.x, bb.min.y, bb.max.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05, {1,0,0,1});
-        }
+        BatchRenderer::drawLine({bb.min.x, bb.min.y, bb.max.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
     }
 
 }

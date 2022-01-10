@@ -5,7 +5,6 @@ void GraphicsContext::x_init()
 {
     auto winSize = App::getWindowSize();
     m_viewPortSize = winSize;
-    m_currentCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -21,12 +20,6 @@ void GraphicsContext::x_init()
     glDepthFunc(GL_LESS);
 
     BatchRenderer::init();
-    MeshRenderer::init();
-}
-
-void GraphicsContext::x_setCamera(std::shared_ptr<Camera> camera)
-{
-    m_currentCamera = camera;
 }
 
 void GraphicsContext::x_resizeViewPort(int width, int height)
@@ -35,6 +28,5 @@ void GraphicsContext::x_resizeViewPort(int width, int height)
     {
         m_viewPortSize = {width, height};
         glViewport(0,0, width, height);
-        m_currentCamera->setAspectRatio((float)width/(float)height);
     }
 }

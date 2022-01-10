@@ -3,7 +3,6 @@
 #include "../AssetManagement/asset_manager.h"
 #include "../Renderer/shader.h"
 #include "../Renderer/batchrenderer.h"
-#include "../Renderer/meshrenderer.h"
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 

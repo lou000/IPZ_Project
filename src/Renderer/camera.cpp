@@ -121,6 +121,9 @@ vec3 Camera::forward()
 
 void Camera::onUpdate(float dt)
 {
+    auto winSize = App::getWindowSize();
+    setAspectRatio((float)winSize.x/(float)winSize.y);
+
     //MOUSE
     float offset = (float)App::getMouseScrollChange();
     if(offset!=0)

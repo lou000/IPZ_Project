@@ -39,7 +39,7 @@ public:
     void operator=(BatchRenderer const&) = delete;
 
     static void init(){getInstance().x_init();}
-    static void begin(mat4 viewProj){getInstance().x_begin(viewProj);}
+    static void begin(std::shared_ptr<Camera> camera){getInstance().x_begin(camera);}
     static void end(){getInstance().x_end();}
     static void drawQuad(const mat4 &transform, const std::shared_ptr<Texture> &texture= nullptr,
                   float tilingFactor = 1.f, const vec4 &tintColor = {1,1,1,1})
@@ -77,6 +77,8 @@ private:
     mat4 viewProj3d;
     mat4 viewProjOrtho;
 
+    std::shared_ptr<Camera> currentCamera;
+
     std::shared_ptr<VertexArray> vertexArray = nullptr;
 
     int* texSamplers      = nullptr;
@@ -102,7 +104,7 @@ private:
     std::shared_ptr<Texture> whiteTex;
 
     void x_init();
-    void x_begin(mat4 viewProj);
+    void x_begin(std::shared_ptr<Camera> camera);
     void x_end();
 
 

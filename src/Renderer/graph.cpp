@@ -1,5 +1,5 @@
 ﻿#include "graph.h"
-
+#include "meshrenderer.h"
 
 Graph3d::Graph3d(vec2 rangeX, vec2 rangeY, vec2 rangeZ, float scale)
 {
@@ -161,48 +161,48 @@ void Graph3d::setPaletteBlend(std::vector<vec4> blendColors, uint steps)
 
 void Graph3d::draw(const vec3 &pos, float dt)
 {
-    float lWidth = m_scale * 0.001f;
+//    float lWidth = m_scale * 0.001f;
 
-    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
-    drawGrid(pos);
-    for(auto& line : lines)
-    {
-        BatchRenderer::drawLine(pos+line.start, pos+line.end, lWidth, line.color);
-    }
-    BatchRenderer::end();
+//    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
+//    drawGrid(pos);
+//    for(auto& line : lines)
+//    {
+//        BatchRenderer::drawLine(pos+line.start, pos+line.end, lWidth, line.color);
+//    }
+//    BatchRenderer::end();
 
 
-    if(m_animating)
-    {
-        if(maxAnimTime<dt)
-            maxAnimTime = dt;
+//    if(m_animating)
+//    {
+//        if(maxAnimTime<dt)
+//            maxAnimTime = dt;
 
-        for(uint i=0; i<meshX*meshZ; i++)
-            meshGrid[i].y = glm::lerp(animValsStart[i], animValsStop[i], clamp(animTime/maxAnimTime, 0.f, 1.f));
+//        for(uint i=0; i<meshX*meshZ; i++)
+//            meshGrid[i].y = glm::lerp(animValsStart[i], animValsStop[i], clamp(animTime/maxAnimTime, 0.f, 1.f));
 
-        if(m_smooth)
-            mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
-        else
-            mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
+//        if(m_smooth)
+//            mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
+//        else
+//            mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
 
-        animTime+=dt;
-        if(animTime>maxAnimTime)
-        {
-            animTime = 0;
-            m_animating = false;
-        }
-    }
-    MeshRenderer::begin();
-    if(meshGrid)
-    {
-        glDisable(GL_CULL_FACE);
-        MeshRenderer::drawMesh(pos, vec3(1.0f), mesh);
-        glEnable(GL_CULL_FACE);
-    }
-    if(points)
-        for(size_t i=0; i<nPoints; i++)
-            MeshRenderer::drawMesh(pos+points[i].pos, vec3(m_scale*0.01f*m_pointSize), sphere, points[i].color);
-    MeshRenderer::end();
+//        animTime+=dt;
+//        if(animTime>maxAnimTime)
+//        {
+//            animTime = 0;
+//            m_animating = false;
+//        }
+//    }
+//    MeshRenderer::begin();
+//    if(meshGrid)
+//    {
+//        glDisable(GL_CULL_FACE);
+//        MeshRenderer::drawMesh(pos, vec3(1.0f), mesh);
+//        glEnable(GL_CULL_FACE);
+//    }
+//    if(points)
+//        for(size_t i=0; i<nPoints; i++)
+//            MeshRenderer::drawMesh(pos+points[i].pos, vec3(m_scale*0.01f*m_pointSize), sphere, points[i].color);
+//    MeshRenderer::end();
 }
 
 void Graph3d::setPointSize(float size)
@@ -310,42 +310,42 @@ void Graph2d::draw(const vec2 &pos, const vec2 &size)
     vec2 bottomRight = {right, bottom};
     vec2 bottomLeft  = {left, bottom};
 
-    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
+//    BatchRenderer::begin(GraphicsContext::getCamera()->getViewProjectionMatrix());
 
-    // Draw background
-    BatchRenderer::drawQuad(pos, size, {0.051, 0.067, 0.090, 1});
+//    // Draw background
+//    BatchRenderer::drawQuad(pos, size, {0.051, 0.067, 0.090, 1});
 
-    // Draw Axes
-    BatchRenderer::drawLine(topLeft, bottomLeft, lWidth, {0.788, 0.820, 0.851,1});
-    BatchRenderer::drawLine({left-lWidth/2, bottom}, bottomRight, lWidth, {0.788, 0.820, 0.851,1});
+//    // Draw Axes
+//    BatchRenderer::drawLine(topLeft, bottomLeft, lWidth, {0.788, 0.820, 0.851,1});
+//    BatchRenderer::drawLine({left-lWidth/2, bottom}, bottomRight, lWidth, {0.788, 0.820, 0.851,1});
 
-    // Draw grid
-    for(float i=left+gridSpacing; i<right; i+=gridSpacing)
-        BatchRenderer::drawLine({i, bottom}, {i, top}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
-    for(float i=bottom-gridSpacing; i>top; i-=gridSpacing)
-        BatchRenderer::drawLine({left, i}, {right, i}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
-
-
-    // Draw lines
-    for(auto l : lines)
-    {
-        vec2 pos1 = {mapToRange(m_rangeX, {left, right}, l.start.x),
-                     mapToRange(m_rangeY, {bottom, top}, l.start.y)};
-        vec2 pos2 = {mapToRange(m_rangeX, {left, right}, l.end.x),
-                     mapToRange(m_rangeY, {bottom, top}, l.end.y)};
-        BatchRenderer::drawLine(pos1, pos2, lWidth/2*m_lineWidthF, l.color);
-    }
-
-    // Draw points
-    for(auto p : points)
-    {
-        vec2 pos = {mapToRange(m_rangeX, {left, right}, p.pos.x),
-                    mapToRange(m_rangeY, {bottom, top}, p.pos.y)};
-        BatchRenderer::drawCircle(pos, lWidth/2*m_pointSizeF, 10, p.color);
-    }
+//    // Draw grid
+//    for(float i=left+gridSpacing; i<right; i+=gridSpacing)
+//        BatchRenderer::drawLine({i, bottom}, {i, top}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
+//    for(float i=bottom-gridSpacing; i>top; i-=gridSpacing)
+//        BatchRenderer::drawLine({left, i}, {right, i}, lWidth/3, {0.788, 0.820, 0.851, 0.5});
 
 
-    BatchRenderer::end();
+//    // Draw lines
+//    for(auto l : lines)
+//    {
+//        vec2 pos1 = {mapToRange(m_rangeX, {left, right}, l.start.x),
+//                     mapToRange(m_rangeY, {bottom, top}, l.start.y)};
+//        vec2 pos2 = {mapToRange(m_rangeX, {left, right}, l.end.x),
+//                     mapToRange(m_rangeY, {bottom, top}, l.end.y)};
+//        BatchRenderer::drawLine(pos1, pos2, lWidth/2*m_lineWidthF, l.color);
+//    }
+
+//    // Draw points
+//    for(auto p : points)
+//    {
+//        vec2 pos = {mapToRange(m_rangeX, {left, right}, p.pos.x),
+//                    mapToRange(m_rangeY, {bottom, top}, p.pos.y)};
+//        BatchRenderer::drawCircle(pos, lWidth/2*m_pointSizeF, 10, p.color);
+//    }
+
+
+//    BatchRenderer::end();
 
 
 }

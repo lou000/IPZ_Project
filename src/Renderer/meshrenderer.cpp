@@ -1,43 +1,6 @@
 ﻿#include "meshrenderer.h"
 #include "shader.h"
 
-void MeshRenderer::x_init()
-{
-    //Nothing for now...
-}
-
-void MeshRenderer::x_begin()
-{
-    auto currentCamera = GraphicsContext::getCamera();
-    currentShader->bind();
-    currentShader->setUniform("u_View", BufferElement::Mat4, currentCamera->getViewMatrix());
-    currentShader->setUniform("u_Projection", BufferElement::Mat4, currentCamera->getProjMatrix());
-    currentShader->setUniform("u_CameraPosition", BufferElement::Float3, currentCamera->getPos());
-    currentShader->setUniform("u_LightPosition", BufferElement::Float3, vec3{20, 25, 25});
-}
-
-void MeshRenderer::x_end()
-{
-    currentShader->unbind();
-}
-
-void MeshRenderer::x_drawMesh(const mat4 &model, const std::shared_ptr<Mesh> &mesh, const vec4 &color)
-{
-    currentShader->setUniform("u_Model", BufferElement::Mat4, model);
-    currentShader->setUniform("u_Color", BufferElement::Float4, color);
-
-    mesh->vao()->bind();
-    glDrawElements(GL_TRIANGLES, (GLsizei)mesh->vao()->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
-    mesh->vao()->unbind();
-    glBindTexture(GL_TEXTURE_2D, 0);
-}
-
-void MeshRenderer::x_drawMesh(const vec3& pos, const vec3& size, const std::shared_ptr<Mesh> &mesh, const vec4& color)
-{
-    auto model = translate(mat4(1.0f), pos) * scale(mat4(1.0f), size);
-    x_drawMesh(model, mesh, color);
-}
-
 std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
 {
     ASSERT(vPerEdge>=2);

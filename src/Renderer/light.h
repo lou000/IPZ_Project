@@ -1,9 +1,8 @@
 ﻿#pragma once
 #include "glm.hpp"
+#include "../Core/entity.h"
 
 using namespace glm;
-
-
 
 
 struct DirectionalLight
@@ -16,14 +15,20 @@ struct DirectionalLight
     float intensity = 1.0f;
 };
 
-struct PointLight
+struct GPU_PointLight
 {
     vec4 pos = {0,0,0,0};
     vec4 color = {1,1,1,1};
+    float intensity = 1.0f;
+    float radius = 10.0f;
+};
 
-    uint enabled = false;
+struct PointLight : public Entity
+{
     uint shadowCasting = true;
 
     float intensity = 1.0f;
-    float range = 10.0f;
+    float radius = 10.0f;
+
+    GPU_PointLight toGPULight();
 };

@@ -14,8 +14,8 @@ public:
 
 private:
     std::shared_ptr<Model> mesh1, mesh2, mesh3;
-    Entity* previewPuck = nullptr;
-    Entity* puckInPlay = nullptr;
+    std::shared_ptr<Entity> previewPuck = nullptr;
+    std::shared_ptr<Entity> puckInPlay = nullptr;
     vec4 red = {0.882, 0.192, 0.161, 1};
     vec4 yellow = {0.906, 0.878, 0.302, 1};
     uint entityCount = 4;

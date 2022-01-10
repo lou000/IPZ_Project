@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "meshrenderer.h"
 #include "batchrenderer.h"
 #define DEFAULT_2D_SIZE 1000
 #include <functional>

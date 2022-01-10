@@ -1,33 +1,63 @@
 ﻿#include "scene.h"
+#include <memory>
+#include "../Core/application.h"
 
 
-Entity* Scene::createEntity()
+
+Scene::Scene()
 {
-    auto ent = &entities[activeEntityCount++];
-    ent->enabled = true;
-    return ent;
+    auto winSize = App::getWindowSize();
+    m_editorCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+    m_sceneCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+    m_activeCamera = m_editorCamera;
 }
 
-PointLight *Scene::createLight(vec3 pos, vec3 color, float range, float intensity)
+void Scene::serialize()
 {
-    auto light = &lights[activeLightCount++];
-    light->enabled = true;
+
+}
+
+std::vector<std::shared_ptr<Entity>> Scene::enabledEntities()
+{
+    return entities;
+}
+
+std::vector<std::shared_ptr<PointLight>> Scene::enabledLights()
+{
+    return lights;
+}
+
+std::shared_ptr<PointLight> Scene::createLight(vec3 pos, vec3 color, float range, float intensity)
+{
+    auto light = std::make_shared<PointLight>();
+    light->m_enabled = true;
     light->pos = vec4(pos, 1);
     light->color = vec4(color, 1);
-    light->range = range;
+    light->radius = range;
     light->intensity = intensity;
+    lights.push_back(light);
     return light;
 }
 
-Entity *Scene::createEntity(std::shared_ptr<Model> model, vec3 pos, vec3 scale, quat rotation)
+template<typename T>
+std::shared_ptr<T> Scene::createEntity()
 {
-    auto ent = &entities[activeEntityCount];
-    ent->enabled = true;
+    auto ent = std::make_shared<T>();
+
+    ent->m_enabled = true;
+    entities.push_back(std::static_pointer_cast<Entity>(ent));
+    return ent;
+}
+
+std::shared_ptr<Entity> Scene::createEntity(std::shared_ptr<Model> model, vec3 pos, vec3 scale, quat rotation)
+{
+    auto ent = std::make_shared<Entity>();
+    ent->m_enabled = true;
     ent->renderable = true;
     ent->model = model;
     ent->pos = pos;
     ent->scale = scale;
     ent->rotation = rotation;
-    activeEntityCount++;
+    entities.push_back(ent);
     return ent;
 }

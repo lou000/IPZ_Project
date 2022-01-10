@@ -56,11 +56,12 @@ void BatchRenderer::x_init()
     AssetManager::addShader(m_debugShader);
 }
 
-void BatchRenderer::x_begin(mat4 viewProj)
+void BatchRenderer::x_begin(std::shared_ptr<Camera> camera)
 {
     // bind all uniforms
 //    glDisable(GL_CULL_FACE);
-    viewProj3d = viewProj;
+    viewProj3d = camera->getViewProjectionMatrix();
+    currentCamera = camera;
     m_debugShader->bind();
     m_debugShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
     m_debugShader->setUniformArray("u_TextureArrays", BufferElement::Int, texSamplersArray, maxTextureSlotsArray);
@@ -79,6 +80,7 @@ void BatchRenderer::x_end()
     flush();
     m_debugShader->unbind();
     vertexArray->unbind();
+    currentCamera = nullptr;
 }
 
 int BatchRenderer::addTexture(const std::shared_ptr<Texture>& texture)
@@ -236,7 +238,7 @@ void BatchRenderer::x_drawLine(const vec3 &posStart, const vec3 &posEnd, float w
 {
     //Line always faces camera
     auto lineVec = normalize(posStart-posEnd);
-    auto cameraForward = GraphicsContext::getCamera()->forward();
+    auto cameraForward = currentCamera->forward();
     auto crossP = normalize(cross(cameraForward, lineVec));
     auto offset = crossP*(width/2);
 

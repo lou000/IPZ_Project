@@ -61,9 +61,9 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     updateSSBOs(scene);
 
     //Sort entities
-    std::vector<Entity> entitiesToDraw;
-    for(auto& ent : scene->entities)
-        if(ent.renderable && ent.enabled)
+    std::vector<std::shared_ptr<Entity>> entitiesToDraw;
+    for(auto& ent : scene->enabledEntities())
+        if(ent->renderable)
             entitiesToDraw.push_back(ent);
 
 
@@ -246,9 +246,9 @@ void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
         csmShader->updateRuntimeModifiedStrings(def);
         oldShadowCascadeCount = config.shadowCascadeCount;
 
-        LOG("Camera near:%f\n", scene->camera->getNearClip());
+        LOG("Camera near:%f\n", scene->activeCamera()->getNearClip());
         updateCascadeRanges();
-        LOG("Camera far:%f\n", scene->camera->getFarClip());
+        LOG("Camera far:%f\n", scene->activeCamera()->getFarClip());
     }
 }
 
@@ -263,17 +263,17 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
     }
 
     // Set point lights data
-    std::vector<PointLight> enabledLights;
-    for(auto light : scene->lights)
-    {
-        if(light.enabled)
-            enabledLights.push_back(light);
-    }
+
+
+    std::vector<GPU_PointLight> enabledLights;
+    for(auto light : scene->enabledLights())
+            enabledLights.push_back(light->toGPULight());
+
 
     enabledPointLightCount = (uint)enabledLights.size();
-    lightsSSBO.setData(enabledLights.data(), sizeof(PointLight)*enabledPointLightCount);
+    lightsSSBO.setData(enabledLights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
 
-    auto camera = scene->camera;
+    auto camera = scene->activeCamera();
 
     std::vector<glm::mat4> cascades;
 
@@ -305,7 +305,7 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
                 prevCascade = camera->getNearClip();
             }
         }
-        cascades[i] = calcDirLightViewProjMatrix(camera, scene->skyLight, prevCascade,
+        cascades[i] = calcDirLightViewProjMatrix(camera, scene->directionalLight, prevCascade,
                                                  cascade, config.cascadeZextra);
     }
     csmSSBO.setData(cascades.data(), sizeof(mat4)*cascades.size());
@@ -372,7 +372,7 @@ void RenderPipeline::updateCascadeRanges()
     }
 }
 
-void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<Entity> entities)
+void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<std::shared_ptr<Entity>> entities)
 {
     UNUSED(scene);
     // Draw cascading shadow maps to depth
@@ -384,9 +384,9 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<E
     for(auto& ent : entities)
     {
         // draw here
-        auto model = ent.getModelMatrix();
+        auto model = ent->getModelMatrix();
         csmShader->setUniform("u_Model", BufferElement::Mat4, model);
-        for(auto mesh : ent.model->meshes())
+        for(auto mesh : ent->model->meshes())
         {
             auto vao = mesh->vao();
             vao->bind();
@@ -400,11 +400,11 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<E
     csmFBO.unbind();
 }
 
-void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<Entity> entities)
+void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<std::shared_ptr<Entity>> entities)
 {
     // DRAW pbr objects
     hdrFBO.bind();
-    auto sceneCamera = scene->camera;
+    auto sceneCamera = scene->activeCamera();
     pbrShader->bind();
     lightsSSBO.bind();
 
@@ -414,13 +414,13 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<Entity> e
     pbrShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
 
     // Set directional light data
-    pbrShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->skyLight.direction);
-    pbrShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->skyLight.color);
-    pbrShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->skyLight.intensity);
+    pbrShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->directionalLight.direction);
+    pbrShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
+    pbrShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
     pbrShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
 
     // CSM data
-    pbrShader->setUniform("u_farPlane", BufferElement::Float, scene->camera->getFarClip());
+    pbrShader->setUniform("u_farPlane", BufferElement::Float, sceneCamera->getFarClip());
     pbrShader->setUniform("u_cascadeCount", BufferElement::Int, config.shadowCascadeCount+1);
     pbrShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
     csmFBO.getDepthTex()->bind(3);
@@ -430,9 +430,9 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<Entity> e
     for(auto& ent : entities)
     {
         // draw here
-        auto model = ent.getModelMatrix();
+        auto model = ent->getModelMatrix();
         pbrShader->setUniform("u_Model", BufferElement::Mat4, model);
-        for(auto mesh : ent.model->meshes())
+        for(auto mesh : ent->model->meshes())
         {
             auto vao = mesh->vao();
             // this below should probably go to separate draw call
@@ -445,8 +445,8 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<Entity> e
 
             //NOTE: We might add this as a boolean check but you shouldn't set override color to
             //      invisible, instead you should set renderable to false
-            if(ent.overrideColor.a > 0)
-                pbrShader->setUniform("u_Color", BufferElement::Float4, ent.overrideColor);
+            if(ent->color.a > 0)
+                pbrShader->setUniform("u_Color", BufferElement::Float4, ent->color);
             else
                 pbrShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
             vao->bind();
@@ -517,7 +517,7 @@ void RenderPipeline::bloomComputePass()
 
 void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
 {
-    auto sceneCamera = scene->camera;
+    auto sceneCamera = scene->activeCamera();
     ssaoFBO.bind();
     ssaoShader->bind();
     ssaoShader->setUniform("kernelSize", BufferElement::Int, config.ssaoKernelSize);
@@ -612,10 +612,10 @@ void RenderPipeline::resizeOrClearResources()
 
 void RenderPipeline::drawSceneDebug(std::shared_ptr<Scene> scene)
 {
-    auto sceneCamera = scene->camera;
+    auto sceneCamera = scene->activeCamera();
     hdrFBO.bindColorAttachment(0);
     // Draw debug graphics
-    BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
+    BatchRenderer::begin(sceneCamera);
     scene->debugDraw();
     BatchRenderer::end();
     hdrFBO.unbind();
@@ -623,9 +623,9 @@ void RenderPipeline::drawSceneDebug(std::shared_ptr<Scene> scene)
 
 void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
 {
-    auto sceneCamera = scene->camera;
+    auto sceneCamera = scene->activeCamera();
     outputFBO.bind();
-    BatchRenderer::begin(sceneCamera->getViewProjectionMatrix());
+    BatchRenderer::begin(sceneCamera);
 //    csmFBO.getDepthTex()->selectLayerForNextDraw(debugCascadeDisplayIndex);
 //    auto size = (vec2)winSize/(float)bloomSamples;
 //        for(uint i=0; i<bloomSamples; i++)
