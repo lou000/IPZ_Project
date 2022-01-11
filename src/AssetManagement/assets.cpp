@@ -9,6 +9,10 @@
 #include <sstream>
 #include "../Renderer/buffer.h" // VAO
 
+std::string Asset::getName()
+{
+    return m_path.empty() ? m_name : m_path.string();
+}
 
 Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal,  GLenum textureWrap, uint samples, bool loadDebug)
     : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_glFormatSized(formatInternal), m_textureWrap(textureWrap)
@@ -51,7 +55,7 @@ bool Texture::doReload()
     uint oldWidth  = m_width;
     uint oldHeight = m_height;
 
-    auto data = loadFromFile(path);
+    auto data = loadFromFile(m_path);
     if(!data) return false;
 
     if(oldFormat != m_glFormatSized)
@@ -252,19 +256,19 @@ void* Texture::loadFromFile(const std::filesystem::path& path){
 
 
 ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName)
-    : m_shaderName(shaderName)
+    : m_programName(shaderName)
 {
     assetType = AssetType::shaderFile;
-    this->path = path;
+    this->m_path = path;
     if(!getTypeFromFileName()) return;
     text = loadFile();
 }
 
 ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type, const std::string shaderName)
-    : m_shaderName(shaderName), type(type)
+    : m_programName(shaderName), type(type)
 {
     assetType = AssetType::shaderFile;
-    this->path = path;
+    this->m_path = path;
     text = loadFile();
 }
 
@@ -276,15 +280,15 @@ bool ShaderFile::doReload()
 
 std::string ShaderFile::loadFile()
 {
-    if(!std::filesystem::exists(path))
+    if(!std::filesystem::exists(m_path))
     {
-        WARN("Failed to load shader: File %s doesnt exist.", path.string().c_str());
+        WARN("Failed to load shader: File %s doesnt exist.", m_path.string().c_str());
         return nullptr;
     }
 
-    std::ifstream input_file(path);
+    std::ifstream input_file(m_path);
     if (!input_file.is_open()) {
-        WARN("Failed to load shader: Couldnt open file %s for reading.", path.string().c_str());
+        WARN("Failed to load shader: Couldnt open file %s for reading.", m_path.string().c_str());
         return nullptr;
     }
 
@@ -296,7 +300,7 @@ std::string ShaderFile::loadFile()
 
 bool ShaderFile::getTypeFromFileName()
 {
-    auto extension = this->path.extension();
+    auto extension = this->m_path.extension();
 
     if(extension == ".vs")
         type = vertex;
@@ -320,12 +324,13 @@ bool ShaderFile::getTypeFromFileName()
 
 Model::Model(const std::filesystem::path &path)
 {
-    this->path = path;
+    this->m_path = path;
     loadModel();
 }
 
-Model::Model(std::vector<std::shared_ptr<Mesh> > meshes)
+Model::Model(std::string name, std::vector<std::shared_ptr<Mesh> > meshes)
 {
+    m_name = name;
     AABB modelBB;
     for(const auto& m : meshes)
     {
@@ -397,16 +402,16 @@ std::shared_ptr<Model> Model::makeUnitQuad()
 
 bool Model::loadModel()
 {
-    auto str = path.string();
+    auto str = m_path.string();
     auto c_str = str.c_str();
     UNUSED(c_str);
-    if(!std::filesystem::exists(path))
+    if(!std::filesystem::exists(m_path))
     {
         WARN("Asset: Couldnt load the asset file %s doesnt exist", c_str);
         return false;
     }
 
-    if(path.extension() != ".fbx" && path.extension() != ".obj")
+    if(m_path.extension() != ".fbx" && m_path.extension() != ".obj")
     {
         WARN("Asset: Couldnt load the asset file %s extension is not supported.", c_str);
         return false;
@@ -538,4 +543,6 @@ bool Model::loadModel()
 
     return true;
 }
+
+
 

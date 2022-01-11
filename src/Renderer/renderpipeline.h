@@ -38,7 +38,7 @@ private:
     void initSSBOs();
     void initShaders();
     void resizeBloomBuffers();
-    void updateSSBOs(std::shared_ptr<Scene> scene);
+    void updateSSBOs(std::shared_ptr<Scene> scene, std::vector<GPU_PointLight> lights);
     void updateCascadeRanges();
 
 

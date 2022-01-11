@@ -1,7 +1,8 @@
 ﻿#include "scene.h"
-#include <memory>
 #include "../Core/application.h"
 #include "../Core/yamlserialization.h"
+#include <memory>
+#include <random>
 
 
 Scene::Scene(std::string name, bool serialize)
@@ -28,47 +29,33 @@ Scene::~Scene()
         Serializer::serializeScene(this, "../Config/"+m_name+".pc");
 }
 
-std::vector<std::shared_ptr<Entity>> Scene::enabledEntities()
+std::unordered_set<std::shared_ptr<Entity>> Scene::entities()
 {
-    return entities;
+    return m_entities;
 }
 
-std::vector<std::shared_ptr<PointLight>> Scene::enabledLights()
+uint64 Scene::genID()
 {
-    return lights;
+    static std::random_device randDevice;
+    static std::mt19937_64 engine(randDevice());
+    static std::uniform_int_distribution<uint64> uniformDist;
+
+    return uniformDist(engine);
 }
 
-std::shared_ptr<PointLight> Scene::createLight(vec3 pos, vec3 color, float range, float intensity)
+void Scene::addDeserializedEntity(std::shared_ptr<Entity> entity, uint64 id)
 {
-    auto light = std::make_shared<PointLight>();
-    light->m_enabled = true;
-    light->pos = vec4(pos, 1);
-    light->color = vec4(color, 1);
-    light->radius = range;
-    light->intensity = intensity;
-    lights.push_back(light);
-    return light;
+    entity->m_id = id;
+    m_entities.insert(entity);
 }
 
-template<typename T>
-std::shared_ptr<T> Scene::createEntity()
+void Scene::registerEntity(std::shared_ptr<Entity> entity)
 {
-    auto ent = std::make_shared<T>();
-
-    ent->m_enabled = true;
-    entities.push_back(std::static_pointer_cast<Entity>(ent));
-    return ent;
+    entity->m_id = genID();
+    m_entities.insert(entity);
 }
 
-std::shared_ptr<Entity> Scene::createEntity(std::shared_ptr<Model> model, vec3 pos, vec3 scale, quat rotation)
+void Scene::removeEntity(std::shared_ptr<Entity> entity)
 {
-    auto ent = std::make_shared<Entity>();
-    ent->m_enabled = true;
-    ent->renderable = true;
-    ent->model = model;
-    ent->pos = pos;
-    ent->scale = scale;
-    ent->rotation = rotation;
-    entities.push_back(ent);
-    return ent;
+    m_entities.erase(entity);
 }

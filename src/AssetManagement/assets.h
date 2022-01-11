@@ -22,11 +22,14 @@ class Asset{
     friend class AssetManager;
 public:
     virtual bool doReload() = 0;
+    std::string getName();
 
 protected:
+    Asset(){}
     AssetType assetType;
     bool reloadScheduled = false;
-    std::filesystem::path path;
+    std::filesystem::path m_path;
+    std::string m_name;
 };
 
 
@@ -85,14 +88,14 @@ class ShaderFile : public Asset
     };
 
 public:
-    ShaderFile(const std::filesystem::path& path, const std::string shaderName);
-    ShaderFile(const std::filesystem::path& path, ShaderType type, const std::string shaderName);
+    ShaderFile(const std::filesystem::path& path, const std::string programName);
+    ShaderFile(const std::filesystem::path& path, ShaderType type, const std::string programName);
 
     virtual bool doReload() override;
-    const std::string& shaderName(){return m_shaderName;}
+    const std::string& shaderName(){return m_programName;}
 
 private:
-    const std::string m_shaderName;
+    const std::string m_programName;
     ShaderType type;
     std::string loadFile();
     bool getTypeFromFileName();
@@ -104,7 +107,7 @@ class Model : public Asset
 
 public:
     Model(const std::filesystem::path& path);
-    Model(std::vector<std::shared_ptr<Mesh>> meshes);
+    Model(std::string name, std::vector<std::shared_ptr<Mesh>> meshes);
 
     virtual bool doReload() override;
     std::vector<std::shared_ptr<Mesh>> meshes(){return m_meshes;}
@@ -116,7 +119,6 @@ private:
     std::vector<std::shared_ptr<Mesh>> m_meshes;
     AABB m_boundingBox;
     bool loadModel();
-
 };
 
 

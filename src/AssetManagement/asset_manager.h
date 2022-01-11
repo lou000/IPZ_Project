@@ -40,8 +40,8 @@ public:
     void operator=(AssetManager const&)  = delete;
 
     static void addAsset(std::shared_ptr<Asset> asset){getInstance().x_addAsset(asset);}
-    static void removeAsset(const std::filesystem::path& assetPath){getInstance().x_removeAsset(assetPath);}
-    static std::shared_ptr<Asset> getAsset(const std::filesystem::path& name) {return getInstance().x_getAsset(name);}
+    static void removeAsset(const std::string& assetPath){getInstance().x_removeAsset(assetPath);}
+    static std::shared_ptr<Asset> getAsset(const std::string& name) {return getInstance().x_getAsset(name);}
 
     static void addShader(std::shared_ptr<Shader> shader){getInstance().x_addShader(shader);}
     static void removeShader(int id){getInstance().x_removeShader(id);}
@@ -57,8 +57,8 @@ private:
     Assimp::Importer* x_getAssimpImporter(){return &importer;}
 
     void x_addAsset(std::shared_ptr<Asset> asset);
-    void x_removeAsset(const std::filesystem::path& assetPath);
-    std::shared_ptr<Asset> x_getAsset(const std::filesystem::path& path);
+    void x_removeAsset(const std::string& assetPath);
+    std::shared_ptr<Asset> x_getAsset(const std::string& name);
 
     void x_addShader(std::shared_ptr<Shader> shader);
     void x_removeShader(uint id);

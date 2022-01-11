@@ -18,7 +18,7 @@ m_editorCamera:
   camera->type: 0
   camera->m_pos: [13.4900465, 9.66067505, 18.2966976]
   camera->m_fov: 50
-  camera->m_aspectRatio: 1.8879056
+  camera->m_aspectRatio: 1.5
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false

@@ -4,26 +4,43 @@
 
 void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
 {
-    fileAssets.insert({asset->path, asset});
+    if(asset->m_path.empty() && asset->m_name.empty())
+    {
+        WARN("AssetManager: Cannot add nameless asset!");
+        return;
+    }
+    if(asset->m_path.empty() && !asset->m_name.empty())
+    {
+        if(fileAssets.find(asset->m_name) != fileAssets.end())
+        {
+            fileAssets.insert({asset->m_name, asset});
+        }
+        else
+        {
+            WARN("AssetManager: Asset already added to manager!");
+        }
+        return;
+    }
+    fileAssets.insert({asset->m_path, asset});
     auto dir = std::make_shared<Dir>();
-    auto p = asset->path;
+    auto p = asset->m_path;
     dir->path = p.remove_filename();
     auto r = dirs.insert({dir->path, dir});
 
     //If directory doesnt exist add it to map
     if (r.second)
     {
-        dir->assets.insert({asset->path, asset});
+        dir->assets.insert({asset->m_path, asset});
         addDirWatch(dir);
     }
     else // if it does add asset to existing one
     {
         auto eDir = dirs[dir->path];
-        eDir->assets.insert({asset->path, asset});
+        eDir->assets.insert({asset->m_path, asset});
     }
 }
 
-std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path &path)
+std::shared_ptr<Asset> AssetManager::x_getAsset(const std::string &path)
 {
     if (fileAssets.find(path) == fileAssets.end())
         return nullptr;
@@ -31,7 +48,7 @@ std::shared_ptr<Asset> AssetManager::x_getAsset(const std::filesystem::path &pat
         return fileAssets.at(path);
 }
 
-void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
+void AssetManager::x_removeAsset(const std::string &assetPath)
 {
     auto assetIt = fileAssets.find(assetPath);
     std::shared_ptr<Asset> asset = nullptr;
@@ -50,7 +67,7 @@ void AssetManager::x_removeAsset(const std::filesystem::path &assetPath)
     else
         std::cout << "Asset not found.\n";
 
-    auto dirPath = asset->path.remove_filename();
+    auto dirPath = asset->m_path.remove_filename();
 
     auto dirIt = dirs.find(dirPath);
     if (dirIt != dirs.end())
@@ -89,7 +106,7 @@ void AssetManager::x_removeShader(uint id)
             auto shaderFilesVector = shader->m_files;
             for (auto& sf : shaderFilesVector)
             {
-                auto shaderFilePath = sf.file->path;
+                auto shaderFilePath = sf.file->m_path;
                 fileAssets.erase(shaderFilePath);
                 auto dirPath = shaderFilePath.remove_filename();
                 auto dir = dirs.find(dirPath);
@@ -97,7 +114,7 @@ void AssetManager::x_removeShader(uint id)
                 if (dir != dirs.end())
                 {
                     auto &mapAssets = dir->second->assets;
-                    auto asset = mapAssets.find(sf.file->path);
+                    auto asset = mapAssets.find(sf.file->m_path);
 
                     if (asset != mapAssets.end())
                         mapAssets.erase(asset->first);

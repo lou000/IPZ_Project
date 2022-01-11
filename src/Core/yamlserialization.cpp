@@ -248,24 +248,27 @@ std::shared_ptr<Camera> Serializer::deserializeCamera(const Node& node)
     return std::static_pointer_cast<Camera>(camera);
 }
 
-bool Serializer::serializeEntity(YAML::Emitter &e, std::shared_ptr<Entity> entity)
+bool Serializer::serializeEntity(Emitter &e, const std::shared_ptr<Entity>& entity)
 {
-//    e << BeginMap;
-//    SERIALIZE_PRIMITIVE(e, entity->type);
-//    SERIALIZE_PRIMITIVE(e, camera->m_pos);
-//    SERIALIZE_PRIMITIVE(e, camera->m_fov);
-//    SERIALIZE_PRIMITIVE(e, camera->m_aspectRatio);
-//    SERIALIZE_PRIMITIVE(e, camera->m_nearClip);
-//    SERIALIZE_PRIMITIVE(e, camera->m_farClip);
-//    SERIALIZE_PRIMITIVE(e, camera->isActive);
-//    SERIALIZE_PRIMITIVE(e, camera->m_focusPoint);
-//    SERIALIZE_PRIMITIVE(e, camera->m_rotation);
-//    e << EndMap;
+    e << BeginMap;
+    SERIALIZE_PRIMITIVE(e, entity->type);
+    SERIALIZE_PRIMITIVE(e, entity->color);
+    SERIALIZE_PRIMITIVE(e, entity->pos);
+    SERIALIZE_PRIMITIVE(e, entity->scale);
+    SERIALIZE_PRIMITIVE(e, entity->rotation);
+    SERIALIZE_PRIMITIVE(e, entity->renderable);
+    SERIALIZE_PRIMITIVE(e, entity->model->getName());
+    e << EndMap;
     return true;
 }
 
-std::shared_ptr<Entity> Serializer::deserializeEntity(const YAML::Node &node)
+std::shared_ptr<Entity> Serializer::deserializeEntity(const Node &node)
 {
+//    ASSERT(node["entity->type"]);
+//    Entity::Type type = (Entity::Type)node["entity->type"].as<uint>();
+
+
+//    return std::shared_ptr<Entity>(new Entity(node.as<uint64>()));
     return nullptr;
 }
 

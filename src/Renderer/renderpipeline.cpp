@@ -56,16 +56,25 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     oldWinSize = winSize;
     winSize = App::getWindowSize();
 
-    maybeUpdateDynamicShaders(scene);
-    resizeOrClearResources();
-    updateSSBOs(scene);
-
     //Sort entities
     std::vector<std::shared_ptr<Entity>> entitiesToDraw;
-    for(auto& ent : scene->enabledEntities())
+    std::vector<GPU_PointLight> lightsToDraw;
+    for(auto& ent : scene->entities())
         if(ent->renderable)
-            entitiesToDraw.push_back(ent);
+        {
+            if(ent->type == Entity::Type::PointLight)
+            {
+                auto light = std::static_pointer_cast<PointLight>(ent);
+                lightsToDraw.push_back(light->toGPULight());
+            }
+            else
+                entitiesToDraw.push_back(ent);
+        }
 
+
+    maybeUpdateDynamicShaders(scene);
+    resizeOrClearResources();
+    updateSSBOs(scene, lightsToDraw);
 
     glEnable(GL_DEPTH_TEST);
     if(config.enableCSM)
@@ -252,7 +261,7 @@ void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
     }
 }
 
-void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
+void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene, std::vector<GPU_PointLight> lights)
 {
     // SSAO kernel update
     if(oldSsaoKernelSize != config.ssaoKernelSize)
@@ -263,15 +272,8 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
     }
 
     // Set point lights data
-
-
-    std::vector<GPU_PointLight> enabledLights;
-    for(auto light : scene->enabledLights())
-            enabledLights.push_back(light->toGPULight());
-
-
-    enabledPointLightCount = (uint)enabledLights.size();
-    lightsSSBO.setData(enabledLights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
+    enabledPointLightCount = (uint)lights.size();
+    lightsSSBO.setData(lights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
 
     auto camera = scene->activeCamera();
 
