@@ -24,6 +24,8 @@ set(client_INCLUDE_DIRS
     external/yaml-cpp/include
     external/imgui
     external/entt
+    external/openal-soft/include
+    external/dr_libs
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
@@ -74,6 +76,23 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/external/assimp/lib/Release/assimp-vc142-mt.lib" 
 else()
    add_subdirectory(external/assimp)
    target_link_libraries(Primor assimp)
+endif()
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.lib")
+
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        target_link_libraries(Primor
+            ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.lib
+            )
+    else()
+        target_link_libraries(Primor
+            ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Debug/OpenAL32.lib
+            )
+    endif()
+
+else()
+   add_subdirectory(external/openal-soft)
+   target_link_libraries(Primor openal-soft)
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib")

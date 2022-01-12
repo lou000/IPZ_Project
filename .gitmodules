@@ -23,3 +23,7 @@
 	ignore = dirty
 	path = external/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp/
+[submodule "external/openal-soft"]
+	ignore = dirty
+	path = external/openal-soft
+	url = https://github.com/kcat/openal-soft
