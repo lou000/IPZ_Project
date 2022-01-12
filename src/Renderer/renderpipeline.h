@@ -38,7 +38,7 @@ private:
     void initSSBOs();
     void initShaders();
     void resizeBloomBuffers();
-    void updateSSBOs(std::shared_ptr<Scene> scene, std::vector<GPU_PointLight> lights);
+    void updateSSBOs(std::shared_ptr<Scene> scene);
     void updateCascadeRanges();
 
 
@@ -83,8 +83,8 @@ private:
     std::vector<std::shared_ptr<Texture>> bloomUpSampleTextures;
 
     VertexArray screenQuad;
-    void pbrPass(std::shared_ptr<Scene> scene, std::vector<std::shared_ptr<Entity>> entities);
-    void CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<std::shared_ptr<Entity>> entities);
+    void pbrPass(std::shared_ptr<Scene> scene);
+    void CSMdepthPrePass(std::shared_ptr<Scene> scene);
     void bloomComputePass();
     void compositePass();
     void resizeOrClearResources();

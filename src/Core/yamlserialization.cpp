@@ -274,60 +274,21 @@ std::shared_ptr<Camera> Serializer::deserializeCamera(const Node& node)
 bool Serializer::serializeEntity(Emitter &e, const std::shared_ptr<Entity>& entity)
 {
     e << BeginMap;
-    SERIALIZE_PRIMITIVE(e, entity->m_type);
-    SERIALIZE_PRIMITIVE(e, entity->color);
-    SERIALIZE_PRIMITIVE(e, entity->pos);
-    SERIALIZE_PRIMITIVE(e, entity->scale);
-    SERIALIZE_PRIMITIVE(e, entity->rotation);
-    SERIALIZE_PRIMITIVE(e, entity->renderable);
-    SERIALIZE_PRIMITIVE(e, entity->model->getName());
+//    SERIALIZE_PRIMITIVE(e, entity->m_type);
+//    SERIALIZE_PRIMITIVE(e, entity->color);
+//    SERIALIZE_PRIMITIVE(e, entity->pos);
+//    SERIALIZE_PRIMITIVE(e, entity->scale);
+//    SERIALIZE_PRIMITIVE(e, entity->rotation);
+//    SERIALIZE_PRIMITIVE(e, entity->renderable);
+//    SERIALIZE_PRIMITIVE(e, entity->model->getName());
     e << EndMap;
     return true;
 }
 
 std::shared_ptr<Entity> Serializer::deserializeEntity(const Node &node)
 {
-    ASSERT(node["entity->type"]);
-    Entity::Type type = (Entity::Type)node["entity->type"].as<uint>();
-    std::shared_ptr<Entity> ent;
 
-    switch (type) {
-    case Entity::Base:
-        ent = std::shared_ptr<Entity>(new Entity(Entity::Base));
-        break;
-    case Entity::PointLight:
-    {
-        auto pointLight = std::make_shared<PointLight>();
-        DESERIALIZE_PRIMITIVE(node, pointLight->intensity,    float);
-        DESERIALIZE_PRIMITIVE(node, pointLight->radius,       float);
-        DESERIALIZE_PRIMITIVE(node, pointLight->shadowCasting, bool);
-        ent = pointLight;
-        break;
-    }
-    case Entity::C4Puck:
-    {
-        auto puck = std::make_shared<Puck>();
-        DESERIALIZE_PRIMITIVE(node, puck->boardPos,    vec2);
-        ent = puck;
-        break;
-    }
-    case Entity::Decoration:
-    {
-        auto decoration = std::make_shared<Decoration>();
-        ent = decoration;
-        break;
-    }
-    case Entity::C4Board:
-    {
-        auto board = std::make_shared<Board>();
-        ent = board;
-        break;
-    }
-    default:
-        ASSERT("Deserialization not implemented!");
-        break;
-    }
-    return ent;
+    return nullptr;
 }
 
 bool Serializer::serializeDirLight(Emitter& e, DirectionalLight dirLight)

@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include "math.h"
 #include "../AssetManagement/assets.h"
+#include "entt.hpp"
+
+class Scene;
 
 using namespace glm;
 class Entity
@@ -9,35 +12,42 @@ class Entity
     friend class Serializer;
 
 public:
-    mat4 getModelMatrix();
-    void setOverrideColor(vec4 color);
-    bool enabled() const;
 
-    enum Type{
-        Base,
-        PointLight,
-        C4Board,
-        C4Puck,
-        Decoration
-    };
-    Type getType(){return m_type;}
+    operator entt::entity() const { return m_enttID; }
 
-    //       SERIALIZED      //
-    //-----------------------//
-    vec4 color =    {0,0,0,0};
-    vec3 pos =      {0, 0, 0};
-    vec3 scale =    {1, 1, 1};
-    quat rotation = {1,0,0,0};
-    std::shared_ptr<Model> model; // serialize mesh names, count on asset manager
-    bool renderable = false;
-    //-----------------------//
+    template<typename T, typename... Args>
+    T& addComponent(Args&&... args)
+    {
+        ASSERT_ERROR(!hasComponent<T>(), "Component already exists in entity!");
+        T& component = m_scene->m_entities.emplace<T>(m_enttID, std::forward<Args>(args)...);
+        return component;
+    }
 
-protected:
-    Entity(Entity::Type type) : m_type(type){}
-    Type m_type =     Base;
-    bool m_enabled = true;
+    template<typename T>
+    T& getComponent()
+    {
+        ASSERT_ERROR(hasComponent<T>(), "Component doesnt exist in entity!");
+        return m_scene->m_entities.get<T>(m_enttID);
+    }
+
+    template<typename T>
+    bool hasComponent()
+    {
+        return m_scene->m_entities.all_of<T>(m_enttID);
+    }
+
+    template<typename T>
+    void removeComponent()
+    {
+        ASSERT_ERROR(hasComponent<T>(), "Component doesnt exist in entity!");
+        m_scene->m_entities.remove<T>(m_enttID);
+    }
 
 private:
+    Entity(entt::entity enttID, Scene* scene)
+        : m_enttID(enttID), m_scene(scene){}
     uint64 m_id = 0; //SERIALIZED
+    entt::entity m_enttID = entt::null;
+    Scene* m_scene;
 };
 

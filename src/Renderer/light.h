@@ -22,21 +22,4 @@ struct GPU_PointLight
     float radius = 10.0f;
 };
 
-struct PointLight : public Entity
-{
-    PointLight():Entity(Entity::PointLight){}
-    PointLight(vec3 pos, vec4 color, float intensity, float radius );
-    bool shadowCasting = true;
-    float intensity = 1.0f;
-    float radius = 10.0f;
-    GPU_PointLight toGPULight();
-};
 
-inline PointLight::PointLight(vec3 pos, vec4 color, float intensity, float radius)
-    : Entity(Entity::PointLight)
-{
-    this->pos = pos;
-    this->color = color;
-    this->intensity = intensity;
-    this->radius = radius;
-}

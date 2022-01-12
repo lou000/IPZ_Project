@@ -1,4 +1,5 @@
 ﻿#include "scene.h"
+#include "components.h"
 #include "../Core/application.h"
 #include "../Core/yamlserialization.h"
 #include <memory>
@@ -29,9 +30,34 @@ Scene::~Scene()
         Serializer::serializeScene(this, "../Config/"+m_name+".pc");
 }
 
-std::unordered_set<std::shared_ptr<Entity>> Scene::entities()
+Entity Scene::createEntity()
 {
-    return m_entities;
+    Entity entity = { m_entities.create(), this };
+    entity.m_id = genID();
+    return entity;
+}
+
+Entity Scene::createEntity(const std::string &meshName, vec3 pos, vec3 scale, quat rotation, vec4 color)
+{
+    Entity entity = createEntity();
+    entity.addComponent<TransformComponent>(pos, scale, rotation);
+    entity.addComponent<MeshComponent>(meshName);
+    entity.addComponent<RenderSpecComponent>(color);
+    return entity;
+}
+
+Entity Scene::createPointLight(vec3 pos, vec3 color,
+                               float intensity, float radius,
+                               bool shadowCasting)
+{
+    Entity entity = createEntity();
+    entity.addComponent<PointLightComponent>(pos, color, intensity, radius, shadowCasting);
+    return entity;
+}
+
+void Scene::removeEntity(Entity entity)
+{
+    m_entities.destroy(entity);
 }
 
 uint64 Scene::genID()
@@ -41,21 +67,4 @@ uint64 Scene::genID()
     static std::uniform_int_distribution<uint64> uniformDist;
 
     return uniformDist(engine);
-}
-
-void Scene::addDeserializedEntity(std::shared_ptr<Entity> entity, uint64 id)
-{
-    entity->m_id = id;
-    m_entities.insert(entity);
-}
-
-void Scene::registerEntity(std::shared_ptr<Entity> entity)
-{
-    entity->m_id = genID();
-    m_entities.insert(entity);
-}
-
-void Scene::removeEntity(std::shared_ptr<Entity> entity)
-{
-    m_entities.erase(entity);
 }

@@ -1,6 +1,7 @@
 ﻿#include "testconnect4.h"
 #include <sstream>
 #include "../Core/math.h"
+#include "../Core/components.h"
 
 Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorted
 {
@@ -46,24 +47,15 @@ TestConnect4::TestConnect4()
     AssetManager::addAsset(Model::makeUnitPlane());
 
 
-
-    auto board = std::make_shared<Board>();
-
-    registerEntity(board);
-
-    registerEntity(std::make_shared<Decoration>("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
-                                                vec3(1), quat({-radians(90.f), 0, 0})));
-    registerEntity(std::make_shared<Decoration>("../assets/meshes/wolf.fbx", vec3(-5,0,5),
-                                                vec3(1),  quat({-radians(90.f), 0, 0})));
-    registerEntity(std::make_shared<Decoration>("../assets/meshes/campfire.fbx", vec3(1,0,3),
-                                                vec3(0.3f), quat({-radians(90.f), 0, 0})));
-    registerEntity(std::make_shared<Decoration>("unitPlane", vec3(0,0,0), vec3(100)));
-    registerEntity(std::make_shared<PointLight>(vec3(1, 2 ,3), vec4(1,0.05,0,1), 60.f, 200.f));
-
-
-    previewPuck = std::make_shared<Puck>(Puck::Yellow);
-    previewPuck->color.a = 0.2f;
-    registerEntity(previewPuck);
+    createEntity("../assets/meshes/connect4_board.fbx");
+    createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
+                  vec3(1), quat({-radians(90.f), 0, 0}));
+    createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
+                  vec3(1),  quat({-radians(90.f), 0, 0}));
+    createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
+                 vec3(0.3f), quat({-radians(90.f), 0, 0}));
+    createEntity("unitPlane", vec3(0,0,0), vec3(100));
+    createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 60.f, 200.f);
 
 
 
@@ -149,10 +141,11 @@ void TestConnect4::onUpdate(float dt)
 
 void TestConnect4::debugDraw()
 {
-    for(auto ent : entities())
+    auto view = entities().view<MeshComponent, TransformComponent>();
+    for(auto ent : view)
     {
-        auto model = ent->getModelMatrix();
-        auto bb = ent->model->boundingBox();
+        auto model = view.get<TransformComponent>(ent).transform();
+        auto bb = view.get<MeshComponent>(ent).model->boundingBox();
         bb.max = model*vec4(bb.max, 1);
         bb.min = model*vec4(bb.min, 1);
         BatchRenderer::drawLine(bb.min, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
@@ -176,38 +169,3 @@ void TestConnect4::debugDraw()
 
 }
 
-Board::Board()
-    : Entity(Entity::C4Board)
-{
-    model = AssetManager::getAsset<Model>("../assets/meshes/connect4_board.fbx");
-    renderable = true;
-}
-
-Puck::Puck(Color col)
-    : Entity(Entity::C4Puck)
-{
-    switch(col)
-    {
-        case Yellow:
-            model = AssetManager::getAsset<Model>("../assets/meshes/connect4Puck1.obj");
-            color = {0.906, 0.878, 0.302, 1};
-            break;
-        case Red:
-            model = AssetManager::getAsset<Model>("../assets/meshes/connect4Puck2.obj");
-            color = {0.882, 0.192, 0.161, 1};
-            break;
-    }
-    rotation = quat({radians(90.f), 0, 0});
-    boardPos = {-1, -1};
-    renderable = true;
-}
-
-Decoration::Decoration(const std::string &meshName, vec3 pos, vec3 scale, quat rotation)
-    : Entity(Entity::Decoration)
-{
-    this->model = AssetManager::getAsset<Model>(meshName);
-    this->pos = pos;
-    this->scale = scale;
-    this->rotation = rotation;
-    renderable = true;
-}

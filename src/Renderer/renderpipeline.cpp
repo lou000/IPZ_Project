@@ -3,6 +3,7 @@
 #include "../Core/gui.h"
 #include "../Core/application.h"
 #include "../Core/entity.h"
+#include "../Core/components.h"
 #include <random>
 
 
@@ -57,30 +58,14 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     oldWinSize = winSize;
     winSize = App::getWindowSize();
 
-    //Sort entities
-    std::vector<std::shared_ptr<Entity>> entitiesToDraw;
-    std::vector<GPU_PointLight> lightsToDraw;
-    for(auto& ent : scene->entities())
-    {
-        if(ent->renderable)
-            entitiesToDraw.push_back(ent);
-        else if(ent->getType() == Entity::Type::PointLight)
-        {
-            auto light = std::static_pointer_cast<PointLight>(ent);
-            lightsToDraw.push_back(light->toGPULight());
-        }
-    }
-
-
-
     maybeUpdateDynamicShaders(scene);
     resizeOrClearResources();
-    updateSSBOs(scene, lightsToDraw);
+    updateSSBOs(scene);
 
     glEnable(GL_DEPTH_TEST);
     if(config.enableCSM)
-        CSMdepthPrePass(scene, entitiesToDraw);
-    pbrPass(scene, entitiesToDraw);
+        CSMdepthPrePass(scene);
+    pbrPass(scene);
     glDisable(GL_DEPTH_TEST);
 
     if(config.enableBloom)
@@ -236,7 +221,7 @@ void RenderPipeline::updateSSAOKernel()
 void RenderPipeline::initSSBOs()
 {
     // Create lights SSBO
-    lightsSSBO = StorageBuffer(MAX_LIGHTS*sizeof(PointLight), 0);
+    lightsSSBO = StorageBuffer(MAX_LIGHTS*sizeof(GPU_PointLight), 0);
 
     // Create light space matrix for DirLight
     csmSSBO = StorageBuffer(MAX_SHADOW_CASCADES*sizeof(mat4), 1);
@@ -262,7 +247,7 @@ void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
     }
 }
 
-void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene, std::vector<GPU_PointLight> lights)
+void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
 {
     // SSAO kernel update
     if(oldSsaoKernelSize != config.ssaoKernelSize)
@@ -273,8 +258,11 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene, std::vector<GPU_P
     }
 
     // Set point lights data
-    enabledPointLightCount = (uint)lights.size();
-    lightsSSBO.setData(lights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
+    std::vector<GPU_PointLight> lights;
+    auto&& storage = scene->entities().storage<PointLightComponent>();
+
+    enabledPointLightCount = (uint)storage.size();
+    lightsSSBO.setData(storage.raw(), sizeof(GPU_PointLight)*enabledPointLightCount);
 
     auto camera = scene->activeCamera();
 
@@ -375,7 +363,7 @@ void RenderPipeline::updateCascadeRanges()
     }
 }
 
-void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<std::shared_ptr<Entity>> entities)
+void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
 {
     UNUSED(scene);
     // Draw cascading shadow maps to depth
@@ -384,15 +372,14 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<s
     csmShader->bind();
     glDisable(GL_BLEND);
     glCullFace(GL_FRONT);
-    for(auto& ent : entities)
+    auto group = scene->entities().group<TransformComponent, MeshComponent, RenderSpecComponent>();
+    for(auto& ent : group)
     {
-        auto model = ent->model;
-        if(!model)
-            continue;
-
         // draw here
-        auto mMat = ent->getModelMatrix();
-        csmShader->setUniform("u_Model", BufferElement::Mat4, mMat);
+        auto transform = group.get<TransformComponent>(ent).transform();
+        csmShader->setUniform("u_Model", BufferElement::Mat4, transform);
+
+        auto model = group.get<MeshComponent>(ent).model;
         for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
@@ -407,7 +394,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<s
     csmFBO.unbind();
 }
 
-void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<std::shared_ptr<Entity>> entities)
+void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
 {
     // DRAW pbr objects
     hdrFBO.bind();
@@ -432,23 +419,22 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<std::shar
     pbrShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
     csmFBO.getDepthTex()->bind(3);
 
+    // this below should probably go to separate draw call
+    pbrShader->setUniform("u_bloomTreshold", BufferElement::Float, config.bloomTreshold);
+    pbrShader->setUniform("u_exposure", BufferElement::Float, config.exposure);
 
 
-    for(auto& ent : entities)
+    auto group = scene->entities().group<TransformComponent, MeshComponent, RenderSpecComponent>();
+    for(auto& ent : group)
     {
-        auto model = ent->model;
-        if(!model)
-            continue;   // should draw debug model here
+        auto renderSpec = group.get<RenderSpecComponent>(ent);
+        auto transform = group.get<TransformComponent>(ent).transform();
+        auto model = group.get<MeshComponent>(ent).model;
+        pbrShader->setUniform("u_Model", BufferElement::Mat4, transform);
 
-        // draw here
-        auto mMat = ent->getModelMatrix();
-        pbrShader->setUniform("u_Model", BufferElement::Mat4, mMat);
         for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
-            // this below should probably go to separate draw call
-            pbrShader->setUniform("u_bloomTreshold", BufferElement::Float, config.bloomTreshold);
-            pbrShader->setUniform("u_exposure", BufferElement::Float, config.exposure);
 
             //draw with basic_pbr
             pbrShader->setUniform("u_Metallic", BufferElement::Float, mesh->material.metallic);
@@ -456,8 +442,8 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<std::shar
 
             //NOTE: We might add this as a boolean check but you shouldn't set override color to
             //      invisible, instead you should set renderable to false
-            if(ent->color.a > 0)
-                pbrShader->setUniform("u_Color", BufferElement::Float4, ent->color);
+            if(renderSpec.color.a > 0)
+                pbrShader->setUniform("u_Color", BufferElement::Float4, renderSpec.color);
             else
                 pbrShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
             vao->bind();
