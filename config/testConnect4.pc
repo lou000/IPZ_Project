@@ -16,11 +16,11 @@ m_gameCamera:
   camera->m_rotation: [0, 0, 0, 1]
 m_editorCamera:
   camera->type: 0
-  camera->m_pos: [13.4900465, 9.66067505, 18.2966976]
+  camera->m_pos: [18.2558823, 15.6185312, 10.2156076]
   camera->m_fov: 50
   camera->m_aspectRatio: 1.5
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [-0.0757576004, 0.311349541, 0.0249086637, 0.946943402]
+  camera->m_rotation: [-0.18444787, 0.494107246, 0.108149037, 0.842698514]

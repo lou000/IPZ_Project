@@ -357,7 +357,7 @@ bool Model::doReload()
     return loadModel();
 }
 
-std::shared_ptr<Model> Model::makeUnitQuad()
+std::shared_ptr<Model> Model::makeUnitPlane()
 {
     constexpr vec2 textureCoords[4]={
         {0.0f, 0.0f},
@@ -397,7 +397,7 @@ std::shared_ptr<Model> Model::makeUnitQuad()
     mat.color = {1,1,1,1};
     auto m = std::make_shared<Mesh>((float*)&vertices[0], 4, (uint16*)&indices[0], 6, mat);
 
-    return std::make_shared<Model>(std::vector<std::shared_ptr<Mesh>>{m});
+    return std::make_shared<Model>("unitPlane", std::vector<std::shared_ptr<Mesh>>{m});
 }
 
 bool Model::loadModel()
@@ -432,7 +432,7 @@ bool Model::loadModel()
     std::vector<float> vertices; // resize
 
     AABB modelBB;
-    LOG("\nLoading asset %s\n", c_str);
+    LOG("Loading asset %s\n", c_str);
     for(uint s=0; s<scene->mNumMeshes; s++)
     {
         Material material;
@@ -514,8 +514,8 @@ bool Model::loadModel()
             for(uint j=0; j<face.mNumIndices; j++)
                 indices.push_back(face.mIndices[j]);
         }
-        LOG("Mesh %s\n v: %d  i: %d\nRoughness: %f  Metallness: %f\n", mesh->mName.C_Str(),
-            (int)vertices.size()/vertexSize, (int)indices.size(), material.roughness, material.metallic);
+//        LOG("Mesh %s\n v: %d  i: %d\nRoughness: %f  Metallness: %f\n", mesh->mName.C_Str(),
+//            (int)vertices.size()/vertexSize, (int)indices.size(), material.roughness, material.metallic);
         AABB bb;
         memcpy(&bb.min, &mesh->mAABB.mMin, sizeof (vec3));
         memcpy(&bb.max, &mesh->mAABB.mMax, sizeof (vec3));
@@ -538,7 +538,6 @@ bool Model::loadModel()
         m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize,
                                                   indices.data(), indices.size(), material, bb));
     }
-    LOG("\n");
     m_boundingBox = modelBB;
 
     return true;

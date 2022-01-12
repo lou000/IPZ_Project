@@ -113,7 +113,7 @@ public:
     std::vector<std::shared_ptr<Mesh>> meshes(){return m_meshes;}
     AABB boundingBox(){return m_boundingBox;}
 
-    static std::shared_ptr<Model> makeUnitQuad();
+    static std::shared_ptr<Model> makeUnitPlane();
 
 private:
     std::vector<std::shared_ptr<Mesh>> m_meshes;

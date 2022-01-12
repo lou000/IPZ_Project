@@ -1,23 +1,47 @@
 ﻿#pragma once
+#include "Connect4/connect4.h"
 #include "../Core/application.h"
 #include "../Core/scene.h"
-#include "Connect4/connect4.h"
+
+
+
+class Puck : public Entity
+{
+public:
+    enum Color
+    {
+        Red, Yellow
+    };
+    Puck():Entity(Entity::C4Puck){}
+    Puck(Color col);
+    ivec2 boardPos;
+};
+
+class Board : public Entity
+{
+public:
+    Board();
+};
+
+class Decoration : public Entity
+{
+public:
+    Decoration() : Entity(Entity::Decoration){}
+    Decoration(const std::string& meshName, vec3 pos, vec3 scale = {1,1,1}, quat rotation = {0,0,0,0});
+};
 
 class TestConnect4 : public Scene
 {
 public:
     TestConnect4();
-    ~TestConnect4(){/*dontcare*/};
+    ~TestConnect4(){/*dontcare*/}
     virtual void onStart() override;
     virtual void onUpdate(float dt) override;
     virtual void debugDraw() override;
 
 private:
-    std::shared_ptr<Model> mesh1, mesh2, mesh3;
-    std::shared_ptr<Entity> previewPuck = nullptr;
-    std::shared_ptr<Entity> puckInPlay = nullptr;
-    vec4 red = {0.882, 0.192, 0.161, 1};
-    vec4 yellow = {0.906, 0.878, 0.302, 1};
+    std::shared_ptr<Board> board;
+    std::shared_ptr<Puck> previewPuck;
     uint entityCount = 4;
     float length = 11.9f;
     float top = 9.1;

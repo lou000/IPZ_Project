@@ -13,15 +13,17 @@ public:
     void setOverrideColor(vec4 color);
     bool enabled() const;
 
-
     enum Type{
         Base,
-        PointLight
+        PointLight,
+        C4Board,
+        C4Puck,
+        Decoration
     };
+    Type getType(){return m_type;}
 
     //       SERIALIZED      //
     //-----------------------//
-    Type type =     Base;
     vec4 color =    {0,0,0,0};
     vec3 pos =      {0, 0, 0};
     vec3 scale =    {1, 1, 1};
@@ -31,8 +33,9 @@ public:
     //-----------------------//
 
 protected:
-    bool m_enabled = false;
-    Entity();
+    Entity(Entity::Type type) : m_type(type){}
+    Type m_type =     Base;
+    bool m_enabled = true;
 
 private:
     uint64 m_id = 0; //SERIALIZED

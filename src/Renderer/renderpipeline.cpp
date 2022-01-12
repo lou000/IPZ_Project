@@ -1,7 +1,8 @@
 ﻿#include "renderpipeline.h"
+#include"../Core/yamlserialization.h"
 #include "../Core/gui.h"
 #include "../Core/application.h"
-#include"../Core/yamlserialization.h"
+#include "../Core/entity.h"
 #include <random>
 
 
@@ -60,16 +61,16 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     std::vector<std::shared_ptr<Entity>> entitiesToDraw;
     std::vector<GPU_PointLight> lightsToDraw;
     for(auto& ent : scene->entities())
+    {
         if(ent->renderable)
+            entitiesToDraw.push_back(ent);
+        else if(ent->getType() == Entity::Type::PointLight)
         {
-            if(ent->type == Entity::Type::PointLight)
-            {
-                auto light = std::static_pointer_cast<PointLight>(ent);
-                lightsToDraw.push_back(light->toGPULight());
-            }
-            else
-                entitiesToDraw.push_back(ent);
+            auto light = std::static_pointer_cast<PointLight>(ent);
+            lightsToDraw.push_back(light->toGPULight());
         }
+    }
+
 
 
     maybeUpdateDynamicShaders(scene);
@@ -385,10 +386,14 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene, std::vector<s
     glCullFace(GL_FRONT);
     for(auto& ent : entities)
     {
+        auto model = ent->model;
+        if(!model)
+            continue;
+
         // draw here
-        auto model = ent->getModelMatrix();
-        csmShader->setUniform("u_Model", BufferElement::Mat4, model);
-        for(auto mesh : ent->model->meshes())
+        auto mMat = ent->getModelMatrix();
+        csmShader->setUniform("u_Model", BufferElement::Mat4, mMat);
+        for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
             vao->bind();
@@ -431,10 +436,14 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene, std::vector<std::shar
 
     for(auto& ent : entities)
     {
+        auto model = ent->model;
+        if(!model)
+            continue;   // should draw debug model here
+
         // draw here
-        auto model = ent->getModelMatrix();
-        pbrShader->setUniform("u_Model", BufferElement::Mat4, model);
-        for(auto mesh : ent->model->meshes())
+        auto mMat = ent->getModelMatrix();
+        pbrShader->setUniform("u_Model", BufferElement::Mat4, mMat);
+        for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
             // this below should probably go to separate draw call

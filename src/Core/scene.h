@@ -23,6 +23,7 @@ public:
     virtual void debugDraw() = 0;
 
     DirectionalLight directionalLight; //serialized
+    bool deserialized() {return m_deserialized;}
     std::unordered_set<std::shared_ptr<Entity>> entities();
     std::shared_ptr<Camera> activeCamera(){return m_activeCamera;}
     std::shared_ptr<Camera> sceneCamera(){return m_gameCamera;}
@@ -45,8 +46,8 @@ private:
     bool m_serialize;
     //-----------------------------------//
 
+    bool m_deserialized = false;
 
-    // these are serialized by the inheriting classes
     std::unordered_set<std::shared_ptr<Entity>> m_entities;
 };
 

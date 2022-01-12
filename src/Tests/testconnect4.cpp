@@ -32,46 +32,38 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
     ASSERT(bestMoves.size());
     return bestMoves[random].first;
 }
+
 TestConnect4::TestConnect4()
     :Scene("testConnect4", true)
 {
-    mesh1 = std::make_shared<Model>("../assets/meshes/connect4_board.fbx");
-    mesh2 = std::make_shared<Model>("../assets/meshes/connect4Puck1.obj");
-    mesh3 = std::make_shared<Model>("../assets/meshes/connect4Puck2.obj");
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4_board.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4Puck1.obj"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4Puck2.obj"));
 
-    auto testMesh1 = std::make_shared<Model>("../assets/meshes/obelisk1.fbx");
-    auto testMesh2 = std::make_shared<Model>("../assets/meshes/wolf.fbx");
-    auto testMesh3 = std::make_shared<Model>("../assets/meshes/campfire.fbx");
-    auto testMesh4 = Model::makeUnitQuad();
-//    auto testMesh3 = std::make_shared<MeshFile>("../assets/meshes/tree.blend");
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
+    AssetManager::addAsset(Model::makeUnitPlane());
 
-    AssetManager::addAsset(mesh1);
-    AssetManager::addAsset(mesh2);
-    AssetManager::addAsset(mesh3);
 
-    AssetManager::addAsset(testMesh1);
-    AssetManager::addAsset(testMesh2);
-    AssetManager::addAsset(testMesh3);
 
-    auto board = createEntity(mesh1, {0,0,0});
-    board->color = {0.165, 0.349, 1.000, 1};
+    auto board = std::make_shared<Board>();
 
-    auto puck1 = createEntity(mesh2, {1,0,3});
-    puck1->color = red;
+    registerEntity(board);
 
-    auto puck2 = createEntity(mesh3, {-1,0,3});
-    puck2->color = yellow;
+    registerEntity(std::make_shared<Decoration>("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
+                                                vec3(1), quat({-radians(90.f), 0, 0})));
+    registerEntity(std::make_shared<Decoration>("../assets/meshes/wolf.fbx", vec3(-5,0,5),
+                                                vec3(1),  quat({-radians(90.f), 0, 0})));
+    registerEntity(std::make_shared<Decoration>("../assets/meshes/campfire.fbx", vec3(1,0,3),
+                                                vec3(0.3f), quat({-radians(90.f), 0, 0})));
+    registerEntity(std::make_shared<Decoration>("unitPlane", vec3(0,0,0), vec3(100)));
+    registerEntity(std::make_shared<PointLight>(vec3(1, 2 ,3), vec4(1,0.05,0,1), 60.f, 200.f));
 
-    auto test1 = createEntity(testMesh1, {5,0,5}, vec3(1), quat({-radians(90.f), 0, 0}));
-    auto test2 = createEntity(testMesh2, {-5,0,5}, vec3(1),  quat({-radians(90.f), 0, 0}));
-    auto test3 = createEntity(testMesh3, {1,0,3}, vec3(0.3), quat({-radians(90.f), 0, 0}));
-    auto test4 = createEntity(testMesh4, {0,0,0}, vec3(100));
 
-    createLight({1, 2 ,3}, {1,0.05,0}, 60.f, 200.f);
-
-    previewPuck = createEntity(mesh3, {0, 0, 0}, vec3(1), quat({radians(90.f), 0, 0}));
-    previewPuck->color = yellow;
+    previewPuck = std::make_shared<Puck>(Puck::Yellow);
     previewPuck->color.a = 0.2f;
+    registerEntity(previewPuck);
 
 
 
@@ -92,72 +84,72 @@ void TestConnect4::onStart()
 
 void TestConnect4::onUpdate(float dt)
 {
-    auto mouseRay  = activeCamera()->getMouseRay();
-    auto cameraPos = activeCamera()->getPos();
-    vec3 intersection = {};
+//    auto mouseRay  = activeCamera()->getMouseRay();
+//    auto cameraPos = activeCamera()->getPos();
+//    vec3 intersection = {};
 
-    previewPuck->renderable = false;
-    if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && c4->userTurn && c4->is_terminal() == std::nullopt)
-    {
-        if(intersectPlane({0, 0, -1}, {0,0,0.45}, cameraPos, mouseRay, intersection))
-        {
-            for(int i=0; i<7; i++)
-                if(abs(intersection.x - hPositions[i])<=hOffset/2 && intersection.y>0 && intersection.y<10)
-                {
-                    currentMove = c4->createMove(i);
-                    if(currentMove.h_grade>=0)
-                    {
-                        if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
-                        {
-                            puckInPlay = createEntity(mesh3, {hPositions[i],11,-0.45}, vec3(1), quat({radians(90.f), 0, 0}));
-                            puckInPlay->color = yellow;
-                            animating = true;
-                        }
-                        else
-                        {
-                            previewPuck->renderable = true;
-                            previewPuck->pos = {hPositions[i],11,-0.45};
-                        }
-                    }
-                }
-        }
-    }
-    if(!animating && !c4->userTurn && c4->is_terminal() == std::nullopt)
-    {
-        searcher->do_search(*c4);
-        auto moves = searcher->get_scores();
-        currentMove = pickRandomTopMove(moves);
+//    previewPuck->renderable = false;
+//    if(!App::getMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT) && !animating && c4->userTurn && c4->is_terminal() == std::nullopt)
+//    {
+//        if(intersectPlane({0, 0, -1}, {0,0,0.45}, cameraPos, mouseRay, intersection))
+//        {
+//            for(int i=0; i<7; i++)
+//                if(abs(intersection.x - hPositions[i])<=hOffset/2 && intersection.y>0 && intersection.y<10)
+//                {
+//                    currentMove = c4->createMove(i);
+//                    if(currentMove.h_grade>=0)
+//                    {
+//                        if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+//                        {
+//                            puckInPlay = createEntity(mesh3, {hPositions[i],11,-0.45}, vec3(1), quat({radians(90.f), 0, 0}));
+//                            puckInPlay->color = yellow;
+//                            animating = true;
+//                        }
+//                        else
+//                        {
+//                            previewPuck->renderable = true;
+//                            previewPuck->pos = {hPositions[i],11,-0.45};
+//                        }
+//                    }
+//                }
+//        }
+//    }
+//    if(!animating && !c4->userTurn && c4->is_terminal() == std::nullopt)
+//    {
+//        searcher->do_search(*c4);
+//        auto moves = searcher->get_scores();
+//        currentMove = pickRandomTopMove(moves);
 
-        puckInPlay = createEntity(mesh3, {0,0,0}, vec3(1), quat({radians(90.f), 0, 0}));
-        puckInPlay->color = red;
+//        puckInPlay = createEntity(mesh3, {0,0,0}, vec3(1), quat({radians(90.f), 0, 0}));
+//        puckInPlay->color = red;
 
-        animating = true;
-    }
+//        animating = true;
+//    }
 
-    if(animating)
-    {
-        ASSERT(puckInPlay);
-        ySpeed += 20*dt;
-        yPos -= ySpeed*dt;
+//    if(animating)
+//    {
+//        ASSERT(puckInPlay);
+//        ySpeed += 20*dt;
+//        yPos -= ySpeed*dt;
 
-        puckInPlay->pos = {hPositions[currentMove.x], yPos,-0.45};
+//        puckInPlay->pos = {hPositions[currentMove.x], yPos,-0.45};
 
-        if(yPos<=vPositions[currentMove.y])
-        {
-            animating = false;
-            puckInPlay->pos.y = vPositions[currentMove.y];
-            puckInPlay = nullptr;
-            ySpeed = 0;
-            yPos = 11;
-            c4->commitMove(currentMove);
-        }
-    }
+//        if(yPos<=vPositions[currentMove.y])
+//        {
+//            animating = false;
+//            puckInPlay->pos.y = vPositions[currentMove.y];
+//            puckInPlay = nullptr;
+//            ySpeed = 0;
+//            yPos = 11;
+//            c4->commitMove(currentMove);
+//        }
+//    }
 
 }
 
 void TestConnect4::debugDraw()
 {
-    for(auto ent : enabledEntities())
+    for(auto ent : entities())
     {
         auto model = ent->getModelMatrix();
         auto bb = ent->model->boundingBox();
@@ -182,4 +174,40 @@ void TestConnect4::debugDraw()
         BatchRenderer::drawLine({bb.min.x, bb.min.y, bb.max.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
     }
 
+}
+
+Board::Board()
+    : Entity(Entity::C4Board)
+{
+    model = AssetManager::getAsset<Model>("../assets/meshes/connect4_board.fbx");
+    renderable = true;
+}
+
+Puck::Puck(Color col)
+    : Entity(Entity::C4Puck)
+{
+    switch(col)
+    {
+        case Yellow:
+            model = AssetManager::getAsset<Model>("../assets/meshes/connect4Puck1.obj");
+            color = {0.906, 0.878, 0.302, 1};
+            break;
+        case Red:
+            model = AssetManager::getAsset<Model>("../assets/meshes/connect4Puck2.obj");
+            color = {0.882, 0.192, 0.161, 1};
+            break;
+    }
+    rotation = quat({radians(90.f), 0, 0});
+    boardPos = {-1, -1};
+    renderable = true;
+}
+
+Decoration::Decoration(const std::string &meshName, vec3 pos, vec3 scale, quat rotation)
+    : Entity(Entity::Decoration)
+{
+    this->model = AssetManager::getAsset<Model>(meshName);
+    this->pos = pos;
+    this->scale = scale;
+    this->rotation = rotation;
+    renderable = true;
 }

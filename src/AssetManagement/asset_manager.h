@@ -41,7 +41,9 @@ public:
 
     static void addAsset(std::shared_ptr<Asset> asset){getInstance().x_addAsset(asset);}
     static void removeAsset(const std::string& assetPath){getInstance().x_removeAsset(assetPath);}
-    static std::shared_ptr<Asset> getAsset(const std::string& name) {return getInstance().x_getAsset(name);}
+
+    template<typename T>
+    static std::shared_ptr<T> getAsset(const std::string& name) {return getInstance().x_getAsset<T>(name);}
 
     static void addShader(std::shared_ptr<Shader> shader){getInstance().x_addShader(shader);}
     static void removeShader(int id){getInstance().x_removeShader(id);}
@@ -58,7 +60,18 @@ private:
 
     void x_addAsset(std::shared_ptr<Asset> asset);
     void x_removeAsset(const std::string& assetPath);
-    std::shared_ptr<Asset> x_getAsset(const std::string& name);
+
+    template<typename T>
+    std::shared_ptr<T> x_getAsset(const std::string &name)
+    {
+        if (fileAssets.find(name) == fileAssets.end())
+            return nullptr;
+        else
+        {
+            auto asset = std::dynamic_pointer_cast<T>(fileAssets.at(name));
+            return asset;
+        }
+    }
 
     void x_addShader(std::shared_ptr<Shader> shader);
     void x_removeShader(uint id);

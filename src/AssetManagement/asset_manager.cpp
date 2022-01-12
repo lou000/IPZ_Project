@@ -11,7 +11,7 @@ void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
     }
     if(asset->m_path.empty() && !asset->m_name.empty())
     {
-        if(fileAssets.find(asset->m_name) != fileAssets.end())
+        if(fileAssets.find(asset->m_name) == fileAssets.end())
         {
             fileAssets.insert({asset->m_name, asset});
         }
@@ -38,14 +38,6 @@ void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
         auto eDir = dirs[dir->path];
         eDir->assets.insert({asset->m_path, asset});
     }
-}
-
-std::shared_ptr<Asset> AssetManager::x_getAsset(const std::string &path)
-{
-    if (fileAssets.find(path) == fileAssets.end())
-        return nullptr;
-    else
-        return fileAssets.at(path);
 }
 
 void AssetManager::x_removeAsset(const std::string &assetPath)

@@ -34,11 +34,11 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
     switch(level)
     {
     case 0/*LOG */: std::cout<<color(cyan)<<message; return AssertAction::None;
-    case 1/*WARN*/: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n\n"; return AssertAction::None;
-    case 2/*OPENGL_LOG  */: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::None;
-    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n\n"; return AssertAction::Break;
-    case 4/*GLFW_LOG    */: std::cout<<color(cyan)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::None;
-    case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n\n"; return AssertAction::Break;
+    case 1/*WARN*/: std::cout<<color(red)<<file<<" : "<<line<<"\n"<<message<<"\n"; return AssertAction::None;
+    case 2/*OPENGL_LOG  */: std::cout<<color(cyan)<<"[OpenGL] "<<message<<"\n"; return AssertAction::None;
+    case 3/*OPENGL_THROW*/: std::cout<<color(red)<<"[OpenGL] "<<message<<"\n"; return AssertAction::Break;
+    case 4/*GLFW_LOG    */: std::cout<<color(cyan)<<"[GLFW] "<<message<<"\n"; return AssertAction::None;
+    case 5/*GLFW_THROW  */: std::cout<<color(red)<<"[GLFW] "<<message<<"\n"; return AssertAction::Break;
     case 6/*NOT_REACHED */: std::cout<<color(red)<<file<<" : "<<line<<"\n ASSERT_NOT_REACHED: Shouldn't be here!\n"; return AssertAction::Break;
 
     case AssertLevel::Warning: std::cout<<file<<line<<message; return AssertAction::None;
@@ -48,7 +48,7 @@ static ppk::assert::implementation::AssertAction::AssertAction assertHandler(con
         std::cout<<file<<line<<message;
         return AssertAction::Break;
     }
-    std::cout<<file<<" "<<line<<"Invalid Assert level:"<<level<<"\n\n"<<message;
+    std::cout<<file<<" "<<line<<"Invalid Assert level:"<<level<<"\n"<<message;
     return AssertAction::Break;
 }
 
