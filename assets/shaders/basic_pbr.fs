@@ -1,4 +1,4 @@
-#version 430 core
+﻿#version 430 core
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_BloomColor;
@@ -40,6 +40,7 @@ uniform float u_cascadePlaneDistances[20];
 uniform vec3 u_CameraPosition;
 uniform vec3 u_DirLightDirection;
 uniform float u_DirLightIntensity;
+uniform float u_AmbientIntensity;
 uniform float u_bloomTreshold;
 uniform float u_exposure;
 uniform vec3 u_DirLightCol;
@@ -58,28 +59,36 @@ vec3 pointLightContribution(vec3 lightPosition, vec3 lightColor, float intensity
 float dirLightShadow(vec3 fPos);
 
 void main()
-{
-    vec3 N = normalize(v_Normal);
-    vec3 V = normalize(u_CameraPosition - v_Pos);
-
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, v_Color.rgb, u_Metallic);
-
-    // lights contribution TODO: pass intensities and ranges
-    float dirShadow = dirLightShadow(v_Pos);
-    vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, dirShadow, 
-                                   V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
-
-    for(int i = 0; i < u_PointLightCount; ++i)
+{   
+    vec3 color;
+    if(dot(v_Color.rgb, vec3(0.2126, 0.7152, 0.0722)) < 2.0) // temporary hack, move those objects to another pass
     {
-        vec3 pos = pointLights[i].position.xyz;
-        vec3 col = pointLights[i].color.rgb;
-        Lo += pointLightContribution(pos, col, pointLights[i].intensity, pointLights[i].range,
-                                     v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
-    }
+        vec3 N = normalize(v_Normal);
+        vec3 V = normalize(u_CameraPosition - v_Pos);
 
-    vec3 ambient = vec3(0.3) * v_Color.rgb;
-    vec3 color = ambient + Lo;
+        vec3 F0 = vec3(0.04);
+        F0 = mix(F0, v_Color.rgb, u_Metallic);
+
+        // lights contribution TODO: pass intensities and ranges
+        float dirShadow = dirLightShadow(v_Pos);
+        vec3 Lo = dirLightContribution(u_DirLightDirection, u_DirLightCol, u_DirLightIntensity, dirShadow, 
+                                    V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
+
+        for(int i = 0; i < u_PointLightCount; ++i)
+        {
+            vec3 pos = pointLights[i].position.xyz;
+            vec3 col = pointLights[i].color.rgb;
+            Lo += pointLightContribution(pos, col, pointLights[i].intensity, pointLights[i].range,
+                                        v_Pos, V, N, v_Color.rgb, u_Roughness, u_Metallic, F0);
+        }
+
+        vec3 ambient = u_AmbientIntensity * v_Color.rgb;
+        color = ambient + Lo;
+    }
+    else
+    {
+        color = v_Color.rgb;
+    }
 
     color*=u_exposure;
     o_Color = vec4(color, v_Color.a);

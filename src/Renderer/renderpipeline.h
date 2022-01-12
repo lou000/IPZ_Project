@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "../Core/scene.h"
+#include "../AssetManagement/assets.h"
 #include <memory>
 #define MAX_BLOOM_SAMPLES 20
 #define MAX_SHADOW_CASCADES 20
@@ -44,6 +45,7 @@ private:
 
     // no touchy
     RenderConfig config;
+    bool showRenderSettings = true;
     uvec2 winSize;
     uvec2 oldWinSize;
     uint enabledPointLightCount = 0;
@@ -79,6 +81,7 @@ private:
     std::shared_ptr<Shader> downsampleAndBlur;
     std::shared_ptr<Shader> tentUpsampleAndAdd;
     std::shared_ptr<Shader> csmShader;
+    std::shared_ptr<Shader> solidShader;
     std::vector<std::shared_ptr<Texture>> bloomDownSampleTextures;
     std::vector<std::shared_ptr<Texture>> bloomUpSampleTextures;
 
@@ -91,7 +94,7 @@ private:
     void maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene);
     void drawSceneDebug(std::shared_ptr<Scene> scene);
     void drawScreenSpace(std::shared_ptr<Scene> scene);
-    void drawImgui();
+    void drawImgui(std::shared_ptr<Scene> scene);
     void initSSAO();
     void ssaoPass(std::shared_ptr<Scene> scene);
     void ssaoBlur();

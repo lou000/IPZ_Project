@@ -82,7 +82,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     outputFBO.bind();
     outputFBO.blitToFrontBuffer();
-    drawImgui();
+    drawImgui(scene);
 }
 
 void RenderPipeline::serialize()
@@ -142,6 +142,13 @@ void RenderPipeline::initShaders()
     };
     simpleBlur = std::make_shared<Shader>("simple_blur", shaderSrcs);
     AssetManager::addShader(simpleBlur);
+
+    shaderSrcs = {
+        {"../assets/shaders/basic_pbr.vs"},
+        {"../assets/shaders/solid_color.fs"}
+    };
+    solidShader = std::make_shared<Shader>("solid_color", shaderSrcs);
+    AssetManager::addShader(solidShader);
 }
 
 void RenderPipeline::initFBOs()
@@ -259,10 +266,12 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
 
     // Set point lights data
     std::vector<GPU_PointLight> lights;
-    auto&& storage = scene->entities().storage<PointLightComponent>();
+    auto view = scene->entities().view<PointLightComponent>();
+    for(auto ent : view)
+        lights.push_back(view.get<PointLightComponent>(ent).light);
 
-    enabledPointLightCount = (uint)storage.size();
-    lightsSSBO.setData(storage.raw(), sizeof(GPU_PointLight)*enabledPointLightCount);
+    enabledPointLightCount = lights.size();
+    lightsSSBO.setData(lights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
 
     auto camera = scene->activeCamera();
 
@@ -408,6 +417,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     pbrShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
 
     // Set directional light data
+    pbrShader->setUniform("u_AmbientIntensity", BufferElement::Float, scene->directionalLight.ambientIntensity);
     pbrShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->directionalLight.direction);
     pbrShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
     pbrShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
@@ -613,7 +623,7 @@ void RenderPipeline::drawSceneDebug(std::shared_ptr<Scene> scene)
     hdrFBO.bindColorAttachment(0);
     // Draw debug graphics
     BatchRenderer::begin(sceneCamera);
-    scene->debugDraw();
+    scene->onDebugDraw();
     BatchRenderer::end();
     hdrFBO.unbind();
 }
@@ -635,35 +645,30 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
     outputFBO.unbind();
 }
 
-void RenderPipeline::drawImgui()
+void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
 {
-    bool show = true;
     ImGui::SetNextWindowSize(ImVec2(200, 400), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Render settings", &show))
-    {
-        // CSM
-        TWEAK_BOOL("enableCSM", config.enableCSM);
-        TWEAK_INT("shadowCascadeCount", config.shadowCascadeCount, 1, 0, 10);
-        TWEAK_FLOAT("firstCascadeOffset", config.firstCascadeOffset, 0.01f);
-        TWEAK_FLOAT("cascadeZextra", config.cascadeZextra, 0.01f);
+    START_TWEAK("Render settings", showRenderSettings);
+    // CSM
+    TWEAK_BOOL("enableCSM", config.enableCSM);
+    TWEAK_INT("shadowCascadeCount", config.shadowCascadeCount, 1, 0, 10);
+    TWEAK_FLOAT("firstCascadeOffset", config.firstCascadeOffset, 0.01f);
+    TWEAK_FLOAT("cascadeZextra", config.cascadeZextra, 0.01f);
 
-        // BLOOM
-        TWEAK_BOOL("enableBloom", config.enableBloom);
-        TWEAK_FLOAT("bloomRadius", config.bloomRadius, 0.01f, 0, 8);
-        TWEAK_FLOAT("bloomIntensity", config.bloomIntensity, 0.01f);
-        TWEAK_FLOAT("bloomTreshold", config.bloomTreshold, 0.01f);
-        TWEAK_FLOAT("exposure", config.exposure, 0.01f);
+    // BLOOM
+    TWEAK_BOOL("enableBloom", config.enableBloom);
+    TWEAK_FLOAT("bloomRadius", config.bloomRadius, 0.01f, 0, 8);
+    TWEAK_FLOAT("bloomIntensity", config.bloomIntensity, 0.01f);
+    TWEAK_FLOAT("bloomTreshold", config.bloomTreshold, 0.01f);
+    TWEAK_FLOAT("exposure", config.exposure, 0.01f);
 
-        // SSAO
-        TWEAK_BOOL("enableSSAO", config.enableSSAO);
-        TWEAK_INT("blurKernelSize", config.blurKernelSize, 2, 2, 20);
-        TWEAK_INT("ssaoKernelSize", config.ssaoKernelSize, 2, 2, 256);
-        TWEAK_FLOAT("ssaoRadius", config.ssaoRadius, 0.01f);
-        TWEAK_FLOAT("ssaoBias", config.ssaoBias, 0.01f);
+    // SSAO
+    TWEAK_BOOL("enableSSAO", config.enableSSAO);
+    TWEAK_INT("blurKernelSize", config.blurKernelSize, 2, 2, 20);
+    TWEAK_INT("ssaoKernelSize", config.ssaoKernelSize, 2, 2, 256);
+    TWEAK_FLOAT("ssaoRadius", config.ssaoRadius, 0.01f);
+    TWEAK_FLOAT("ssaoBias", config.ssaoBias, 0.01f);
+    STOP_TWEAK();
 
-
-//        ImGui::ShowDemoWindow(&show);
-
-        ImGui::End();
-    }
+    scene->sceneSettingsRender();
 }

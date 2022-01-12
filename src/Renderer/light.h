@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "glm.hpp"
-#include "../Core/entity.h"
 
 using namespace glm;
 
@@ -12,6 +11,7 @@ struct DirectionalLight
 
     bool enabled = false;
     float intensity = 1.0f;
+    float ambientIntensity = 0.05f;
 };
 
 struct GPU_PointLight
