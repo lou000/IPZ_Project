@@ -23,9 +23,11 @@ set(client_INCLUDE_DIRS
     external/assimp/include
     external/yaml-cpp/include
     external/imgui
+    external/entt
     )
 include_directories(${client_INCLUDE_DIRS})
 link_directories(external/stb)
+link_directories(external/entt)
 
 file(GLOB_RECURSE client_SRC CONFIGURE_DEPENDS "src/*.h" "src/*.cpp")
 
