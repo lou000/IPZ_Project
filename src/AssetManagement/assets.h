@@ -23,6 +23,7 @@ class Asset{
 public:
     virtual bool doReload() = 0;
     std::string getName();
+    bool hasFile(){return !m_path.empty();}
 
 protected:
     Asset(){}
@@ -106,6 +107,7 @@ class Model : public Asset
 {
 
 public:
+    Model(const std::string& name, bool loadDebug); //TODO: debug model
     Model(const std::filesystem::path& path);
     Model(std::string name, std::vector<std::shared_ptr<Mesh>> meshes);
 

@@ -2,15 +2,20 @@
 #include "components.h"
 #include "../Core/application.h"
 #include "../Core/yamlserialization.h"
+#include "../Core/gui.h"
+#include "entity.h"
 #include <memory>
 #include <random>
 
 
-Scene::Scene(std::string name, bool serialize)
-    : m_name(name), m_serialize(serialize)
+Scene::Scene(std::string name, bool deserialize)
+    : m_name(name), m_deserialize(deserialize)
 {
+    //Add built in meshes
+    AssetManager::addAsset(Model::makeUnitPlane());
+
     //Deserialize if enabled and succesful
-    if(m_serialize && Serializer::deserializeScene(this, "../Config/"+m_name+".pc"))
+    if(m_deserialize && Serializer::deserializeScene(this, "../Config/"+m_name+".pc"))
         return;
 
     //Default values in case there is no file or serialization is off
@@ -18,22 +23,36 @@ Scene::Scene(std::string name, bool serialize)
     m_editorCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     m_gameCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     m_activeCamera = m_editorCamera;
+    m_activeCamera->setFov(50.f);
+    m_activeCamera->setPosition({0, 7, 20});
+    m_activeCamera->setFocusPoint({0,6,0});
 
     directionalLight.direction = normalize(vec3(-6, -5, -1.33f));
     directionalLight.color = {1,1,1};
     directionalLight.intensity = 1.f;
+    directionalLight.ambientIntensity = 0.1f;
 }
 
 Scene::~Scene()
 {
-    if(m_serialize)
-        Serializer::serializeScene(this, "../Config/"+m_name+".pc");
+    Serializer::serializeScene(this, "../Config/"+m_name+".pc");
+}
+
+void Scene::sceneSettingsRender()
+{
+    START_TWEAK("Scene settings", showSceneSettings);
+    TWEAK_VEC3("Direction", directionalLight.direction, 0.01f, -10, 10);
+    TWEAK_COLOR3("Color", directionalLight.color);
+    TWEAK_FLOAT("Intensity", directionalLight.intensity, 0.01f, 0, 10);
+    TWEAK_FLOAT("AmbientIntensity", directionalLight.ambientIntensity, 0.001f, 0, 1);
+    STOP_TWEAK();
+    onGuiRender();
 }
 
 Entity Scene::createEntity()
 {
     Entity entity = { m_entities.create(), this };
-    entity.m_id = genID();
+    entity.addComponent<IDComponent>(genID());
     return entity;
 }
 

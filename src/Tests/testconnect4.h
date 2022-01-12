@@ -11,7 +11,8 @@ public:
     ~TestConnect4(){/*dontcare*/}
     virtual void onStart() override;
     virtual void onUpdate(float dt) override;
-    virtual void debugDraw() override;
+    virtual void onDebugDraw() override;
+    virtual void onGuiRender() override;
 
 private:
     uint entityCount = 4;

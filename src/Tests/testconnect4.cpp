@@ -1,6 +1,7 @@
 ﻿#include "testconnect4.h"
 #include <sstream>
 #include "../Core/math.h"
+#include "../Core/entity.h"
 #include "../Core/components.h"
 
 Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorted
@@ -37,25 +38,27 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 TestConnect4::TestConnect4()
     :Scene("testConnect4", true)
 {
-    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4_board.fbx"));
-    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4Puck1.obj"));
-    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4Puck2.obj"));
+    if(!deserialized())
+    {
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4_board.fbx"));
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4Puck1.obj"));
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4Puck2.obj"));
 
-    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
-    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
-    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
-    AssetManager::addAsset(Model::makeUnitPlane());
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
 
-
-    createEntity("../assets/meshes/connect4_board.fbx");
-    createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
-                  vec3(1), quat({-radians(90.f), 0, 0}));
-    createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
-                  vec3(1),  quat({-radians(90.f), 0, 0}));
-    createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
-                 vec3(0.3f), quat({-radians(90.f), 0, 0}));
-    createEntity("unitPlane", vec3(0,0,0), vec3(100));
-    createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 60.f, 200.f);
+        createEntity("../assets/meshes/connect4_board.fbx");
+        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
+                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
+        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
+                      vec3(1),  quat({-radians(90.f), 0, 0}));
+        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
+                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+        createEntity("unitPlane", vec3(0,0,0), vec3(100));
+        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 60.f, 200.f);
+        createEntity("unitPlane", vec3(0,0,0), vec3(100));
+    }
 
 
 
@@ -139,7 +142,11 @@ void TestConnect4::onUpdate(float dt)
 
 }
 
-void TestConnect4::debugDraw()
+void TestConnect4::onGuiRender()
+{
+}
+
+void TestConnect4::onDebugDraw()
 {
     auto view = entities().view<MeshComponent, TransformComponent>();
     for(auto ent : view)

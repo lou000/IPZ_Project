@@ -24,8 +24,8 @@ public:
     static bool serializeCamera(YAML::Emitter& e, std::shared_ptr<Camera> camera);
     static std::shared_ptr<Camera> deserializeCamera(const YAML::Node& node);
 
-    static bool serializeEntity(YAML::Emitter& e, const std::shared_ptr<Entity> &entity);
-    static std::shared_ptr<Entity> deserializeEntity(const YAML::Node& node);
+    static bool serializeEntity(YAML::Emitter& e, Entity entity);
+    static bool deserializeEntity(const YAML::Node& node, const Entity *entity);
 
     static bool serializeScene(Scene* scene, const std::filesystem::path &filepath);
     static bool deserializeScene(Scene* scene, const std::filesystem::path &filepath);

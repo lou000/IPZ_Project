@@ -322,6 +322,11 @@ bool ShaderFile::getTypeFromFileName()
     return true;
 }
 
+Model::Model(const std::string &name, bool loadDebug)
+{
+    this->m_name = name;
+}
+
 Model::Model(const std::filesystem::path &path)
 {
     this->m_path = path;

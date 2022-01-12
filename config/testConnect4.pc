@@ -1,9 +1,11 @@
+Scene: testConnect4
 directionalLight:
-  dirLight.direction: [-0.757319212, -0.631099343, -0.167872429]
-  dirLight.color: [1, 1, 1]
+  dirLight.direction: [-0.757319212, -0.671000004, -0.518000007]
+  dirLight.color: [0.993007004, 0.889573872, 0.784683824]
   dirLight.enabled: false
-  dirLight.intensity: 1
-m_activeCamera: true
+  dirLight.intensity: 3.92000008
+  dirLight.ambientIntensity: 0.224999994
+m_activeCamera: 0
 m_gameCamera:
   camera->type: 0
   camera->m_pos: [0, 0, 0]
@@ -13,14 +15,99 @@ m_gameCamera:
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 0, 0]
-  camera->m_rotation: [0, 0, 0, 1]
+  camera->m_rotation: [0, 0, 0, 0]
 m_editorCamera:
   camera->type: 0
-  camera->m_pos: [9.84341049, 11.9317331, 19.9517689]
+  camera->m_pos: [-3.14255619, 13.7473841, 20.9160099]
   camera->m_fov: 50
-  camera->m_aspectRatio: 1.8879056
+  camera->m_aspectRatio: 1.5
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [-0.126515314, 0.225235373, 0.0295107607, 0.965604484]
+  camera->m_rotation: [-0.174172044, -0.0733513311, -0.0130113447, 0.981893301]
+Entities:
+  - Entity: 18206121531758412552
+    TransformComponent:
+      component.pos: [0, 0, 0]
+      component.scale: [100, 100, 100]
+      component.rotation: [0, 0, 0, 1]
+    RenderSpecComponent:
+      component.color: [0, 0, 0, 0]
+    MeshComponent:
+      hasFile: false
+      meshName: unitPlane
+  - Entity: 5073586319425480881
+    PointLightComponent:
+      component.shadowCasting: false
+      component.light.pos: [1, 2, 3, 1]
+      component.light.color: [1, 0.0500000007, 0, 1]
+      component.light.intensity: 60
+      component.light.radius: 200
+  - Entity: 3150970289167081522
+    TransformComponent:
+      component.pos: [0, 0, 0]
+      component.scale: [1, 1, 1]
+      component.rotation: [0, 0, 0, 1]
+    RenderSpecComponent:
+      component.color: [0, 0, 0, 0]
+    MeshComponent:
+      hasFile: true
+      meshName: ../assets/meshes/connect4_board.fbx
+  - Entity: 17251051957243220877
+    TransformComponent:
+      component.pos: [5, 0, 5]
+      component.scale: [1, 1, 1]
+      component.rotation: [-0.707106769, 0, 0, 0.707106769]
+    RenderSpecComponent:
+      component.color: [0.300000012, 0.300000012, 0.300000012, 1]
+    MeshComponent:
+      hasFile: true
+      meshName: ../assets/meshes/obelisk1.fbx
+  - Entity: 1017288002886314339
+    TransformComponent:
+      component.pos: [-5, 0, 5]
+      component.scale: [1, 1, 1]
+      component.rotation: [-0.707106769, 0, 0, 0.707106769]
+    RenderSpecComponent:
+      component.color: [0, 0, 0, 0]
+    MeshComponent:
+      hasFile: true
+      meshName: ../assets/meshes/wolf.fbx
+  - Entity: 2785897669299526096
+    TransformComponent:
+      component.pos: [1, 0, 3]
+      component.scale: [0.300000012, 0.300000012, 0.300000012]
+      component.rotation: [-0.707106769, 0, 0, 0.707106769]
+    RenderSpecComponent:
+      component.color: [0, 0, 0, 0]
+    MeshComponent:
+      hasFile: true
+      meshName: ../assets/meshes/campfire.fbx
+  - Entity: 9283824322850443951
+    TransformComponent:
+      component.pos: [0, 0, 0]
+      component.scale: [100, 100, 100]
+      component.rotation: [0, 0, 0, 1]
+    RenderSpecComponent:
+      component.color: [0, 0, 0, 0]
+    MeshComponent:
+      hasFile: false
+      meshName: unitPlane
+  - Entity: 2372111429498081642
+    PointLightComponent:
+      component.shadowCasting: false
+      component.light.pos: [1, 2, 3, 1]
+      component.light.color: [1, 0.0500000007, 0, 1]
+      component.light.intensity: 60
+      component.light.radius: 200
+  - Entity: 2010557690809907040
+    TransformComponent:
+      component.pos: [0, 0, 0]
+      component.scale: [100, 100, 100]
+      component.rotation: [0, 0, 0, 1]
+    RenderSpecComponent:
+      component.color: [0, 0, 0, 0]
+    MeshComponent:
+      hasFile: false
+      meshName: unitPlane

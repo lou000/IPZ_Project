@@ -1,6 +1,7 @@
 ﻿#include "yamlserialization.h"
 #include "../Renderer/renderpipeline.h"
-#include "../Tests/testconnect4.h"
+#include "components.h"
+#include "entity.h"
 #include <fstream>
 
 #define SERIALIZE_PRIMITIVE(e, k) \
@@ -271,24 +272,122 @@ std::shared_ptr<Camera> Serializer::deserializeCamera(const Node& node)
     return std::static_pointer_cast<Camera>(camera);
 }
 
-bool Serializer::serializeEntity(Emitter &e, const std::shared_ptr<Entity>& entity)
+bool Serializer::serializeEntity(Emitter &e, Entity entity)
 {
+    ASSERT(entity.hasComponent<IDComponent>());
+    uint64 id = entity.getComponent<IDComponent>();
     e << BeginMap;
-//    SERIALIZE_PRIMITIVE(e, entity->m_type);
-//    SERIALIZE_PRIMITIVE(e, entity->color);
-//    SERIALIZE_PRIMITIVE(e, entity->pos);
-//    SERIALIZE_PRIMITIVE(e, entity->scale);
-//    SERIALIZE_PRIMITIVE(e, entity->rotation);
-//    SERIALIZE_PRIMITIVE(e, entity->renderable);
-//    SERIALIZE_PRIMITIVE(e, entity->model->getName());
+    e << Key << "Entity" << Value << id;
+    if (entity.hasComponent<TransformComponent>())
+    {
+        auto& component = entity.getComponent<TransformComponent>();
+        e << Key << "TransformComponent";
+        e << YAML::BeginMap;
+        SERIALIZE_PRIMITIVE(e, component.pos);
+        SERIALIZE_PRIMITIVE(e, component.scale);
+        SERIALIZE_PRIMITIVE(e, component.rotation);
+        e << YAML::EndMap;
+    }
+    if (entity.hasComponent<RenderSpecComponent>())
+    {
+        auto& component = entity.getComponent<RenderSpecComponent>();
+        e << Key << "RenderSpecComponent";
+        e << YAML::BeginMap;
+        SERIALIZE_PRIMITIVE(e, component.color);
+        e << YAML::EndMap;
+    }
+    if (entity.hasComponent<MeshComponent>())
+    {
+        auto& component = entity.getComponent<MeshComponent>();
+        e << Key << "MeshComponent";
+        e << YAML::BeginMap;
+        e << Key << "hasFile" << Value << component.model->hasFile();
+        e << Key << "meshName" << Value << component.model->getName();
+        e << YAML::EndMap;
+    }
+    if (entity.hasComponent<PointLightComponent>())
+    {
+        auto& component = entity.getComponent<PointLightComponent>();
+        e << Key << "PointLightComponent";
+        e << YAML::BeginMap;
+        SERIALIZE_PRIMITIVE(e, component.shadowCasting);
+        SERIALIZE_PRIMITIVE(e, component.light.pos);
+        SERIALIZE_PRIMITIVE(e, component.light.color);
+        SERIALIZE_PRIMITIVE(e, component.light.intensity);
+        SERIALIZE_PRIMITIVE(e, component.light.radius);
+        e << YAML::EndMap;
+    }
+    if (entity.hasComponent<EmissiveComponent>())
+    {
+        auto& component = entity.getComponent<EmissiveComponent>();
+        e << Key << "EmissiveComponent";
+        e << YAML::BeginMap;
+        SERIALIZE_PRIMITIVE(e, component.color);
+        SERIALIZE_PRIMITIVE(e, component.emissiveIntensity);
+        e << YAML::EndMap;
+    }
     e << EndMap;
     return true;
 }
 
-std::shared_ptr<Entity> Serializer::deserializeEntity(const Node &node)
+bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
 {
+    if(node["Entity"].IsNull()) return false;
+    entity->addComponent<IDComponent>(node["Entity"].as<uint64>());
 
-    return nullptr;
+    auto transform = node["TransformComponent"];
+    if(transform)
+    {
+        auto& component = entity->addComponent<TransformComponent>();
+        DESERIALIZE_PRIMITIVE(transform, component.pos, vec3);
+        DESERIALIZE_PRIMITIVE(transform, component.scale, vec3);
+        DESERIALIZE_PRIMITIVE(transform, component.rotation, quat);
+    }
+    auto renderSpec = node["RenderSpecComponent"];
+    if(renderSpec)
+    {
+        auto& component = entity->addComponent<RenderSpecComponent>();
+        DESERIALIZE_PRIMITIVE(renderSpec, component.color, vec4);
+    }
+    auto mesh = node["MeshComponent"];
+    if(mesh)
+    {
+        auto name = mesh["meshName"].as<std::string>();
+        auto hasFile = mesh["hasFile"].as<bool>();
+        auto mesh = AssetManager::getAsset<Model>(name);
+        if(!mesh)
+        {
+            if(hasFile)
+            {
+                mesh = std::make_shared<Model>(name);
+                AssetManager::addAsset(mesh);
+            }
+            else
+            {
+                mesh = std::make_shared<Model>(name, true); //TODO debug meshes
+                WARN("Serializer: Cant find %s mesh!", name.c_str());
+            }
+        }
+        entity->addComponent<MeshComponent>(mesh);
+    }
+    auto pointLight = node["PointLightComponent"];
+    if(pointLight)
+    {
+        auto& component = entity->addComponent<PointLightComponent>();
+        DESERIALIZE_PRIMITIVE(pointLight, component.shadowCasting, bool);
+        DESERIALIZE_PRIMITIVE(pointLight, component.light.pos, vec4);
+        DESERIALIZE_PRIMITIVE(pointLight, component.light.color, vec4);
+        DESERIALIZE_PRIMITIVE(pointLight, component.light.intensity, float);
+        DESERIALIZE_PRIMITIVE(pointLight, component.light.radius, float);
+    }
+    auto emmisive = node["EmissiveComponent"];
+    if(emmisive)
+    {
+        auto& component = entity->addComponent<EmissiveComponent>();
+        DESERIALIZE_PRIMITIVE(pointLight, component.color, vec3);
+        DESERIALIZE_PRIMITIVE(pointLight, component.emissiveIntensity, float);
+    }
+    return true;
 }
 
 bool Serializer::serializeDirLight(Emitter& e, DirectionalLight dirLight)
@@ -298,6 +397,7 @@ bool Serializer::serializeDirLight(Emitter& e, DirectionalLight dirLight)
     SERIALIZE_PRIMITIVE(e, dirLight.color);
     SERIALIZE_PRIMITIVE(e, dirLight.enabled);
     SERIALIZE_PRIMITIVE(e, dirLight.intensity);
+    SERIALIZE_PRIMITIVE(e, dirLight.ambientIntensity);
     e << EndMap;
     return false;
 }
@@ -309,29 +409,34 @@ DirectionalLight Serializer::deserializeDirLight(const Node& node)
     DESERIALIZE_PRIMITIVE(node, dirLight.color,     vec3);
     DESERIALIZE_PRIMITIVE(node, dirLight.enabled,   bool);
     DESERIALIZE_PRIMITIVE(node, dirLight.intensity, float);
+    DESERIALIZE_PRIMITIVE(node, dirLight.ambientIntensity, float);
     return dirLight;
 }
 
 bool Serializer::serializeScene(Scene* scene, const std::filesystem::path &filepath)
 {
     //TODO: serialize entities!
-    LOG("Config: Serializing scene to file %s\n",
+    LOG("Serializer: Serializing scene to file %s\n",
         filepath.string().c_str());
     Emitter e;
     e << BeginMap;
+    e << Key << "Scene"<<Value<<scene->m_name;
     e << Key << "directionalLight"<< Value;
     serializeDirLight(e, scene->directionalLight);
-
-    e << Key << "m_activeCamera"<<Value << (scene->m_activeCamera == scene->m_editorCamera);
-
+    e << Key << "m_activeCamera"<<Value << (scene->m_activeCamera == scene->m_editorCamera ? 0 : 1);
     e << Key << "m_gameCamera"<<Value;
     serializeCamera(e, scene->m_gameCamera);
-
     e << Key << "m_editorCamera"<<Value;
     serializeCamera(e, scene->m_editorCamera);
+
+    e << Key << "Entities" << Value << BeginSeq;
+    scene->m_entities.each([&](auto entity)
+    {
+        serializeEntity(e, Entity(entity, scene));
+    });
+    e << EndSeq;
     e << EndMap;
     return writeFile(e.c_str(), filepath);
-    return false;
 }
 
 bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &filepath)
@@ -340,12 +445,35 @@ bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &fil
     if(!readFile(&in, filepath))
         return false;
 
-    Node node = Load(in);
-    scene->directionalLight = deserializeDirLight(node["directionalLight"]);
-    scene->m_gameCamera = deserializeCamera(node["m_gameCamera"]);
-    scene->m_editorCamera = deserializeCamera(node["m_editorCamera"]);
-    if(node["m_activeCamera"].as<bool>())
-        scene->m_activeCamera = scene->m_editorCamera;
+    // yaml-cpp uses exceptions, we do not use exceptions
+    // return false on any exception and report corrupted save file
+//    try{
+        Node node = Load(in);
+        scene->directionalLight = deserializeDirLight(node["directionalLight"]);
+        scene->m_gameCamera = deserializeCamera(node["m_gameCamera"]);
+        scene->m_editorCamera = deserializeCamera(node["m_editorCamera"]);
+        if(node["m_activeCamera"].as<uint>() == 0)
+            scene->m_activeCamera = scene->m_editorCamera;
+        auto entities = node["Entities"];
+        if (entities)
+        {
+            ASSERT(entities.Type() == NodeType::Sequence);
+            for (const auto& entity : entities)
+            {
+                ASSERT(entity.Type() == NodeType::Map);
+                auto enttID = scene->m_entities.create();
+                auto ent = Entity(enttID, scene);
+                deserializeEntity(entity, &ent);
+            }
+        }
+
+//    }
+//    catch(...)
+//    {
+//        WARN("Serializer: Serialized file corrupted!");
+//        return false;
+//    }
+
     scene->m_deserialized = true;
     return true;
 }

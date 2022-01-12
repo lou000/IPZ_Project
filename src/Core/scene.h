@@ -1,10 +1,10 @@
 ﻿#pragma once
 #include <memory>
 #include <array>
-#include "../Renderer/camera.h"
-#include "entity.h"
-#include "../Renderer/light.h"
 #include <unordered_set>
+#include "../Renderer/camera.h"
+#include "../Renderer/light.h"
+#include "entt.hpp"
 
 #define MAX_LIGHTS 100
 
@@ -14,12 +14,14 @@ class Scene
     friend class Entity;
     friend class Serializer;
 public:
-    Scene(std::string name, bool serialize = true);
+    Scene(std::string name, bool deserialize = true);
     Scene(const Scene&) = delete;
     virtual ~Scene();
     virtual void onUpdate(float dt) = 0;
     virtual void onStart() = 0;
-    virtual void debugDraw() = 0;
+    virtual void onDebugDraw() = 0;
+    virtual void onGuiRender() = 0;
+    void sceneSettingsRender();
 
     DirectionalLight directionalLight; //serialized
     bool deserialized() {return m_deserialized;}
@@ -34,12 +36,11 @@ protected:
                         vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0},
                         vec4 color = {0,0,0,0});
     Entity createPointLight(vec3 pos, vec3 color = {1,1,1}, float intensity = 1.0f, float radius = 10.f, bool shadowCasting = false);
-
     void removeEntity(Entity entity);
+
 
 private:
     uint64 genID();
-    void addDeserializedEntity(std::shared_ptr<Entity> entity, uint64 id);
 
     //             SERIALIZED            //
     //-----------------------------------//
@@ -47,10 +48,12 @@ private:
     std::shared_ptr<Camera> m_gameCamera;
     std::shared_ptr<Camera> m_editorCamera;
     std::string m_name;
-    bool m_serialize;
     //-----------------------------------//
 
+    bool m_serialize = true;
+    bool m_deserialize = true;
     bool m_deserialized = false;
+    bool showSceneSettings = true;
     entt::registry m_entities;
 };
 

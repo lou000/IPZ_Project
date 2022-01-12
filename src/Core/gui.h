@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "glad/glad.h"
+#include "math.h"
 #include "application.h"
 #define IM_VEC2_CLASS_EXTRA                                                 \
 ImVec2(const glm::vec2& f) { x = f.x; y = f.y; }                       \
@@ -14,14 +15,31 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
 
+#define START_TWEAK(name, show) \
+if (ImGui::Begin(name, &show))  \
+{                               \
+ImGui::Columns(2, #name"cols"); \
+ImGui::SetColumnWidth(0, 100);
+
 #define TWEAK_FLOAT(label, v, ...) \
-ImGui::TextUnformatted(label); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragFloat("##"#v, &v, __VA_ARGS__);
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();
 
 #define TWEAK_INT(label, v, ...) \
-ImGui::TextUnformatted(label); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::DragInt("##"#v, &v, __VA_ARGS__);
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragInt("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();
 
 #define TWEAK_BOOL(label, v) \
-ImGui::TextUnformatted(label); ImGui::SameLine(); ImGui::SetCursorPosX(120); ImGui::Checkbox("##"#v, &v);
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::Checkbox("##"#v, &v); ImGui::NextColumn();
+
+#define TWEAK_VEC3(label, v, ...) \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();
+
+#define TWEAK_COLOR3(label, v, ...) \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::ColorPicker3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();
+
+#define STOP_TWEAK()\
+ImGui::Columns();\
+}                   \
+ImGui::End();
 
 inline void imguiInit()
 {
@@ -35,6 +53,10 @@ inline void imguiInit()
 //    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
     ImGui::StyleColorsDark();
+    auto& style = ImGui::GetStyle();
+    style.WindowRounding = 0.0f;
+    style.ItemSpacing = vec2(5.f, 10.f);
+    style.WindowPadding = vec2(0.f, 0.f);
 
     auto window = App::getWindowHandle();
 
