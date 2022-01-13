@@ -83,16 +83,18 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.lib")
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_link_libraries(Primor
             ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Debug/OpenAL32.lib
+            winmm
             )
     else()
         target_link_libraries(Primor
             ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.lib
+            winmm
             )
     endif()
 
 else()
    add_subdirectory(external/openal-soft)
-   target_link_libraries(Primor openal-soft)
+   target_link_libraries(Primor OpenAL32 winmm)
 endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib")
