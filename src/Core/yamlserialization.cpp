@@ -8,7 +8,11 @@
     e << Key << #k << Value << k;
 
 #define DESERIALIZE_PRIMITIVE(node, dest, type)\
-    dest = node[#dest].as<type>();
+do{                                             \
+        auto maybe = node[#dest];               \
+        if(maybe)                               \
+            dest = maybe.as<type>();            \
+} while(0);
 
 using namespace YAML;
 
@@ -194,6 +198,8 @@ bool Serializer::serializeRenderConfig(const RenderConfig &config, const std::fi
     SERIALIZE_PRIMITIVE(e, config.blurKernelSize);
     SERIALIZE_PRIMITIVE(e, config.ssaoRadius);
     SERIALIZE_PRIMITIVE(e, config.ssaoBias);
+
+    SERIALIZE_PRIMITIVE(e, config.renderStatsCorner);
     e << EndMap;
     return writeFile(e.c_str(), filepath);
 }
@@ -223,6 +229,8 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
     DESERIALIZE_PRIMITIVE(data, config.blurKernelSize, int);
     DESERIALIZE_PRIMITIVE(data, config.ssaoRadius,     float);
     DESERIALIZE_PRIMITIVE(data, config.ssaoBias,       float);
+
+    DESERIALIZE_PRIMITIVE(data, config.renderStatsCorner, int);
 
     return config;
 }

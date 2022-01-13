@@ -14,6 +14,9 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 #include "imgui.h"
+#include <thread>
+#include <string>
+#include <unordered_map>
 
 #define START_TWEAK(name, show) \
 if (ImGui::Begin(name, &show))  \
@@ -56,7 +59,7 @@ inline void imguiInit()
     auto& style = ImGui::GetStyle();
     style.WindowRounding = 0.0f;
     style.ItemSpacing = vec2(5.f, 10.f);
-    style.WindowPadding = vec2(0.f, 0.f);
+    style.WindowPadding = vec2(10.f, 10.f);
 
     auto window = App::getWindowHandle();
 

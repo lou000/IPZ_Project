@@ -1,9 +1,9 @@
 ﻿#include "renderpipeline.h"
 #include"../Core/yamlserialization.h"
-#include "../Core/gui.h"
 #include "../Core/application.h"
 #include "../Core/entity.h"
 #include "../Core/components.h"
+#include "../Core/instrumentation.h"
 #include <random>
 
 
@@ -270,7 +270,7 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
     for(auto ent : view)
         lights.push_back(view.get<PointLightComponent>(ent).light);
 
-    enabledPointLightCount = lights.size();
+    enabledPointLightCount = (uint)lights.size();
     lightsSSBO.setData(lights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
 
     auto camera = scene->activeCamera();
@@ -374,6 +374,7 @@ void RenderPipeline::updateCascadeRanges()
 
 void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
 {
+    PROFILE_GPU("CSMPass", syncGPU);
     UNUSED(scene);
     // Draw cascading shadow maps to depth
     csmFBO.bind();
@@ -405,6 +406,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
 
 void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
 {
+    PROFILE_GPU("PBRPass", syncGPU);
     // DRAW pbr objects
     hdrFBO.bind();
     auto sceneCamera = scene->activeCamera();
@@ -469,6 +471,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
 
 void RenderPipeline::bloomComputePass()
 {
+    PROFILE_GPU("Bloom compute", syncGPU);
     // Bloom compute
     for(uint i=0; i<bloomSamples; i++)
     {
@@ -524,6 +527,7 @@ void RenderPipeline::bloomComputePass()
 
 void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
 {
+    PROFILE_GPU("SSAOPass", syncGPU);
     auto sceneCamera = scene->activeCamera();
     ssaoFBO.bind();
     ssaoShader->bind();
@@ -546,6 +550,7 @@ void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
 
 void RenderPipeline::ssaoBlur()
 {
+    PROFILE_GPU("SSAOBlur", syncGPU);
     simpleBlur->bind();
     blurFBO.bind();
     ssaoFBO.getTexture(0)->bind(0);
@@ -561,6 +566,7 @@ void RenderPipeline::ssaoBlur()
 
 void RenderPipeline::compositePass()
 {
+    PROFILE_GPU("CompositePass", syncGPU);
     // Draw final ouput image
     outputFBO.bind();
     screenShader->bind();
@@ -580,6 +586,11 @@ void RenderPipeline::compositePass()
 
 void RenderPipeline::resizeOrClearResources()
 {
+    if(config.csmResolution != oldCsmResolusion)
+    {
+        csmFBO.resize(config.csmResolution, config.csmResolution, config.shadowCascadeCount+1);
+        oldCsmResolusion = config.csmResolution;
+    }
     if(!config.enableBloom && bloomUpSampleTextures.size()>0)
         bloomUpSampleTextures[0]->clear({0,0,0});
     if(!config.enableSSAO)
@@ -651,9 +662,10 @@ void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
     START_TWEAK("Render settings", showRenderSettings);
     // CSM
     TWEAK_BOOL("enableCSM", config.enableCSM);
-    TWEAK_INT("shadowCascadeCount", config.shadowCascadeCount, 1, 0, 10);
+    TWEAK_INT("shadowCascadeCount", config.shadowCascadeCount, 1, 1, 10);
     TWEAK_FLOAT("firstCascadeOffset", config.firstCascadeOffset, 0.01f);
     TWEAK_FLOAT("cascadeZextra", config.cascadeZextra, 0.01f);
+    TWEAK_INT("csmResolution", config.csmResolution, 256, 256, 4096)
 
     // BLOOM
     TWEAK_BOOL("enableBloom", config.enableBloom);
@@ -669,6 +681,58 @@ void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
     TWEAK_FLOAT("ssaoRadius", config.ssaoRadius, 0.01f);
     TWEAK_FLOAT("ssaoBias", config.ssaoBias, 0.01f);
     STOP_TWEAK();
+
+    {
+        ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+        if (config.renderStatsCorner != -1)
+        {
+            const float PAD = 10.0f;
+            const ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+            ImVec2 work_size = viewport->WorkSize;
+            ImVec2 window_pos, window_pos_pivot;
+            window_pos.x = (config.renderStatsCorner & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+            window_pos.y = (config.renderStatsCorner & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+            window_pos_pivot.x = (config.renderStatsCorner & 1) ? 1.0f : 0.0f;
+            window_pos_pivot.y = (config.renderStatsCorner & 2) ? 1.0f : 0.0f;
+            ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+            window_flags |= ImGuiWindowFlags_NoMove;
+        }
+        ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+        if (ImGui::Begin("Example: Simple overlay", &showRenderStats, window_flags))
+        {
+            ImGui::Text("Render profile:");
+            ImGui::Separator();
+            ImGui::Checkbox("Synchronize GPU", &syncGPU);
+            auto storage = InstrumentationStorage::getInstance().storage;
+            ProfileResult gpuRes;
+            ProfileResult cpuRes;
+            for(auto& [key, result] : storage)
+            {
+                if(result.name == "GPU")
+                    gpuRes = result;
+                else if(result.name == "CPU")
+                    cpuRes = result;
+                else
+                    ImGui::Text("%s: %.3f ms", result.name.c_str(), result.ms);
+
+            }
+            ImGui::Separator();
+            ImGui::Text("%s: %.3f ms", gpuRes.name.c_str(), gpuRes.ms);
+            ImGui::Text("%s: %.3f ms", cpuRes.name.c_str(), cpuRes.ms);
+            if (ImGui::BeginPopupContextWindow())
+            {
+                if (ImGui::MenuItem("Custom",       NULL, config.renderStatsCorner == -1)) config.renderStatsCorner = -1;
+                if (ImGui::MenuItem("Top-left",     NULL, config.renderStatsCorner == 0)) config.renderStatsCorner = 0;
+                if (ImGui::MenuItem("Top-right",    NULL, config.renderStatsCorner == 1)) config.renderStatsCorner = 1;
+                if (ImGui::MenuItem("Bottom-left",  NULL, config.renderStatsCorner == 2)) config.renderStatsCorner = 2;
+                if (ImGui::MenuItem("Bottom-right", NULL, config.renderStatsCorner == 3)) config.renderStatsCorner = 3;
+                if (showRenderStats && ImGui::MenuItem("Close")) showRenderStats = false;
+                ImGui::EndPopup();
+            }
+        }
+        ImGui::End();
+    }
 
     scene->sceneSettingsRender();
 }

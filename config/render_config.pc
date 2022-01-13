@@ -5,11 +5,12 @@ config.bloomTreshold: 1
 config.exposure: 1
 config.enableCSM: true
 config.shadowCascadeCount: 5
-config.cascadeZextra: 10
+config.cascadeZextra: 12.6199999
 config.firstCascadeOffset: 10
-config.csmResolution: 4096
+config.csmResolution: 1024
 config.enableSSAO: true
-config.ssaoKernelSize: 104
+config.ssaoKernelSize: 30
 config.blurKernelSize: 4
-config.ssaoRadius: 0.600000024
+config.ssaoRadius: 0.959999979
 config.ssaoBias: 0.200000003
+config.renderStatsCorner: 1

@@ -2,6 +2,7 @@
 #include "../Core/scene.h"
 #include "../AssetManagement/assets.h"
 #include <memory>
+#include "../Core/gui.h"
 #define MAX_BLOOM_SAMPLES 20
 #define MAX_SHADOW_CASCADES 20
 #define MAX_SSAO_KERNEL_SIZE 256
@@ -18,13 +19,15 @@ struct RenderConfig
     int shadowCascadeCount = 5;
     float cascadeZextra = 10.f;
     float firstCascadeOffset = 10.f;
-    uint csmResolution = 4096;
+    int csmResolution = 4096;
 
     bool enableSSAO = true;
     int ssaoKernelSize = 96;
     int blurKernelSize = 4;
-    float ssaoRadius = 0.6;
-    float ssaoBias = 0.2;
+    float ssaoRadius = 0.6f;
+    float ssaoBias = 0.2f;
+
+    int renderStatsCorner = 0;
 };
 
 class RenderPipeline
@@ -46,6 +49,8 @@ private:
     // no touchy
     RenderConfig config;
     bool showRenderSettings = true;
+    bool showRenderStats = true;
+    bool syncGPU = false;
     uvec2 winSize;
     uvec2 oldWinSize;
     uint enabledPointLightCount = 0;
@@ -56,6 +61,7 @@ private:
 
     //CSM
     int oldShadowCascadeCount = 5;
+    int oldCsmResolusion = 4096;
     std::vector<float> cascadeRanges;
 
 
