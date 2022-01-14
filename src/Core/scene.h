@@ -5,6 +5,7 @@
 #include "../Renderer/camera.h"
 #include "../Renderer/light.h"
 #include "entt.hpp"
+#include "../Audio/AudioListener.h"
 
 #define MAX_LIGHTS 100
 
@@ -22,6 +23,7 @@ public:
     virtual void onDebugDraw() = 0;
     virtual void onGuiRender() = 0;
     void sceneSettingsRender();
+    void update(float dt);
 
     Entity fromEntID(entt::entity id);
     DirectionalLight directionalLight; //serialized
@@ -58,5 +60,6 @@ private:
     bool m_deserialized = false;
     bool showSceneSettings = true;
     entt::registry m_entities;
+    AudioListener m_audioListener;
 };
 

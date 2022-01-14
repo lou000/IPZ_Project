@@ -18,7 +18,7 @@ public:
     void stop();
     void pause();
 
-    bool ssPlaying() const {
+    bool isPlaying() const {
         alGetSourcei(source, AL_SOURCE_STATE, &sourceState);
 		return sourceState == AL_PLAYING; }
 

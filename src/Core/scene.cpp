@@ -7,7 +7,7 @@
 #include <memory>
 #include <random>
 
-
+//TODO: serialize only when prompted on exit and make a button
 Scene::Scene(std::string name, bool deserialize)
     : m_name(name), m_deserialize(deserialize)
 {
@@ -51,6 +51,22 @@ void Scene::sceneSettingsRender()
     onGuiRender();
 }
 
+void Scene::update(float dt)
+{
+    // Update sound listener
+    m_activeCamera->onUpdate(dt);
+    m_audioListener.setPosition(m_activeCamera->getPos());
+    m_audioListener.setOrientation(m_activeCamera->forward(), m_activeCamera->up());
+
+    // Update all sound sources that have transform components
+    auto view = m_entities.view<TransformComponent, AudioSourceComponent>();
+    for(auto& ent : view)
+    {
+        auto& pos = view.get<TransformComponent>(ent).pos;
+        view.get<AudioSourceComponent>(ent).source->setPosition(pos);
+    }
+}
+
 Entity Scene::createEntity()
 {
     Entity entity = { m_entities.create(), this };
@@ -72,6 +88,7 @@ Entity Scene::createInstanced(uint instancedGroup, const std::string &meshName, 
     Entity entity = createEntity();
     entity.addComponent<TransformComponent>(pos, scale, rotation);
     entity.addComponent<MeshComponent>(meshName);
+    entity.addComponent<RenderSpecComponent>(vec4(0,0,0,0));
     entity.addComponent<InstancedDrawComponent>(instancedGroup);
     return entity;
 }

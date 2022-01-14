@@ -36,7 +36,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 }
 
 TestConnect4::TestConnect4()
-    :Scene("testConnect4", true)
+    :Scene("testConnect4", false)
 {
     if(!deserialized())
     {
@@ -48,6 +48,8 @@ TestConnect4::TestConnect4()
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
+
+        AssetManager::addAsset(std::make_shared<AudioBuffer>("../assets/sounds/soundtrack.wav"));
 
         directionalLight.color = {1, 0.9, 0.5};
         directionalLight.intensity = 2;
@@ -63,7 +65,12 @@ TestConnect4::TestConnect4()
         createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 60.f, 200.f);
         createEntity("unitPlane", vec3(0,0,0), vec3(100));
 
-        unsigned int amount = 2000;
+        auto soundTest = createEntity();
+        soundTest.addComponent<TransformComponent>(vec3(0,0,0));
+        auto src = soundTest.addComponent<AudioSourceComponent>(AssetManager::getAsset<AudioBuffer>("../assets/sounds/soundtrack.wav"));
+        src.source->play();
+
+        unsigned int amount = 1000;
         srand(glfwGetTime()); // initialize random seed
         float radius = 40.0;
         float offset = 30.f;
@@ -81,7 +88,7 @@ TestConnect4::TestConnect4()
 
             // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
             float rotAngle = (rand() % 360);
-//            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
+            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
         }
     }
 

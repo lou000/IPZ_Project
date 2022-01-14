@@ -4,6 +4,7 @@
 #include "math.h"
 #include "../AssetManagement/asset_manager.h"
 #include "../Renderer/light.h"
+#include "../Audio/AudioSource.h"
 
 struct IDComponent
 {
@@ -14,7 +15,7 @@ struct IDComponent
 
 struct TransformComponent
 {
-    TransformComponent(vec3 pos, vec3 scale, quat rotation)
+    TransformComponent(vec3 pos, vec3 scale = {1,1,1}, quat rotation = {0,0,0,0})
         :pos(pos), scale(scale), rotation(rotation){}
     TransformComponent(){}
     mat4 transform()
@@ -80,6 +81,17 @@ struct PointLightComponent
     }
     GPU_PointLight light;
     bool shadowCasting = true;
+};
+
+struct AudioSourceComponent
+{
+    AudioSourceComponent(){}
+    AudioSourceComponent(std::shared_ptr<AudioBuffer> buffer)
+    {
+        source = std::make_shared<AudioSource>(buffer);
+    }
+
+    std::shared_ptr<AudioSource> source;
 };
 
 struct CameraComponent
