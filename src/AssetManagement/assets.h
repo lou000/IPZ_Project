@@ -2,6 +2,9 @@
 #include <unordered_map>
 #include <filesystem>
 #include <iostream>
+#define AL_LIBTYPE_STATIC
+#include <AL/al.h>
+#include <AL/alc.h>
 #include "../Core/utilities.h"
 #include "../Renderer/mesh.h"
 
@@ -12,6 +15,7 @@ enum AssetType{
     texture,
     shaderFile,
     meshFile,
+    audioBuffer
 };
 
 class VertexArray;
@@ -33,7 +37,24 @@ protected:
     std::string m_name;
 };
 
+class AudioBuffer : public Asset
+{
+public:
+    AudioBuffer(const std::filesystem::path& path);
+    ~AudioBuffer();
+    virtual bool doReload() override;
+    ALuint bufferID(){return m_bufferID;}
+    void setData(void *data, size_t size, ALenum format, uint samplerate);
 
+private:
+    void init();
+    void* loadFromFile();
+    ALuint m_bufferID   = 0;
+    ALenum m_ALFormat   = 0;
+    uint m_channels     = 0;
+    uint m_samplerate   = 0;
+    uint64 m_framecount = 0;
+};
 
 class Texture : public Asset
 {

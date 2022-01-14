@@ -2,6 +2,7 @@
 #define AL_LIBTYPE_STATIC
 #include <AL/al.h>
 #include <AL/alc.h>
+#include "../Core/math.h"
 class AudioListener
 {
 public:
@@ -9,7 +10,8 @@ public:
 
 	~AudioListener();
 
-	void UpdatePosition(float x, float y, float z);
+    void setPosition(vec3 pos);
+    void setOrientation(vec3 cameraForward, vec3 cameraUp);
 
 private:
 	ALCdevice* device;

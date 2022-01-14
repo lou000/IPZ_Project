@@ -8,10 +8,73 @@
 #include <fstream>
 #include <sstream>
 #include "../Renderer/buffer.h" // VAO
+#define DR_WAV_IMPLEMENTATION
+#include<dr_wav.h>
 
 std::string Asset::getName()
 {
     return m_path.empty() ? m_name : m_path.string();
+}
+
+AudioBuffer::AudioBuffer(const std::filesystem::path &path)
+    :Asset(AssetType::audioBuffer)
+{
+    init();
+    m_path = path;
+    auto data = loadFromFile();
+    if(!data)
+        return;
+    m_ALFormat = m_channels>1 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+    setData(data, m_framecount * m_channels * sizeof(uint16), m_ALFormat, m_samplerate);
+    free(data);
+}
+
+AudioBuffer::~AudioBuffer()
+{
+    alDeleteBuffers(1, &this->m_bufferID);
+}
+
+bool AudioBuffer::doReload()
+{
+    auto data = loadFromFile();
+    if(!data)
+        return false;
+    m_ALFormat = m_channels>1 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+    setData(data, m_framecount * m_channels * sizeof(uint16), m_ALFormat, m_samplerate);
+    free(data);
+    return true;
+}
+
+void AudioBuffer::init()
+{
+    alGenBuffers(1, &this->m_bufferID);
+}
+
+void AudioBuffer::setData(void *data, size_t size, ALenum format, uint samplerate)
+{
+    ASSERT(m_bufferID);
+    alBufferData(m_bufferID, format, data, (ALsizei)size, samplerate);
+}
+
+void* AudioBuffer::loadFromFile()
+{
+    auto path = m_path.string();
+    drwav_int16* const pSampleData =
+        drwav_open_file_and_read_pcm_frames_s16(path.c_str(), &m_channels,
+                                                &m_samplerate, &m_framecount, nullptr);
+    if (!pSampleData) {
+        drwav_free(pSampleData, nullptr);
+        WARN("Audio: Failed to load file %s", path.c_str());
+        return nullptr;
+    }
+    if (m_framecount * m_channels > drwav_uint64(std::numeric_limits<size_t>::max()))
+    {
+        drwav_free(pSampleData, nullptr);
+        WARN("Audio: Failed to load file %s, too much data", path.c_str());
+        return nullptr;
+    }
+
+    return pSampleData;
 }
 
 Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal,  GLenum textureWrap, uint samples, bool loadDebug)

@@ -27,7 +27,13 @@ AudioListener::~AudioListener()
 	alcCloseDevice(device);
 }
 
-void AudioListener::UpdatePosition(float x, float y, float z)
+void AudioListener::setPosition(vec3 pos)
 {
-	alListener3f(AL_POSITION, x, y, z);
+    alListener3f(AL_POSITION, pos.x, pos.y, pos.z);
+}
+
+void AudioListener::setOrientation(vec3 cameraForward, vec3 cameraUp)
+{
+    vec3 arr[] = {cameraForward, cameraUp};
+    alListenerfv(AL_ORIENTATION, (ALfloat*) arr);
 }
