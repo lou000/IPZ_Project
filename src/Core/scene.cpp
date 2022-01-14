@@ -55,7 +55,10 @@ void Scene::update(float dt)
 {
     // Update sound listener
     m_activeCamera->onUpdate(dt);
-    m_audioListener.setPosition(m_activeCamera->getPos());
+    auto camPos = m_activeCamera->getPos();
+//    LOG("Source pos: %f, %f, %f\n", camPos.x, camPos.y, camPos.z);
+//    LOG("AL error: %d\n", alGetError());
+    m_audioListener.setPosition(camPos);
     m_audioListener.setOrientation(m_activeCamera->forward(), m_activeCamera->up());
 
     // Update all sound sources that have transform components
@@ -63,6 +66,7 @@ void Scene::update(float dt)
     for(auto& ent : view)
     {
         auto& pos = view.get<TransformComponent>(ent).pos;
+//        LOG("Source pos: %f, %f, %f\n", pos.x, pos.y, pos.z);
         view.get<AudioSourceComponent>(ent).source->setPosition(pos);
     }
 }

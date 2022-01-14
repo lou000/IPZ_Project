@@ -49,7 +49,7 @@ TestConnect4::TestConnect4()
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
 
-        AssetManager::addAsset(std::make_shared<AudioBuffer>("../assets/sounds/soundtrack.wav"));
+        AssetManager::addAsset(std::make_shared<AudioBuffer>("../assets/sounds/steps2.wav"));
 
         directionalLight.color = {1, 0.9, 0.5};
         directionalLight.intensity = 2;
@@ -67,8 +67,9 @@ TestConnect4::TestConnect4()
 
         auto soundTest = createEntity();
         soundTest.addComponent<TransformComponent>(vec3(0,0,0));
-        auto src = soundTest.addComponent<AudioSourceComponent>(AssetManager::getAsset<AudioBuffer>("../assets/sounds/soundtrack.wav"));
+        auto src = soundTest.addComponent<AudioSourceComponent>(AssetManager::getAsset<AudioBuffer>("../assets/sounds/steps2.wav"));
         src.source->play();
+        src.source->setLoop(true);
 
         unsigned int amount = 1000;
         srand(glfwGetTime()); // initialize random seed

@@ -25,6 +25,8 @@ AudioBuffer::AudioBuffer(const std::filesystem::path &path)
     if(!data)
         return;
     m_ALFormat = m_channels>1 ? AL_FORMAT_STEREO16 : AL_FORMAT_MONO16;
+    LOG("Loading %s sound %s\n",
+        m_channels>1 ? "stereo" : "mono", path.string().c_str());
     setData(data, m_framecount * m_channels * sizeof(uint16), m_ALFormat, m_samplerate);
     free(data);
 }
@@ -509,7 +511,7 @@ bool Model::loadModel()
     std::vector<float> vertices; // resize
 
     AABB modelBB;
-    LOG("Loading asset %s\n", c_str);
+    LOG("Loading mesh %s\n", c_str);
     for(uint s=0; s<scene->mNumMeshes; s++)
     {
         Material material;
