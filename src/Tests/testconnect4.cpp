@@ -81,7 +81,7 @@ TestConnect4::TestConnect4()
 
             // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
             float rotAngle = (rand() % 360);
-            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
+//            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
         }
     }
 

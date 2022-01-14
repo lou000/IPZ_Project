@@ -363,7 +363,7 @@ void RenderPipeline::resizeBloomBuffers()
 
     uint prevSize = (uint)bloomDownSampleTextures.size();
 
-    LOG("Resizing bloom buffers:\n    prevSize: %d, newSize: %d\n", prevSize, bloomSamples);
+//    LOG("Resizing bloom buffers:\n    prevSize: %d, newSize: %d\n", prevSize, bloomSamples);
 
     bloomDownSampleTextures.resize(bloomSamples);
     bloomUpSampleTextures.resize(bloomSamples);
@@ -376,14 +376,14 @@ void RenderPipeline::resizeBloomBuffers()
         uint width  = (uint)(uWinSize.x/(pow(2.f,i+1)));
         uint height = (uint)(uWinSize.y/(pow(2.f,i+1)));
         bloomDownSampleTextures[i]->resize({width, height, 1});
-        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
+//        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
     }
     for(uint i=0; i<size; i++)
     {
         uint width  = (uint)(uWinSize.x/(pow(2.f,i)));
         uint height = (uint)(uWinSize.y/(pow(2.f,i)));
         bloomUpSampleTextures[i]->resize({width, height, 1});
-        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
+//        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
     }
 
     if(prevSize>=bloomSamples)
@@ -395,14 +395,14 @@ void RenderPipeline::resizeBloomBuffers()
         uint width  = (uint)(uWinSize.x/pow(2.f,i+1));
         uint height = (uint)(uWinSize.y/pow(2.f,i+1));
         bloomDownSampleTextures[i] = std::make_shared<Texture>(width, height, 1, GL_R11F_G11F_B10F, GL_CLAMP_TO_EDGE);
-        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
+//        LOG("Size of bloom downsample %d: %d, %d\n", i, width, height);
     }
     for(uint i=prevSize; i<bloomSamples; i++)
     {
         uint width  = (uint)(uWinSize.x/pow(2.f,i));
         uint height = (uint)(uWinSize.y/pow(2.f,i));
         bloomUpSampleTextures[i] = std::make_shared<Texture>(width, height, 1, GL_R11F_G11F_B10F, GL_CLAMP_TO_EDGE);
-        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
+//        LOG("Size of bloom upsample %d: %d, %d\n", i, width, height);
     }
 }
 
@@ -412,7 +412,7 @@ void RenderPipeline::updateCascadeRanges()
     for (int i=0; i<config.shadowCascadeCount; ++i)
     {
         cascadeRanges[i] = (uint)glm::pow(3, i+1)+config.firstCascadeOffset;
-        LOG("Cascade %d: %f\n", i, cascadeRanges[i]);
+//        LOG("Cascade %d: %f\n", i, cascadeRanges[i]);
     }
 }
 
