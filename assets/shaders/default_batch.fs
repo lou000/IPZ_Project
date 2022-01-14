@@ -1,6 +1,13 @@
 //type fragment
 #version 450
 
+float zNear = 0.1;
+float zFar = 1000;
+
+float linearize_Z(float depth , float zNear , float zFar)
+{
+    return (2*zNear ) / (zFar + zNear - depth*(zFar -zNear)) ;
+}
 
 vec4 toGrayscale(in vec4 color)
 {
@@ -12,7 +19,6 @@ vec4 colorize(in vec4 texCol, in vec4 color)
 {
     return (toGrayscale(texCol) * color);
 }
-
 
 layout(location = 0) out vec4 color;
 
@@ -67,7 +73,11 @@ void main()
 	}
     texColor*=v_Color;
     if(texColor.r>0 && texColor.g == 0 && texColor.b == 0)
-        texColor = vec4(texColor.r, texColor.r, texColor.r, 1);
+    {
+        vec3 col = vec3(texColor.r);
+        // col = vec3(linearize_Z(col.r, 0.1, 100));
+        texColor = vec4(col, 1);
+    }
 	color = texColor;
     // if(v_TexIndex == 2)
     //     color = colorize(texColor, vec4(0.965, 0.827, 0.502, 0.95));

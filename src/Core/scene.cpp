@@ -40,12 +40,14 @@ Scene::~Scene()
 
 void Scene::sceneSettingsRender()
 {
-    START_TWEAK("Scene settings", showSceneSettings);
-    TWEAK_VEC3("Direction", directionalLight.direction, 0.01f, -10, 10);
-    TWEAK_COLOR3("Color", directionalLight.color);
-    TWEAK_FLOAT("Intensity", directionalLight.intensity, 0.01f, 0, 10);
-    TWEAK_FLOAT("AmbientIntensity", directionalLight.ambientIntensity, 0.001f, 0, 1);
-    STOP_TWEAK();
+    if (ImGui::Begin("Scene settings", &showSceneSettings))
+    {
+        TWEAK_VEC3("Direction", directionalLight.direction, 0.01f, -10, 10);
+        TWEAK_COLOR3("Color", directionalLight.color);
+        TWEAK_FLOAT("Intensity", directionalLight.intensity, 0.01f, 0, 10);
+        TWEAK_FLOAT("AmbientIntensity", directionalLight.ambientIntensity, 0.001f, 0, 1);
+    }
+    ImGui::End();
     onGuiRender();
 }
 
@@ -65,6 +67,15 @@ Entity Scene::createEntity(const std::string &meshName, vec3 pos, vec3 scale, qu
     return entity;
 }
 
+Entity Scene::createInstanced(uint instancedGroup, const std::string &meshName, vec3 pos, vec3 scale, quat rotation)
+{
+    Entity entity = createEntity();
+    entity.addComponent<TransformComponent>(pos, scale, rotation);
+    entity.addComponent<MeshComponent>(meshName);
+    entity.addComponent<InstancedDrawComponent>(instancedGroup);
+    return entity;
+}
+
 Entity Scene::createPointLight(vec3 pos, vec3 color,
                                float intensity, float radius,
                                bool shadowCasting)
@@ -77,6 +88,12 @@ Entity Scene::createPointLight(vec3 pos, vec3 color,
 void Scene::removeEntity(Entity entity)
 {
     m_entities.destroy(entity);
+}
+
+Entity Scene::fromEntID(entt::entity id)
+{
+    ASSERT(m_entities.valid(id));
+    return Entity(id, this);
 }
 
 uint64 Scene::genID()

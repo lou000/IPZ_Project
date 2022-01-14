@@ -18,31 +18,36 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include <string>
 #include <unordered_map>
 
-#define START_TWEAK(name, show) \
-if (ImGui::Begin(name, &show))  \
-{                               \
-ImGui::Columns(2, #name"cols"); \
-ImGui::SetColumnWidth(0, 100);
 
 #define TWEAK_FLOAT(label, v, ...) \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();
+ImGui::Columns(2, label); \
+ImGui::SetColumnWidth(0, 100);  \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();\
+ImGui::Columns();
 
 #define TWEAK_INT(label, v, ...) \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragInt("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();
+ImGui::Columns(2, label); \
+ImGui::SetColumnWidth(0, 100);  \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragInt("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();\
+ImGui::Columns();
 
 #define TWEAK_BOOL(label, v) \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::Checkbox("##"#v, &v); ImGui::NextColumn();
+ImGui::Columns(2, label); \
+ImGui::SetColumnWidth(0, 100);  \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::Checkbox("##"#v, &v); ImGui::NextColumn();\
+ImGui::Columns();
 
 #define TWEAK_VEC3(label, v, ...) \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();
+ImGui::Columns(2, label); \
+ImGui::SetColumnWidth(0, 100);  \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();\
+ImGui::Columns();
 
 #define TWEAK_COLOR3(label, v, ...) \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::ColorPicker3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();
-
-#define STOP_TWEAK()\
-ImGui::Columns();\
-}                   \
-ImGui::End();
+ImGui::Columns(2, label); \
+ImGui::SetColumnWidth(0, 100);  \
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::ColorPicker3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();\
+ImGui::Columns();
 
 inline void imguiInit()
 {

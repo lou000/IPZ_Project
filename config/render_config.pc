@@ -7,10 +7,11 @@ config.enableCSM: true
 config.shadowCascadeCount: 5
 config.cascadeZextra: 12.6199999
 config.firstCascadeOffset: 10
-config.csmResolution: 1024
+config.csmResolution: 4096
 config.enableSSAO: true
-config.ssaoKernelSize: 30
+config.ssaoHalfRes: true
+config.ssaoKernelSize: 256
 config.blurKernelSize: 4
-config.ssaoRadius: 0.959999979
-config.ssaoBias: 0.200000003
+config.ssaoRadius: 0.790000021
+config.ssaoBias: 0.0799999982
 config.renderStatsCorner: 1

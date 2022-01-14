@@ -34,8 +34,17 @@ struct RenderSpecComponent
     // render pipeline will ignore the entity
     // for now its only color, there will come more
     RenderSpecComponent(){}
-    RenderSpecComponent(vec4 col) : color(col){}
+    RenderSpecComponent(vec4 col)
+        : color(col){}
     vec4 color = {0,0,0,0};
+};
+
+struct InstancedDrawComponent
+{
+    InstancedDrawComponent(){}
+    InstancedDrawComponent(uint group)
+        : instancedGroup(group){}
+    uint instancedGroup = 0;
 };
 
 struct EmissiveComponent

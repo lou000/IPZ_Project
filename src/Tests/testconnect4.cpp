@@ -47,6 +47,10 @@ TestConnect4::TestConnect4()
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
+
+        directionalLight.color = {1, 0.9, 0.5};
+        directionalLight.intensity = 2;
 
         createEntity("../assets/meshes/connect4_board.fbx");
         createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
@@ -58,6 +62,27 @@ TestConnect4::TestConnect4()
         createEntity("unitPlane", vec3(0,0,0), vec3(100));
         createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 60.f, 200.f);
         createEntity("unitPlane", vec3(0,0,0), vec3(100));
+
+        unsigned int amount = 2000;
+        srand(glfwGetTime()); // initialize random seed
+        float radius = 40.0;
+        float offset = 30.f;
+        for(unsigned int i = 0; i < amount; i++)
+        {
+            // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+            float angle = (float)i / (float)amount * 360.0f;
+            float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+            float x = sin(angle) * radius + displacement;
+            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+            float z = cos(angle) * radius + displacement;
+
+            // 2. scale: scale between 0.05 and 0.25f
+            float scale = (rand() % 10) / 100.0f + 0.3;
+
+            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+            float rotAngle = (rand() % 360);
+            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
+        }
     }
 
 

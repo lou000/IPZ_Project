@@ -11,6 +11,7 @@ class Entity
     friend class Serializer;
 
 public:
+    Entity(const Entity&) = default;
     operator entt::entity() const { return m_enttID; }
 
     template<typename T, typename... Args>
@@ -42,7 +43,6 @@ public:
     }
 
 private:
-    Entity(const Entity&) = default;
     Entity(entt::entity enttID, Scene* scene)
         : m_enttID(enttID), m_scene(scene){}
     entt::entity m_enttID = entt::null;

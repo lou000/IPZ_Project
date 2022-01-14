@@ -1,0 +1,33 @@
+//type compute
+#version 430
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(r32f, binding = 0) uniform image2D output_image;
+layout(binding = 1) uniform sampler2D input_image;
+
+
+vec2 posToUV(ivec2 pos, ivec2 resolution)
+{
+    return (vec2(pos)+0.5)/vec2(resolution);
+}
+
+void main()
+{
+    //Downsample
+    ivec2 resolution = textureSize(input_image, 0);
+
+    ivec2 pos = ivec2(gl_WorkGroupID.xy*gl_WorkGroupSize.xy*2 + gl_LocalInvocationID.xy*2);
+    
+
+    vec4 tl = texture(input_image, posToUV(pos, resolution));
+    vec4 tr = texture(input_image, posToUV(pos+ivec2(1,0), resolution));
+    vec4 bl = texture(input_image, posToUV(pos+ivec2(0,1), resolution));
+    vec4 br = texture(input_image, posToUV(pos+ivec2(1,1), resolution));
+
+    vec4 mix1 = mix(tl, bl, 0.5);
+    vec4 mix2 = mix(br, br, 0.5);
+    vec4 outColor = mix(mix1, mix2, 0.5);
+    
+
+    imageStore(output_image, ivec2(gl_GlobalInvocationID), outColor);
+}

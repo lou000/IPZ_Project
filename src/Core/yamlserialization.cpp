@@ -194,6 +194,7 @@ bool Serializer::serializeRenderConfig(const RenderConfig &config, const std::fi
     SERIALIZE_PRIMITIVE(e, config.csmResolution);
 
     SERIALIZE_PRIMITIVE(e, config.enableSSAO);
+    SERIALIZE_PRIMITIVE(e, config.ssaoHalfRes);
     SERIALIZE_PRIMITIVE(e, config.ssaoKernelSize);
     SERIALIZE_PRIMITIVE(e, config.blurKernelSize);
     SERIALIZE_PRIMITIVE(e, config.ssaoRadius);
@@ -225,6 +226,7 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
     DESERIALIZE_PRIMITIVE(data, config.csmResolution,      uint);
 
     DESERIALIZE_PRIMITIVE(data, config.enableSSAO,     bool);
+    DESERIALIZE_PRIMITIVE(data, config.ssaoHalfRes,     bool);
     DESERIALIZE_PRIMITIVE(data, config.ssaoKernelSize, int);
     DESERIALIZE_PRIMITIVE(data, config.blurKernelSize, int);
     DESERIALIZE_PRIMITIVE(data, config.ssaoRadius,     float);
@@ -334,6 +336,14 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
         SERIALIZE_PRIMITIVE(e, component.emissiveIntensity);
         e << YAML::EndMap;
     }
+    if (entity.hasComponent<InstancedDrawComponent>())
+    {
+        auto& component = entity.getComponent<InstancedDrawComponent>();
+        e << Key << "InstancedDrawComponent";
+        e << YAML::BeginMap;
+        SERIALIZE_PRIMITIVE(e, component.instancedGroup);
+        e << YAML::EndMap;
+    }
     e << EndMap;
     return true;
 }
@@ -395,6 +405,12 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
         DESERIALIZE_PRIMITIVE(pointLight, component.color, vec3);
         DESERIALIZE_PRIMITIVE(pointLight, component.emissiveIntensity, float);
     }
+    auto instanced = node["InstancedDrawComponent"];
+    if(instanced)
+    {
+        auto& component = entity->addComponent<InstancedDrawComponent>();
+        DESERIALIZE_PRIMITIVE(pointLight, component.instancedGroup, uint);
+    }
     return true;
 }
 
@@ -453,9 +469,9 @@ bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &fil
     if(!readFile(&in, filepath))
         return false;
 
-    // yaml-cpp uses exceptions, we do not use exceptions
-    // return false on any exception and report corrupted save file
-//    try{
+//     yaml-cpp uses exceptions, we do not use exceptions
+//     return false on any exception and report corrupted save file
+    try{
         Node node = Load(in);
         scene->directionalLight = deserializeDirLight(node["directionalLight"]);
         scene->m_gameCamera = deserializeCamera(node["m_gameCamera"]);
@@ -474,13 +490,12 @@ bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &fil
                 deserializeEntity(entity, &ent);
             }
         }
-
-//    }
-//    catch(...)
-//    {
-//        WARN("Serializer: Serialized file corrupted!");
-//        return false;
-//    }
+    }
+    catch(...)
+    {
+        WARN("Serializer: Serialized file corrupted!");
+        return false;
+    }
 
     scene->m_deserialized = true;
     return true;

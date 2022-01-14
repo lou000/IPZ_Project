@@ -9,11 +9,6 @@ vec2 posToUV(ivec2 pos, ivec2 resolution)
 {
     return (vec2(pos+0.5))/vec2(resolution);
 }
-vec3 safe_color(vec3 c)
-{
-  /* Clamp to avoid black square artifacts if a pixel goes NaN. */
-  return clamp(c, vec3(0.0), vec3(1e20)); /* 1e20 arbitrary. */
-}
 
 vec3 upsample_filter_high(sampler2D tex, vec2 uv, vec2 texelSize)
 {

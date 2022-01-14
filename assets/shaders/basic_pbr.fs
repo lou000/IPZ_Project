@@ -1,4 +1,4 @@
-#version 430 core
+﻿#version 430 core
 
 layout(location = 0) out vec4 o_Color;
 layout(location = 1) out vec4 o_BloomColor;
@@ -128,7 +128,7 @@ float dirLightShadow(vec3 fPos)
         return 0.0;
     
     vec3 normal = normalize(v_Normal);
-    float bias = max(0.001 * (1.0 - dot(normal, -u_DirLightDirection)), 0.001);
+    float bias = max(0.0001 * (1.0 - dot(normal, -u_DirLightDirection)), 0.0001);
     
     if (layer == u_cascadeCount)
         bias *= 1 / (u_farPlane * 0.5f);
