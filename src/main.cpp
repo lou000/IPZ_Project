@@ -38,7 +38,7 @@ int main(void)
                 dtSum = 0;
             }
 
-            test3->activeCamera()->onUpdate(dt);
+            test3->update(dt);
             test3->onUpdate(dt);
         }
         {

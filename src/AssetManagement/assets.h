@@ -21,7 +21,6 @@ enum AssetType{
 class VertexArray;
 class AssetManager;
 
-// TODO: make utility functions toTexture() etc to quickly cast
 class Asset{
     friend class AssetManager;
 public:
@@ -30,7 +29,7 @@ public:
     bool hasFile(){return !m_path.empty();}
 
 protected:
-    Asset(){}
+    Asset(AssetType type) : assetType(type){}
     AssetType assetType;
     bool reloadScheduled = false;
     std::filesystem::path m_path;
@@ -65,7 +64,7 @@ public:
     ~Texture();
 
     virtual bool doReload() override;
-    void setTextureData(void* data, size_t size);
+    void setData(void* data, size_t size);
     vec3 getDimensions();
     size_t getSize();
     GLenum glFormatSized(){return m_glFormatSized;}

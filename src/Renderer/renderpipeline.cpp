@@ -29,7 +29,7 @@ RenderPipeline::RenderPipeline()
     // Create white texture for non-textured drawing
     whiteTexture = std::make_shared<Texture>(1, 1);
     uint whiteData = 0xffffffff;
-    whiteTexture->setTextureData(&whiteData, sizeof(uint));
+    whiteTexture->setData(&whiteData, sizeof(uint));
 
     // Create VOA for a quad TODO: move this to primitive generation
     const float quadVertices[24] = {
@@ -60,7 +60,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     // gather instanced entities
     instancedGroups.clear();
-    auto group = scene->entities().group<InstancedDrawComponent, TransformComponent, MeshComponent>();
+    auto group = scene->entities().group<TransformComponent, MeshComponent, RenderSpecComponent, InstancedDrawComponent>();
     for(auto& ent : group)
     {
         auto& spec = group.get<InstancedDrawComponent>(ent);
@@ -240,7 +240,7 @@ void RenderPipeline::initSSAO()
         ssaoNoise.push_back(noise);
     }
     ssaoNoiseTex = std::make_shared<Texture>(4, 4, 1, GL_RGB16F, GL_REPEAT);
-    ssaoNoiseTex->setTextureData(ssaoNoise.data(), ssaoNoise.size()*sizeof(vec3));
+    ssaoNoiseTex->setData(ssaoNoise.data(), ssaoNoise.size()*sizeof(vec3));
 
     downSampledDepth = std::make_shared<Texture>(winSize.x/2, winSize.y/2, 1, GL_R32F, GL_CLAMP_TO_EDGE);
     upSampledSSAO = std::make_shared<Texture>(winSize.x, winSize.y, 1, GL_R32F, GL_CLAMP_TO_EDGE);
@@ -292,9 +292,9 @@ void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
         csmShader->updateRuntimeModifiedStrings(def);
         oldShadowCascadeCount = config.shadowCascadeCount;
 
-        LOG("Camera near:%f\n", scene->activeCamera()->getNearClip());
+//        LOG("Camera near:%f\n", scene->activeCamera()->getNearClip());
         updateCascadeRanges();
-        LOG("Camera far:%f\n", scene->activeCamera()->getFarClip());
+//        LOG("Camera far:%f\n", scene->activeCamera()->getFarClip());
     }
 }
 
@@ -429,14 +429,14 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
 
     // Render single entities
     csmShader->setUniform("u_DrawInstanced", BufferElement::Int, 0);
-    auto group = scene->entities().group<TransformComponent, MeshComponent, RenderSpecComponent>();
-    for(auto& ent : group)
+    auto view = scene->entities().view<TransformComponent, MeshComponent, RenderSpecComponent>(entt::exclude<InstancedDrawComponent>);
+    for(auto& ent : view)
     {
         // draw here
-        auto transform = group.get<TransformComponent>(ent).transform();
+        auto transform = view.get<TransformComponent>(ent).transform();
         csmShader->setUniform("u_Model", BufferElement::Mat4, transform);
 
-        auto model = group.get<MeshComponent>(ent).model;
+        auto model = view.get<MeshComponent>(ent).model;
         for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
@@ -505,12 +505,12 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
 
     // Render single entities
     pbrShader->setUniform("u_DrawInstanced", BufferElement::Int, 0);
-    auto group = scene->entities().group<TransformComponent, MeshComponent, RenderSpecComponent>();
-    for(auto& ent : group)
+    auto view = scene->entities().view<TransformComponent, MeshComponent, RenderSpecComponent>(entt::exclude<InstancedDrawComponent>);
+    for(auto& ent : view)
     {
-        auto renderSpec = group.get<RenderSpecComponent>(ent);
-        auto transform = group.get<TransformComponent>(ent).transform();
-        auto model = group.get<MeshComponent>(ent).model;
+        auto renderSpec = view.get<RenderSpecComponent>(ent);
+        auto transform = view.get<TransformComponent>(ent).transform();
+        auto model = view.get<MeshComponent>(ent).model;
         pbrShader->setUniform("u_Model", BufferElement::Mat4, transform);
 
         for(auto mesh : model->meshes())

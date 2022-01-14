@@ -27,7 +27,7 @@ void BatchRenderer::x_init()
     // setup white texture used for colored, untextured drawing
     whiteTex = std::make_shared<Texture>(1, 1);
     uint whiteData = 0xffffffff;
-    whiteTex->setTextureData(&whiteData, sizeof(uint));
+    whiteTex->setData(&whiteData, sizeof(uint));
     textureSlots[0] = {whiteTex, 0};
 
     // setup buffers

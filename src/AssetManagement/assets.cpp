@@ -78,24 +78,23 @@ void* AudioBuffer::loadFromFile()
 }
 
 Texture::Texture(uint width, uint height, uint depth, GLenum formatInternal,  GLenum textureWrap, uint samples, bool loadDebug)
-    : m_width(width), m_height(height), m_depth(depth), m_samples(samples), m_glFormatSized(formatInternal), m_textureWrap(textureWrap)
+    : Asset(AssetType::texture), m_width(width), m_height(height), m_depth(depth),
+        m_samples(samples), m_glFormatSized(formatInternal), m_textureWrap(textureWrap)
 {
     ASSERT(width*height*depth>0); // none of the dimensions can be zero
-    assetType = AssetType::texture;
     initTexture();
     if(loadDebug)
         clear({0.969f, 0.353f, 0.580f});
 }
 
 Texture::Texture(const std::filesystem::path& path, uint samples)
-    :m_samples(samples)
+    : Asset(AssetType::texture), m_samples(samples)
 {
     //for now we dont load 3d images from files
     m_depth  = 1;
     m_width  = 1;
     m_height = 1;
 
-    assetType = AssetType::texture;
     auto data = loadFromFile(path);
     initTexture();
     if(!data)
@@ -103,7 +102,7 @@ Texture::Texture(const std::filesystem::path& path, uint samples)
         clear({0.969f, 0.353f, 0.580f});
         return;
     }
-    setTextureData(data, getSize());
+    setData(data, getSize());
     free(data);
 }
 
@@ -132,7 +131,7 @@ bool Texture::doReload()
         glDeleteTextures(1, &m_id);
         initTexture();
     }
-    setTextureData(data, getSize());
+    setData(data, getSize());
     free(data);
     return true;
 }
@@ -198,7 +197,7 @@ void Texture::initTexture()
     }
 }
 
-void Texture::setTextureData(void *d, size_t size)
+void Texture::setData(void *d, size_t size)
 {
 //    auto s = getSize();
 //    ASSERT(size<=s);
@@ -319,18 +318,16 @@ void* Texture::loadFromFile(const std::filesystem::path& path){
 
 
 ShaderFile::ShaderFile(const std::filesystem::path &path, const std::string shaderName)
-    : m_programName(shaderName)
+    : Asset(AssetType::shaderFile), m_programName(shaderName)
 {
-    assetType = AssetType::shaderFile;
     this->m_path = path;
     if(!getTypeFromFileName()) return;
     text = loadFile();
 }
 
 ShaderFile::ShaderFile(const std::filesystem::path &path, ShaderFile::ShaderType type, const std::string shaderName)
-    : m_programName(shaderName), type(type)
+    : Asset(AssetType::shaderFile), m_programName(shaderName), type(type)
 {
-    assetType = AssetType::shaderFile;
     this->m_path = path;
     text = loadFile();
 }
@@ -339,6 +336,15 @@ bool ShaderFile::doReload()
 {
     text = loadFile();
     return false;
+}
+
+bool invalidChar (char c)
+{
+    return !(c>=0 && c <128);
+}
+void stripUnicode(std::string & str)
+{
+    str.erase(std::remove_if(str.begin(),str.end(), invalidChar), str.end());
 }
 
 std::string ShaderFile::loadFile()
@@ -356,7 +362,7 @@ std::string ShaderFile::loadFile()
     }
 
     auto str = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
-
+    stripUnicode(str);
 //    std::cout<<str;
     return str;
 }
@@ -386,17 +392,20 @@ bool ShaderFile::getTypeFromFileName()
 }
 
 Model::Model(const std::string &name, bool loadDebug)
+    : Asset(AssetType::meshFile)
 {
     this->m_name = name;
 }
 
 Model::Model(const std::filesystem::path &path)
+    : Asset(AssetType::meshFile)
 {
     this->m_path = path;
     loadModel();
 }
 
 Model::Model(std::string name, std::vector<std::shared_ptr<Mesh> > meshes)
+    : Asset(AssetType::meshFile)
 {
     m_name = name;
     AABB modelBB;
@@ -610,6 +619,8 @@ bool Model::loadModel()
 
     return true;
 }
+
+
 
 
 
