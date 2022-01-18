@@ -25,7 +25,6 @@ void main(){
     float ssao  = texture(ssaoTexture, o_TexCoord).r;
     vec3 color  = hdrCol+bloom*u_bloomIntensity;
 
-    ssao = pow(ssao, 1.2);
     color *= ssao;
     color = toneMapACES(color+volumetric);
 

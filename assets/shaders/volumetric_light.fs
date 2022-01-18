@@ -12,6 +12,7 @@ uniform mat4 u_View;
 uniform mat4 u_Projection;
 uniform float u_nearPlane;
 uniform float u_farPlane;
+uniform float u_AmbientIntensity;
 
 layout(binding = 0) uniform sampler2DArray shadowMap;
 layout(binding = 1) uniform sampler2D depthMap;
@@ -24,32 +25,13 @@ layout (std430, binding = 1) buffer LightSpaceMatrices
     mat4 lightSpaceMatrices[];
 };
 
-float linearizeDepth(float z)
-{
-    return (2*u_nearPlane ) / (u_farPlane + u_nearPlane - z*(u_farPlane -u_nearPlane)) ;
-}
 
-vec3 reconstructPosition(vec2 uv, float z, mat4 invVP)
-{
-    vec4 position_s = vec4(uv * 2.0 - vec2(1.0), 2.0 * z - 1.0, 1.0);
-    vec4 position_v = invVP * position_s;
-    return position_v.xyz / position_v.w;
-}
-
-float phase(vec3 inDir, vec3 outDir) 
-{
-	float cosAngle = dot(inDir, outDir) / (length(inDir) * length(outDir));
-	float nom = 3.0 * (1.0 + cosAngle * cosAngle);
-	float denom = 16.0 * 3.141592;
-	return nom / denom;
-}
-
-float dirLightShadow(vec3 fPos);
-//temp
-int samples = 50;
-float g_factor = 0.01;
-float fog_strength = 0.3;
-float fog_y = 5;
+//Settings
+uniform int u_Samples = 50;
+uniform float u_Gfactor = -0.1;
+uniform float u_FogStrength = 0.8;
+uniform float u_FogY = 5;
+uniform float u_LightShaftIntensity = 1;
 
 float dither_pattern[16] = float[16] (
 	0.0, 0.5, 0.125, 0.625,
@@ -58,12 +40,19 @@ float dither_pattern[16] = float[16] (
 	0.9375, 0.4375, 0.8125, 0.3125
 );
 
+vec3 reconstructPosition(vec2 uv, float z, mat4 invVP)
+{
+    vec4 position_s = vec4(uv * 2.0 - vec2(1.0), 2.0 * z - 1.0, 1.0);
+    vec4 position_v = invVP * position_s;
+    return position_v.xyz / position_v.w;
+}
 float ComputeScattering(float lightDotView)
 {
-    float result = 1.0f - g_factor * g_factor;
-    result /= (4.0f * 3.14159265359 * pow(1.0f + g_factor * g_factor - (2.0f * g_factor) * lightDotView, 1.5f));
+    float result = 1.0f - u_Gfactor * u_Gfactor;
+    result /= (4.0f * 3.14159265359 * pow(1.0f + u_Gfactor * u_Gfactor - (2.0f * u_Gfactor) * lightDotView, 1.5f));
     return result;
 }
+float dirLightShadow(vec3 fPos);
 
 void main()
 {
@@ -80,7 +69,7 @@ void main()
     float rayLength = length(rayVector);
     vec3 rayDirection = rayVector / rayLength;
 
-    float stepLength = rayLength / samples;
+    float stepLength = rayLength / u_Samples;
 
     vec3 oneStep = rayDirection * stepLength;
     startPosition+=oneStep+dither_value;
@@ -92,25 +81,25 @@ void main()
 
     float extraFog = 0;
 
-    if(worldPos.y < fog_y)
-        extraFog = mix(fog_strength, 0.01, clamp(worldPos.y/fog_y, 0, 1));
+    if(worldPos.y < u_FogY)
+        extraFog = mix(u_FogStrength, 0.01, clamp(worldPos.y/u_FogY, 0, 1));
 
-    for (int i = 0; i < samples; i++) 
+    for (int i = 0; i < u_Samples; i++) 
     { 
         float shadow = dirLightShadow(currentPosition);
 
-        if(shadow == 1 )
+        if(shadow != 1 )
         {
             float lightDot = dot(normalize(rayDirection), normalize(-u_DirLightDirection));
-            L += ComputeScattering(lightDot)*u_DirLightIntensity*u_DirLightCol*(extraFog*u_DirLightCol)*10;
+            L += (ComputeScattering(lightDot)*u_LightShaftIntensity*u_DirLightCol+(extraFog*u_DirLightCol))*u_DirLightIntensity;
         }
 
-            L += extraFog*u_DirLightIntensity;
+            L += extraFog*u_AmbientIntensity;
 
         currentPosition += oneStep;
     }
 
-    o_Color = vec4(L/samples, 1);
+    o_Color = vec4(L/u_Samples, 1);
     // o_Color = vec4(rayCoord, 1);
 }
 

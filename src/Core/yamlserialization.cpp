@@ -196,9 +196,18 @@ bool Serializer::serializeRenderConfig(const RenderConfig &config, const std::fi
     SERIALIZE_PRIMITIVE(e, config.enableSSAO);
     SERIALIZE_PRIMITIVE(e, config.ssaoHalfRes);
     SERIALIZE_PRIMITIVE(e, config.ssaoKernelSize);
-    SERIALIZE_PRIMITIVE(e, config.blurKernelSize);
+    SERIALIZE_PRIMITIVE(e, config.ssaoBlurSize);
     SERIALIZE_PRIMITIVE(e, config.ssaoRadius);
     SERIALIZE_PRIMITIVE(e, config.ssaoBias);
+
+    SERIALIZE_PRIMITIVE(e, config.enableVolumetric);
+    SERIALIZE_PRIMITIVE(e, config.volumetricHalfRes);
+    SERIALIZE_PRIMITIVE(e, config.volumetricSamples);
+    SERIALIZE_PRIMITIVE(e, config.volumetricBlurSize);
+    SERIALIZE_PRIMITIVE(e, config.g_factor);
+    SERIALIZE_PRIMITIVE(e, config.fog_strength);
+    SERIALIZE_PRIMITIVE(e, config.fog_y);
+    SERIALIZE_PRIMITIVE(e, config.lightShaftIntensity);
 
     SERIALIZE_PRIMITIVE(e, config.renderStatsCorner);
     e << EndMap;
@@ -226,11 +235,20 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
     DESERIALIZE_PRIMITIVE(data, config.csmResolution,      uint);
 
     DESERIALIZE_PRIMITIVE(data, config.enableSSAO,     bool);
-    DESERIALIZE_PRIMITIVE(data, config.ssaoHalfRes,     bool);
+    DESERIALIZE_PRIMITIVE(data, config.ssaoHalfRes,    bool);
     DESERIALIZE_PRIMITIVE(data, config.ssaoKernelSize, int);
-    DESERIALIZE_PRIMITIVE(data, config.blurKernelSize, int);
+    DESERIALIZE_PRIMITIVE(data, config.ssaoBlurSize,   int);
     DESERIALIZE_PRIMITIVE(data, config.ssaoRadius,     float);
     DESERIALIZE_PRIMITIVE(data, config.ssaoBias,       float);
+
+    DESERIALIZE_PRIMITIVE(data, config.enableVolumetric,    bool);
+    DESERIALIZE_PRIMITIVE(data, config.volumetricHalfRes,   bool);
+    DESERIALIZE_PRIMITIVE(data, config.volumetricSamples,   int);
+    DESERIALIZE_PRIMITIVE(data, config.volumetricBlurSize,  int);
+    DESERIALIZE_PRIMITIVE(data, config.g_factor,            float);
+    DESERIALIZE_PRIMITIVE(data, config.fog_strength,        float);
+    DESERIALIZE_PRIMITIVE(data, config.fog_y,               float);
+    DESERIALIZE_PRIMITIVE(data, config.lightShaftIntensity, float);
 
     DESERIALIZE_PRIMITIVE(data, config.renderStatsCorner, int);
 

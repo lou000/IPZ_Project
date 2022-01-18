@@ -89,13 +89,16 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     if(config.enableBloom)
         bloomComputePass();
 
+    downsampleDepth();
     if(config.enableSSAO)
-    {
         ssaoPass(scene);
-        ssaoBlur();
-    }
+
+    if(config.enableVolumetric)
+        volumetricPass(scene);
+
+    upsamplePass();
+    blurPass();
 //    drawSceneDebug(scene);
-    volumetricPass(scene);
     compositePass();
     drawScreenSpace(scene);
 
@@ -137,10 +140,16 @@ void RenderPipeline::initShaders()
     AssetManager::addShader(bilinearDownsample);
 
     shaderSrcs = {
-        {"../assets/shaders/tent_upsample.cmp"}
+        {"../assets/shaders/tent_upsampleR11F_G11F_B10F.cmp"}
     };
-    tentUpsample = std::make_shared<Shader>("tent_upsample", shaderSrcs);
-    AssetManager::addShader(tentUpsample);
+    tentUpsampleDepth = std::make_shared<Shader>("tent_upsampleR11F_G11F_B10F", shaderSrcs);
+    AssetManager::addShader(tentUpsampleDepth);
+
+    shaderSrcs = {
+        {"../assets/shaders/tent_upsampleR32F.cmp"}
+    };
+    tentUpsampleColor = std::make_shared<Shader>("tent_upsampleR32F", shaderSrcs);
+    AssetManager::addShader(tentUpsampleColor);
 
     shaderSrcs = {
         {
@@ -221,17 +230,20 @@ void RenderPipeline::initFBOs()
     ssaoAtt.renderBuffer = false;
 
     if(config.ssaoHalfRes)
-    {
         ssaoFBO = FrameBuffer(winSize.x/2, winSize.y/2, 1, {ssaoAtt});
-        blurFBO = FrameBuffer(winSize.x/2, winSize.y/2, 1, {ssaoAtt});
-    }
     else
-    {
         ssaoFBO = FrameBuffer(winSize.x, winSize.y, 1, {ssaoAtt});
-        blurFBO = FrameBuffer(winSize.x, winSize.y, 1, {ssaoAtt});
-    }
+    blurSsaoFBO = FrameBuffer(winSize.x, winSize.y, 1, {ssaoAtt});
 
-    vlFBO = FrameBuffer(winSize.x, winSize.y, 1, {colorAtt});
+    if(config.volumetricHalfRes)
+        vlFBO = FrameBuffer(winSize.x/2, winSize.y/2, 1, {colorAtt});
+    else
+        vlFBO = FrameBuffer(winSize.x/2, winSize.y/2, 1, {colorAtt});
+    blurVlFBO = FrameBuffer(winSize.x, winSize.y, 1, {colorAtt});
+
+    downSampledDepth = std::make_shared<Texture>(winSize.x/2, winSize.y/2, 1, GL_R32F, GL_CLAMP_TO_EDGE);
+    upSampledSSAO = std::make_shared<Texture>(winSize.x, winSize.y, 1, GL_R32F, GL_CLAMP_TO_EDGE);
+    upSampledVL = std::make_shared<Texture>(winSize.x, winSize.y, 1, GL_R11F_G11F_B10F, GL_CLAMP_TO_EDGE);
 
     // Create output framebuffer
     colorAtt.renderBuffer = true;
@@ -251,9 +263,6 @@ void RenderPipeline::initSSAO()
     }
     ssaoNoiseTex = std::make_shared<Texture>(4, 4, 1, GL_RGB16F, GL_REPEAT);
     ssaoNoiseTex->setData(ssaoNoise.data(), ssaoNoise.size()*sizeof(vec3));
-
-    downSampledDepth = std::make_shared<Texture>(winSize.x/2, winSize.y/2, 1, GL_R32F, GL_CLAMP_TO_EDGE);
-    upSampledSSAO = std::make_shared<Texture>(winSize.x, winSize.y, 1, GL_R32F, GL_CLAMP_TO_EDGE);
 }
 
 void RenderPipeline::updateSSAOKernel()
@@ -630,19 +639,47 @@ void RenderPipeline::bloomComputePass()
     }
 }
 
+void RenderPipeline::downsampleDepth()
+{
+    PROFILE_GPU("DownsampleDepth", syncGPU);
+    if(config.ssaoHalfRes || config.volumetricHalfRes)
+    {
+        glBindTexture(GL_TEXTURE_2D, NULL);
+        bilinearDownsample->bind();
+        hdrFBO.getDepthTex()->bind(1);
+        bilinearDownsample->bindImage(downSampledDepth, 0, GL_WRITE_ONLY, false);
+        vec2 size = hdrFBO.getDepthTex()->getDimensions();
+        bilinearDownsample->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), 1);
+
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        bilinearDownsample->unbind();
+    }
+}
+
 void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
 {
+    PROFILE_GPU("VolumetricPass", syncGPU);
     auto sceneCamera = scene->activeCamera();
     vlShader->bind();
     vlFBO.bind();
 
+    //Volumetric settings
+    vlShader->setUniform("u_Samples", BufferElement::Int, config.volumetricSamples);
+    vlShader->setUniform("u_Gfactor", BufferElement::Float, config.g_factor);
+    vlShader->setUniform("u_FogStrength", BufferElement::Float, config.fog_strength);
+    vlShader->setUniform("u_FogY", BufferElement::Float, config.fog_y);
+    vlShader->setUniform("u_LightShaftIntensity", BufferElement::Float, config.lightShaftIntensity);
+
+    //Camera
     vlShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
     vlShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
     vlShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
 
+    // Lightning
     vlShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->directionalLight.direction);
     vlShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
     vlShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
+    vlShader->setUniform("u_AmbientIntensity", BufferElement::Float, scene->directionalLight.ambientIntensity);
 
     // CSM data
     vlShader->setUniform("u_nearPlane", BufferElement::Float, sceneCamera->getNearClip());
@@ -650,7 +687,12 @@ void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
     vlShader->setUniform("u_cascadeCount", BufferElement::Int, config.shadowCascadeCount+1);
     vlShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
     csmFBO.getDepthTex()->bind(0);
-    hdrFBO.getDepthTex()->bind(1);
+
+
+    if(config.volumetricHalfRes)
+        downSampledDepth->bind(1);
+    else
+        hdrFBO.getDepthTex()->bind(1);
 
 
     screenQuad.bind();
@@ -664,19 +706,6 @@ void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
 {
     PROFILE_GPU("SSAOPass", syncGPU);
     auto sceneCamera = scene->activeCamera();
-
-    if(config.ssaoHalfRes)
-    {
-        glBindTexture(GL_TEXTURE_2D, NULL);
-        bilinearDownsample->bind();
-        hdrFBO.getDepthTex()->bind(1);
-        bilinearDownsample->bindImage(downSampledDepth, 0, GL_WRITE_ONLY, false);
-        vec2 size = hdrFBO.getDepthTex()->getDimensions();
-        bilinearDownsample->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), 1);
-
-        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        bilinearDownsample->unbind();
-    }
 
     ssaoFBO.bind();
     ssaoShader->bind();
@@ -700,39 +729,78 @@ void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
     ssaoShader->unbind();
     ssaoKernelSSBO.unbind();
     ssaoFBO.unbind();
+}
 
-    if(config.ssaoHalfRes)
+void RenderPipeline::upsamplePass()
+{
+    PROFILE_GPU("UpsamplePass", syncGPU);
+    if(config.ssaoHalfRes && config.enableSSAO)
     {
-        tentUpsample->bind();
-        bilinearDownsample->bindImage(upSampledSSAO, 0, GL_WRITE_ONLY, false);
+        tentUpsampleDepth->bind();
+        tentUpsampleDepth->bindImage(upSampledSSAO, 0, GL_WRITE_ONLY, false);
         ssaoFBO.getTexture(0)->bind(1);
 
         vec2 size = upSampledSSAO->getDimensions();
-        tentUpsample->dispatch((uint)ceil(size.x/32), (uint)ceil(size.y/32), 1);
+        tentUpsampleDepth->dispatch((uint)ceil(size.x/32), (uint)ceil(size.y/32), 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        tentUpsample->unbind();
+        tentUpsampleDepth->unbind();
+    }
+
+    if(config.volumetricHalfRes && config.enableVolumetric)
+    {
+        tentUpsampleColor->bind();
+        tentUpsampleColor->bindImage(upSampledVL, 0, GL_WRITE_ONLY, false);
+        vlFBO.getTexture(0)->bind(1);
+
+        vec2 size = upSampledVL->getDimensions();
+        tentUpsampleColor->dispatch((uint)ceil(size.x/32), (uint)ceil(size.y/32), 1);
+
+        glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+        tentUpsampleColor->unbind();
     }
 }
 
-void RenderPipeline::ssaoBlur()
+void RenderPipeline::blurPass()
 {
-    PROFILE_GPU("SSAOBlur", syncGPU);
+    PROFILE_GPU("BlurPass", syncGPU);
     simpleBlur->bind();
-    blurFBO.bind();
 
-    if(config.ssaoHalfRes)
-        upSampledSSAO->bind(0);
-    else
-        ssaoFBO.getTexture(0)->bind(0);
+    if(config.enableSSAO)
+    {
+        blurSsaoFBO.bind();
 
-    simpleBlur->setUniform("kernelSize", BufferElement::Int, config.blurKernelSize);
+        if(config.ssaoHalfRes)
+            upSampledSSAO->bind(0);
+        else
+            ssaoFBO.getTexture(0)->bind(0);
 
-    screenQuad.bind();
-    glDrawArrays(GL_TRIANGLES, 0, 6);
-    screenQuad.unbind();
+        simpleBlur->setUniform("kernelSize", BufferElement::Int, config.ssaoBlurSize);
 
-    blurFBO.unbind();
+        screenQuad.bind();
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        screenQuad.unbind();
+
+        blurSsaoFBO.unbind();
+    }
+
+    if(config.enableVolumetric)
+    {
+        blurVlFBO.bind();
+        if(config.volumetricHalfRes)
+            upSampledVL->bind(0);
+        else
+            vlFBO.getTexture(0)->bind(0);
+
+        simpleBlur->setUniform("kernelSize", BufferElement::Int, config.volumetricBlurSize);
+
+        screenQuad.bind();
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+        screenQuad.unbind();
+
+        blurVlFBO.unbind();
+    }
+
     simpleBlur->unbind();
 }
 
@@ -744,10 +812,10 @@ void RenderPipeline::compositePass()
     screenShader->bind();
     screenShader->setUniform("u_bloomIntensity", BufferElement::Float, config.bloomIntensity);
     hdrFBO.getTexture(0)->bind(0);
-    blurFBO.getTexture(0)->bind(1);
+    blurSsaoFBO.getTexture(0)->bind(1);
     if(bloomUpSampleTextures.size()>0)
         bloomUpSampleTextures[0]->bind(2);
-    vlFBO.getTexture(0)->bind(3);
+    blurVlFBO.getTexture(0)->bind(3);
 
     screenQuad.bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -759,42 +827,63 @@ void RenderPipeline::compositePass()
 
 void RenderPipeline::resizeOrClearResources()
 {
+    // Resize based on config changes
     if(config.ssaoHalfRes != oldSsaoHalfRes)
     {
         if(config.ssaoHalfRes)
-            ssaoFBO.resize(winSize.x, winSize.y, 1);
-        else
             ssaoFBO.resize(winSize.x/2, winSize.y/2, 1);
+        else
+            ssaoFBO.resize(winSize.x, winSize.y, 1);
+        oldSsaoHalfRes = config.ssaoHalfRes;
     }
+
+    if(config.volumetricHalfRes != oldVlHalfRes)
+    {
+        if(config.volumetricHalfRes)
+            vlFBO.resize(winSize.x/2, winSize.y/2, 1);
+        else
+            vlFBO.resize(winSize.x, winSize.y, 1);
+        oldVlHalfRes = config.volumetricHalfRes;
+    }
+
     if(config.csmResolution != oldCsmResolusion)
     {
         csmFBO.resize(config.csmResolution, config.csmResolution, config.shadowCascadeCount+1);
         oldCsmResolusion = config.csmResolution;
     }
+
     if(!config.enableBloom && bloomUpSampleTextures.size()>0)
         bloomUpSampleTextures[0]->clear({0,0,0});
     if(!config.enableSSAO)
-        blurFBO.getTexture(0)->clear({1,1,1});
+        blurSsaoFBO.getTexture(0)->clear({1,1,1});
     // Resize FBOs and textures
     if(config.bloomRadius != oldBloomRadius)
     {
         resizeBloomBuffers();
         oldBloomRadius = config.bloomRadius;
     }
+
+    // resize based on resolution changes
     if(winSize != oldWinSize)
     {
         hdrFBO.resize(winSize.x, winSize.y, 1);
         outputFBO.resize(winSize.x, winSize.y, 1);
-        vlFBO.resize(winSize.x, winSize.y, 1);
 
         if(config.ssaoHalfRes)
             ssaoFBO.resize(winSize.x/2, winSize.y/2, 1);
         else
             ssaoFBO.resize(winSize.x, winSize.y, 1);
 
-        blurFBO.resize(winSize.x, winSize.y, 1);
+        if(config.volumetricHalfRes)
+            vlFBO.resize(winSize.x/2, winSize.y/2, 1);
+        else
+            vlFBO.resize(winSize.x, winSize.y, 1);
+
+        blurSsaoFBO.resize(winSize.x, winSize.y, 1);
+        blurVlFBO.resize(winSize.x, winSize.y, 1);
         downSampledDepth->resize({winSize.x/2, winSize.y/2, 1});
         upSampledSSAO->resize({winSize.x, winSize.y, 1});
+        upSampledVL->resize({winSize.x, winSize.y, 1});
         resizeBloomBuffers();
     }
     else
@@ -806,7 +895,9 @@ void RenderPipeline::resizeOrClearResources()
         csmFBO.clearDepthAttachment();
         outputFBO.clear({0.5, 0.5, 0.5});
         ssaoFBO.clear({0.5, 0.5, 0.5});
-        blurFBO.clear({1, 1, 1});
+        blurSsaoFBO.clear({1, 1, 1});
+        blurVlFBO.clear({0,0,0});
+        vlFBO.clear({0,0,0});
 
 //        for(uint i=1; i<bloomSamples+1; i++)
 //        {
@@ -842,8 +933,8 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
     switch(debugView)
     {
     case 0: break;
-    case 1: BatchRenderer::drawQuad({0,0}, winSize, vlFBO.getTexture(0)); break;
-    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurFBO.getTexture(0)); break;
+    case 1: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
+    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
     case 3: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
     case 4: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
     default:
@@ -884,10 +975,23 @@ void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
         {
             TWEAK_BOOL("enableSSAO", config.enableSSAO);
             TWEAK_BOOL("halfRes", config.ssaoHalfRes);
-            TWEAK_INT("blurKernelSize", config.blurKernelSize, 2, 2, 20);
+            TWEAK_INT("blurSize", config.ssaoBlurSize, 2, 2, 20);
             TWEAK_INT("ssaoKernelSize", config.ssaoKernelSize, 2, 2, 256);
             TWEAK_FLOAT("ssaoRadius", config.ssaoRadius, 0.01f);
             TWEAK_FLOAT("ssaoBias", config.ssaoBias, 0.01f);
+        }
+
+        //Volumetric
+        if (ImGui::CollapsingHeader("Volumetric"))
+        {
+            TWEAK_BOOL("enableVolumetric", config.enableVolumetric);
+            TWEAK_BOOL("halfRes", config.volumetricHalfRes);
+            TWEAK_INT("samples", config.volumetricSamples, 1, 1, 200);
+            TWEAK_FLOAT("gFactor", config.g_factor, 0.001, -10, 10);
+            TWEAK_FLOAT("fogY", config.fog_y, 0.01f);
+            TWEAK_FLOAT("fogStrength", config.fog_strength, 0.01f);
+            TWEAK_FLOAT("lightShaftIntensity", config.lightShaftIntensity, 0.01f)
+            TWEAK_INT("blurSize", config.volumetricBlurSize, 2, 2, 20);
         }
     }
     ImGui::End();

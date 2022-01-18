@@ -27,9 +27,19 @@ struct RenderConfig
     bool enableSSAO = true;
     bool ssaoHalfRes = true;
     int ssaoKernelSize = 96;
-    int blurKernelSize = 4;
+    int ssaoBlurSize = 4;
     float ssaoRadius = 0.6f;
     float ssaoBias = 0.2f;
+
+    bool enableVolumetric = true;
+    bool volumetricHalfRes = true;
+    int volumetricSamples = 50;
+    int volumetricBlurSize = 4;
+    float g_factor = -0.1f;
+    float fog_strength = 0.8f;
+    float fog_y = 5;
+    float lightShaftIntensity = 1.f;
+
 
     int renderStatsCorner = 0;
 };
@@ -88,15 +98,19 @@ private:
 
     //Volumetric lights
     FrameBuffer vlFBO;
+    FrameBuffer blurVlFBO;
+    bool oldVlHalfRes = true;
     std::shared_ptr<Shader> vlShader;
+    std::shared_ptr<Shader> tentUpsampleColor;
+    std::shared_ptr<Texture> upSampledVL;
 
     //SSAO
     FrameBuffer ssaoFBO;
-    FrameBuffer blurFBO;
+    FrameBuffer blurSsaoFBO;
     StorageBuffer ssaoKernelSSBO;
     std::shared_ptr<Shader> ssaoShader;
+    std::shared_ptr<Shader> tentUpsampleDepth;
     std::shared_ptr<Shader> bilinearDownsample;
-    std::shared_ptr<Shader> tentUpsample;
     std::shared_ptr<Shader> simpleBlur;
     std::shared_ptr<Texture> ssaoNoiseTex;
     std::shared_ptr<Texture> downSampledDepth;
@@ -118,8 +132,11 @@ private:
     void pbrPass(std::shared_ptr<Scene> scene);
     void CSMdepthPrePass(std::shared_ptr<Scene> scene);
     void bloomComputePass();
+    void downsampleDepth();
     void volumetricPass(std::shared_ptr<Scene> scene);
     void ssaoPass(std::shared_ptr<Scene> scene);
+    void upsamplePass();
+    void blurPass();
     void compositePass();
 
     void drawSceneDebug(std::shared_ptr<Scene> scene);
@@ -130,6 +147,5 @@ private:
     void resizeOrClearResources();
     void maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene);
     void initSSAO();
-    void ssaoBlur();
     void updateSSAOKernel();
 };
