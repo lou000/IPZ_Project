@@ -30,8 +30,8 @@ layout (std430, binding = 1) buffer LightSpaceMatrices
     mat4 lightSpaceMatrices[];
 };
 
-layout(binding = 3) uniform sampler2DArray csmTex;
-uniform sampler2DArray shadowMap;
+
+layout(binding = 3) uniform sampler2DArray shadowMap;
 uniform mat4 u_View;
 uniform float u_farPlane;
 uniform int u_cascadeCount;

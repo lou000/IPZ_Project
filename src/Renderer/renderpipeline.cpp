@@ -95,6 +95,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
         ssaoBlur();
     }
 //    drawSceneDebug(scene);
+    volumetricPass(scene);
     compositePass();
     drawScreenSpace(scene);
 
@@ -179,6 +180,13 @@ void RenderPipeline::initShaders()
     };
     solidShader = std::make_shared<Shader>("solid_color", shaderSrcs);
     AssetManager::addShader(solidShader);
+
+    shaderSrcs = {
+        {"../assets/shaders/textured_passthrough.vs"},
+        {"../assets/shaders/volumetric_light.fs"}
+    };
+    vlShader = std::make_shared<Shader>("volumetric_light", shaderSrcs);
+    AssetManager::addShader(vlShader);
 }
 
 void RenderPipeline::initFBOs()
@@ -222,6 +230,8 @@ void RenderPipeline::initFBOs()
         ssaoFBO = FrameBuffer(winSize.x, winSize.y, 1, {ssaoAtt});
         blurFBO = FrameBuffer(winSize.x, winSize.y, 1, {ssaoAtt});
     }
+
+    vlFBO = FrameBuffer(winSize.x, winSize.y, 1, {colorAtt});
 
     // Create output framebuffer
     colorAtt.renderBuffer = true;
@@ -498,7 +508,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     pbrShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
     csmFBO.getDepthTex()->bind(3);
 
-    // this below should probably go to separate draw call
+    // this below should probably go to separate pass
     pbrShader->setUniform("u_bloomTreshold", BufferElement::Float, config.bloomTreshold);
     pbrShader->setUniform("u_exposure", BufferElement::Float, config.exposure);
 
@@ -620,6 +630,36 @@ void RenderPipeline::bloomComputePass()
     }
 }
 
+void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
+{
+    auto sceneCamera = scene->activeCamera();
+    vlShader->bind();
+    vlFBO.bind();
+
+    vlShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
+    vlShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
+    vlShader->setUniform("u_CameraPosition", BufferElement::Float3, sceneCamera->getPos());
+
+    vlShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->directionalLight.direction);
+    vlShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
+    vlShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
+
+    // CSM data
+    vlShader->setUniform("u_nearPlane", BufferElement::Float, sceneCamera->getNearClip());
+    vlShader->setUniform("u_farPlane", BufferElement::Float, sceneCamera->getFarClip());
+    vlShader->setUniform("u_cascadeCount", BufferElement::Int, config.shadowCascadeCount+1);
+    vlShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
+    csmFBO.getDepthTex()->bind(0);
+    hdrFBO.getDepthTex()->bind(1);
+
+
+    screenQuad.bind();
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    screenQuad.unbind();
+    vlFBO.unbind();
+    vlShader->unbind();
+}
+
 void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
 {
     PROFILE_GPU("SSAOPass", syncGPU);
@@ -707,6 +747,7 @@ void RenderPipeline::compositePass()
     blurFBO.getTexture(0)->bind(1);
     if(bloomUpSampleTextures.size()>0)
         bloomUpSampleTextures[0]->bind(2);
+    vlFBO.getTexture(0)->bind(3);
 
     screenQuad.bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -744,6 +785,7 @@ void RenderPipeline::resizeOrClearResources()
     {
         hdrFBO.resize(winSize.x, winSize.y, 1);
         outputFBO.resize(winSize.x, winSize.y, 1);
+        vlFBO.resize(winSize.x, winSize.y, 1);
 
         if(config.ssaoHalfRes)
             ssaoFBO.resize(winSize.x/2, winSize.y/2, 1);
@@ -789,19 +831,25 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
 {
     auto sceneCamera = scene->activeCamera();
     outputFBO.bind();
+    if(App::getKeyOnce(GLFW_KEY_KP_ADD))
+        debugView++;
+    if(App::getKeyOnce(GLFW_KEY_KP_SUBTRACT))
+        debugView--;
+    if(App::getKeyOnce(GLFW_KEY_KP_0))
+        debugView = 0;
+    glm::clamp(debugView, 0, 4);
     BatchRenderer::begin(sceneCamera);
-//    csmFBO.getDepthTex()->selectLayerForNextDraw(debugCascadeDisplayIndex);
-//    auto size = (vec2)winSize/(float)bloomSamples;
-//        for(uint i=0; i<bloomSamples; i++)
-//        {
-//            BatchRenderer::drawQuad({size.x*i,size.y}, size, bloomDownSampleTextures[i]);
-//            BatchRenderer::drawQuad({size.x*i,size.y*2}, size, bloomUpSampleTextures[i]);
-//        }
-//    BatchRenderer::drawQuad({0,0}, winSize, bloomDownSampleTextures[0]);
-//    BatchRenderer::drawQuad({0,0}, winSize, downSampledDepth);
-//    BatchRenderer::drawQuad({0,0}, winSize, ssaoFBO.getTexture(0));
-//    BatchRenderer::drawQuad({0,0}, winSize, blurFBO.getTexture(0));
-//    BatchRenderer::drawQuad({0,0}, winSize, hdrFBO.getDepthTex());
+    switch(debugView)
+    {
+    case 0: break;
+    case 1: BatchRenderer::drawQuad({0,0}, winSize, vlFBO.getTexture(0)); break;
+    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurFBO.getTexture(0)); break;
+    case 3: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
+    case 4: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
+    default:
+        break;
+    }
+
     BatchRenderer::end();
     outputFBO.unbind();
 }

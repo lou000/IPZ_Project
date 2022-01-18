@@ -57,6 +57,7 @@ private:
     bool syncGPU = false;
     uvec2 winSize;
     uvec2 oldWinSize;
+    int debugView = 0;
 
 
     //PBR
@@ -84,6 +85,10 @@ private:
     int oldShadowCascadeCount = 5;
     int oldCsmResolusion = 4096;
     std::vector<float> cascadeRanges;
+
+    //Volumetric lights
+    FrameBuffer vlFBO;
+    std::shared_ptr<Shader> vlShader;
 
     //SSAO
     FrameBuffer ssaoFBO;
@@ -113,14 +118,18 @@ private:
     void pbrPass(std::shared_ptr<Scene> scene);
     void CSMdepthPrePass(std::shared_ptr<Scene> scene);
     void bloomComputePass();
+    void volumetricPass(std::shared_ptr<Scene> scene);
+    void ssaoPass(std::shared_ptr<Scene> scene);
     void compositePass();
-    void resizeOrClearResources();
-    void maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene);
+
     void drawSceneDebug(std::shared_ptr<Scene> scene);
     void drawScreenSpace(std::shared_ptr<Scene> scene);
     void drawImgui(std::shared_ptr<Scene> scene);
+
+
+    void resizeOrClearResources();
+    void maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene);
     void initSSAO();
-    void ssaoPass(std::shared_ptr<Scene> scene);
     void ssaoBlur();
     void updateSSAOKernel();
 };

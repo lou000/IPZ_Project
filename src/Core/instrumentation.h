@@ -63,7 +63,12 @@ public:
         m_result.ms = (float)elapsedTime.count()/1000;
         m_result.threadID = std::hash<std::thread::id>{}(std::this_thread::get_id());
         std::string hash = m_result.name + std::to_string(m_result.threadID);
-        InstrumentationStorage::getInstance().storage[hash] = m_result;
+
+        auto& instance = InstrumentationStorage::getInstance();
+        if(instance.storage.count(hash) == 0)
+            instance.storage[hash] = m_result;
+        if(instance.storage.count(hash) == 1)
+            instance.storage[hash].ms += m_result.ms;
         m_stopped = true;
     }
 };

@@ -354,13 +354,13 @@ std::string ShaderFile::loadFile()
     if(!std::filesystem::exists(m_path))
     {
         WARN("Failed to load shader: File %s doesnt exist.", m_path.string().c_str());
-        return nullptr;
+        return {};
     }
 
     std::ifstream input_file(m_path);
     if (!input_file.is_open()) {
         WARN("Failed to load shader: Couldnt open file %s for reading.", m_path.string().c_str());
-        return nullptr;
+        return {};
     }
 
     auto str = std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
