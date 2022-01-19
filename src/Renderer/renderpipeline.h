@@ -127,6 +127,10 @@ private:
     //Solid
     std::shared_ptr<Shader> solidShader;
 
+    //Noise
+    std::shared_ptr<Shader> perlinNoiseGen;
+    std::shared_ptr<Texture> perlinTexture;
+
 
 
     void pbrPass(std::shared_ptr<Scene> scene);
@@ -145,6 +149,7 @@ private:
 
 
     void resizeOrClearResources();
+    void generateNoise();
     void maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene);
     void initSSAO();
     void updateSSAOKernel();

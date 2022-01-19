@@ -22,6 +22,8 @@ RenderPipeline::RenderPipeline()
     // Initialize bloom buffers
     resizeBloomBuffers();
 
+    perlinTexture = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
+
 
     // TODO: move everything below this to primitive generation
     //---------------------------------------------------------------//
@@ -57,6 +59,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 {
     oldWinSize = winSize;
     winSize = App::getWindowSize();
+    generateNoise(); //TODO: not every frame...
 
     // gather instanced entities
     instancedGroups.clear();
@@ -150,6 +153,12 @@ void RenderPipeline::initShaders()
     };
     upsampleVL = std::make_shared<Shader>("volumetric_upsample", shaderSrcs);
     AssetManager::addShader(upsampleVL);
+
+    shaderSrcs = {
+        {"../assets/shaders/perlin_texture.cmp"}
+    };
+    perlinNoiseGen = std::make_shared<Shader>("perlin_texture", shaderSrcs);
+    AssetManager::addShader(perlinNoiseGen);
 
     shaderSrcs = {
         {
@@ -914,6 +923,18 @@ void RenderPipeline::resizeOrClearResources()
     }
 }
 
+void RenderPipeline::generateNoise()
+{
+    perlinNoiseGen->bind();
+    perlinNoiseGen->bindImage(perlinTexture, 0, GL_WRITE_ONLY, false);
+
+    vec3 size = perlinTexture->getDimensions();
+    perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)ceil(size.z/4));
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    perlinNoiseGen->unbind();
+}
+
 void RenderPipeline::drawSceneDebug(std::shared_ptr<Scene> scene)
 {
     auto sceneCamera = scene->activeCamera();
@@ -935,15 +956,20 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
         debugView--;
     if(App::getKeyOnce(GLFW_KEY_KP_0))
         debugView = 0;
-    glm::clamp(debugView, 0, 4);
+    glm::clamp(debugView, 0, 5);
     BatchRenderer::begin(sceneCamera);
     switch(debugView)
     {
     case 0: break;
-    case 1: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
-    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
-    case 3: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
-    case 4: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
+    case 1:
+    {
+        perlinTexture->selectLayerForNextDraw(0);
+        BatchRenderer::drawQuad({0,0}, winSize, perlinTexture); break;
+    }
+    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
+    case 3: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
+    case 4: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
+    case 5: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
     default:
         break;
     }
