@@ -140,6 +140,9 @@ void Shader::compile()
     {
         auto sFile = fileDef.file;
 
+        if(!sFile)
+            continue;
+
         if(sFile->type == ShaderFile::ShaderType::compute)
             isCompute = true;
 

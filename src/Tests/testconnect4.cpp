@@ -36,7 +36,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 }
 
 TestConnect4::TestConnect4()
-    :Scene("testConnect4", false)
+    :Scene("testConnect4", true)
 {
     if(!deserialized())
     {
@@ -48,6 +48,7 @@ TestConnect4::TestConnect4()
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
+        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/torch2.fbx"));
 
         AssetManager::addAsset(std::make_shared<AudioBuffer>("../assets/sounds/steps2.wav"));
 
@@ -59,6 +60,8 @@ TestConnect4::TestConnect4()
                      vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
         createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
                       vec3(1),  quat({-radians(90.f), 0, 0}));
+        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
+                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
         createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
                      vec3(0.3f), quat({-radians(90.f), 0, 0}));
         createEntity("unitPlane", vec3(0,0,0), vec3(100));
@@ -74,7 +77,7 @@ TestConnect4::TestConnect4()
         unsigned int amount = 1000;
         srand(glfwGetTime()); // initialize random seed
         float radius = 40.0;
-        float offset = 30.f;
+        float offset = 25.f;
         for(unsigned int i = 0; i < amount; i++)
         {
             // 1. translation: displace along circle with 'radius' in range [-offset, offset]

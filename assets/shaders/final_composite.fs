@@ -7,6 +7,7 @@ in vec2 o_TexCoord;
 layout(binding = 0) uniform sampler2D screenTexture;
 layout(binding = 1) uniform sampler2D ssaoTexture;
 layout(binding = 2) uniform sampler2D bloomTexture;
+layout(binding = 3) uniform sampler2D volumetricTexture;
 
 uniform float u_bloomIntensity;
 
@@ -18,13 +19,15 @@ vec3 ACESFitted(vec3 color);
 vec3 SSAO(vec2 uv);
 
 void main(){
+    vec3 volumetric = texture(volumetricTexture, o_TexCoord).rgb;
     vec3 hdrCol = texture(screenTexture, o_TexCoord).rgb;
     vec3 bloom  = texture(bloomTexture, o_TexCoord).rgb;
     float ssao  = texture(ssaoTexture, o_TexCoord).r;
-    vec3 color  = hdrCol+bloom*u_bloomIntensity;
+    vec3 color  = hdrCol;
+    color      *= ssao;
+    color      += volumetric;
+    color      += bloom*u_bloomIntensity;
 
-    ssao = pow(ssao, 1.2);
-    color *= ssao;
     color = toneMapACES(color);
 
     o_Color = vec4(color, 1) ;

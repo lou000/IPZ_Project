@@ -8,6 +8,8 @@
 #include <iostream>
 #include <glad/glad.h>
 #include "math.h"
+#include <memory>
+#include <cstdio>
 
 #define LOGGING_ENABLED
 
@@ -125,3 +127,31 @@ inline GLenum textureSizedFormatToFormat(GLenum internalFormat)
         return 0;
     }
 }
+
+#include <utility>
+template <typename F>
+struct Defer {
+    Defer( F f ) : f( f ) {}
+    ~Defer( ) { f( ); }
+    F f;
+};
+
+template <typename F>
+Defer<F> makeDefer( F f ) {
+    return Defer<F>( f );
+};
+
+#define __defer( line ) defer_ ## line
+#define _defer( line ) __defer( line )
+
+struct defer_dummy { };
+template<typename F>
+Defer<F> operator+( defer_dummy, F&& f )
+{
+    return makeDefer<F>( std::forward<F>( f ) );
+}
+
+#define defer auto _defer( __LINE__ ) = defer_dummy( ) + [ & ]( )
+
+
+

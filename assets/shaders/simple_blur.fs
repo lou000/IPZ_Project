@@ -9,13 +9,13 @@ layout(binding = 0) uniform sampler2D inputTex;
 
 void main() {
     vec2 texelSize = 1.0 / vec2(textureSize(inputTex, 0));
-    float result = 0.0;
+    vec3 result = vec3(0);
     for (int x = -halfKernelSize; x < halfKernelSize; ++x) 
     {
         for (int y = -halfKernelSize; y < halfKernelSize; ++y) 
         {
             vec2 offset = vec2(float(x), float(y)) * texelSize;
-            result += texture(inputTex, o_TexCoord + offset).r;
+            result += texture(inputTex, o_TexCoord + offset).rgb;
         }
     }
     result = result / (kernelSize * kernelSize);

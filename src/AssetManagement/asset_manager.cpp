@@ -4,6 +4,8 @@
 
 void AssetManager::x_addAsset(std::shared_ptr<Asset> asset)
 {
+    if(!asset)
+        return;
     if(asset->m_path.empty() && asset->m_name.empty())
     {
         WARN("AssetManager: Cannot add nameless asset!");
