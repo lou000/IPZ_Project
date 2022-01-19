@@ -20,6 +20,6 @@ config.volumetricSamples: 100
 config.volumetricBlurSize: 4
 config.g_factor: 0.833999991
 config.fog_strength: 1.20000005
-config.fog_y: 3.07999992
+config.fog_y: 10.1400003
 config.lightShaftIntensity: 1
 config.renderStatsCorner: 1

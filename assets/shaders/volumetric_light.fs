@@ -111,7 +111,7 @@ void main()
     { 
         float shadow = dirLightShadow(currentPosition);
 
-        float fog = extraFog*pow(sample_fog(currentPosition+.8-float(i)*0.1, u_timeAccum), 1);
+        float fog = extraFog*pow(sample_fog(currentPosition+.8-float(i)*0.1, u_timeAccum), 1); //TODO: replace with nicer noise texture
 
         if(shadow != 1 )
             L += (dirScatter*u_DirLightCol+(fog*u_DirLightCol))*u_DirLightIntensity;
