@@ -344,6 +344,16 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
         SERIALIZE_PRIMITIVE(e, component.instancedGroup);
         e << YAML::EndMap;
     }
+    if (entity.hasComponent<AudioSourceComponent>())
+    {
+        // TODO: maybe save state of the audio source, currently playing etc.
+        auto& component = entity.getComponent<AudioSourceComponent>();
+        e << Key << "AudioSourceComponent";
+        e << YAML::BeginMap;
+        e << Key << "hasFile" << Value << component.source->buffer()->hasFile();
+        e << Key << "soundName" << Value << component.source->buffer()->getName();
+        e << YAML::EndMap;
+    }
     e << EndMap;
     return true;
 }
