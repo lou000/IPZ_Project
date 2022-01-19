@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include<string>
 #define AL_LIBTYPE_STATIC
 #include <AL/al.h>
@@ -11,22 +11,23 @@ class AudioSource
 {
 public:
     AudioSource(std::shared_ptr<AudioBuffer> sFile);
-	~AudioSource();
-	void setLoop(bool loop);
+    ~AudioSource();
+    void setLoop(bool loop);
     void setGain(float gain){ alSourcef(this->source, AL_GAIN,gain); }
     void play();
     void stop();
     void pause();
 
+    std::shared_ptr<AudioBuffer> buffer(){return soundBuffer;}
     bool isPlaying() const {
         alGetSourcei(source, AL_SOURCE_STATE, &sourceState);
-		return sourceState == AL_PLAYING; }
+        return sourceState == AL_PLAYING; }
 
     void setPosition(vec3 pos);
 
 private:
-	ALuint source;
-	mutable ALint sourceState;
+    ALuint source;
+    mutable ALint sourceState;
     std::shared_ptr<AudioBuffer> soundBuffer;
 };
 

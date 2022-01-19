@@ -101,7 +101,7 @@ private:
     FrameBuffer blurVlFBO;
     bool oldVlHalfRes = true;
     std::shared_ptr<Shader> vlShader;
-    std::shared_ptr<Shader> tentUpsampleColor;
+    std::shared_ptr<Shader> upsampleVL;
     std::shared_ptr<Texture> upSampledVL;
 
     //SSAO

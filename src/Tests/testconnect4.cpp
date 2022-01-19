@@ -36,7 +36,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 }
 
 TestConnect4::TestConnect4()
-    :Scene("testConnect4", true)
+    :Scene("testConnect4", false)
 {
     if(!deserialized())
     {
@@ -52,8 +52,9 @@ TestConnect4::TestConnect4()
 
         AssetManager::addAsset(std::make_shared<AudioBuffer>("../assets/sounds/steps2.wav"));
 
-        directionalLight.color = {1, 0.9, 0.5};
-        directionalLight.intensity = 2;
+        directionalLight.direction = {-0.757f, -0.631f, -0.978f};
+        directionalLight.color = {0.979f, 0.931f, 0.736f};
+        directionalLight.intensity = 1;
 
         createEntity("../assets/meshes/connect4_board.fbx");
         createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
@@ -65,7 +66,7 @@ TestConnect4::TestConnect4()
         createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
                      vec3(0.3f), quat({-radians(90.f), 0, 0}));
         createEntity("unitPlane", vec3(0,0,0), vec3(100));
-        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 60.f, 200.f);
+        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
         createEntity("unitPlane", vec3(0,0,0), vec3(100));
 
         auto soundTest = createEntity();

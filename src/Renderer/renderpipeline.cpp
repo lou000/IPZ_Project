@@ -146,10 +146,10 @@ void RenderPipeline::initShaders()
     AssetManager::addShader(tentUpsampleDepth);
 
     shaderSrcs = {
-        {"../assets/shaders/tent_upsampleR32F.cmp"}
+        {"../assets/shaders/volumetric_upsample.cmp"}
     };
-    tentUpsampleColor = std::make_shared<Shader>("tent_upsampleR32F", shaderSrcs);
-    AssetManager::addShader(tentUpsampleColor);
+    upsampleVL = std::make_shared<Shader>("volumetric_upsample", shaderSrcs);
+    AssetManager::addShader(upsampleVL);
 
     shaderSrcs = {
         {
@@ -497,7 +497,10 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     hdrFBO.bind();
     auto sceneCamera = scene->activeCamera();
     pbrShader->bind();
+
+    // Pointlights
     lightsSSBO.bind();
+    pbrShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
 
     // Set camera data
     pbrShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
@@ -509,7 +512,6 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     pbrShader->setUniform("u_DirLightDirection", BufferElement::Float3, scene->directionalLight.direction);
     pbrShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
     pbrShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
-    pbrShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
 
     // CSM data
     pbrShader->setUniform("u_farPlane", BufferElement::Float, sceneCamera->getFarClip());
@@ -669,6 +671,7 @@ void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
     vlShader->setUniform("u_FogStrength", BufferElement::Float, config.fog_strength);
     vlShader->setUniform("u_FogY", BufferElement::Float, config.fog_y);
     vlShader->setUniform("u_LightShaftIntensity", BufferElement::Float, config.lightShaftIntensity);
+    vlShader->setUniform("u_timeAccum", BufferElement::Float, (float)App::getTime());
 
     //Camera
     vlShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
@@ -680,6 +683,8 @@ void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
     vlShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
     vlShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
     vlShader->setUniform("u_AmbientIntensity", BufferElement::Float, scene->directionalLight.ambientIntensity);
+    vlShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
+    lightsSSBO.bind();
 
     // CSM data
     vlShader->setUniform("u_nearPlane", BufferElement::Float, sceneCamera->getNearClip());
@@ -749,15 +754,17 @@ void RenderPipeline::upsamplePass()
 
     if(config.volumetricHalfRes && config.enableVolumetric)
     {
-        tentUpsampleColor->bind();
-        tentUpsampleColor->bindImage(upSampledVL, 0, GL_WRITE_ONLY, false);
-        vlFBO.getTexture(0)->bind(1);
+        upsampleVL->bind();
+        upsampleVL->bindImage(upSampledVL, 0, GL_WRITE_ONLY, false);
+        downSampledDepth->bind(1);
+        hdrFBO.getDepthTex()->bind(2);
+        vlFBO.getTexture(0)->bind(3);
 
         vec2 size = upSampledVL->getDimensions();
-        tentUpsampleColor->dispatch((uint)ceil(size.x/32), (uint)ceil(size.y/32), 1);
+        upsampleVL->dispatch((uint)ceil(size.x/32), (uint)ceil(size.y/32), 1);
 
         glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-        tentUpsampleColor->unbind();
+        upsampleVL->unbind();
     }
 }
 
