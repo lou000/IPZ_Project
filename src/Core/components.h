@@ -13,6 +13,13 @@ struct IDComponent
     operator uint64() const {return m_id;}
 };
 
+struct TagComponent
+{
+    TagComponent(){}
+    TagComponent(const std::string& tag) : tag(tag){}
+    std::string tag;
+};
+
 struct TransformComponent
 {
     TransformComponent(vec3 pos, vec3 scale = {1,1,1}, quat rotation = {0,0,0,0})

@@ -306,6 +306,14 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
     uint64 id = entity.getComponent<IDComponent>();
     e << BeginMap;
     e << Key << "Entity" << Value << id;
+    if (entity.hasComponent<TagComponent>())
+    {
+        auto& component = entity.getComponent<TagComponent>();
+        e << Key << "TagComponent";
+        e << YAML::BeginMap;
+        SERIALIZE_PRIMITIVE(e, component.tag);
+        e << YAML::EndMap;
+    }
     if (entity.hasComponent<TransformComponent>())
     {
         auto& component = entity.getComponent<TransformComponent>();
@@ -370,6 +378,13 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
 {
     if(node["Entity"].IsNull()) return false;
     entity->addComponent<IDComponent>(node["Entity"].as<uint64>());
+
+    auto tag = node["TagComponent"];
+    if(tag)
+    {
+        auto& component = entity->addComponent<TagComponent>();
+        DESERIALIZE_PRIMITIVE(tag, component.tag, std::string);
+    }
 
     auto transform = node["TransformComponent"];
     if(transform)

@@ -7,7 +7,7 @@ config.enableCSM: true
 config.shadowCascadeCount: 4
 config.cascadeZextra: 5.84000015
 config.firstCascadeOffset: 20
-config.csmResolution: 2048
+config.csmResolution: 1024
 config.enableSSAO: true
 config.ssaoHalfRes: true
 config.ssaoKernelSize: 48
@@ -16,10 +16,10 @@ config.ssaoRadius: 1.79999995
 config.ssaoBias: 0.100000001
 config.enableVolumetric: true
 config.volumetricHalfRes: true
-config.volumetricSamples: 30
-config.volumetricBlurSize: 6
-config.g_factor: -0.100000001
-config.fog_strength: 0.230000004
+config.volumetricSamples: 20
+config.volumetricBlurSize: 4
+config.g_factor: 0.816999972
+config.fog_strength: 0.150000006
 config.fog_y: 3
-config.lightShaftIntensity: 1.20000005
+config.lightShaftIntensity: 1
 config.renderStatsCorner: 1

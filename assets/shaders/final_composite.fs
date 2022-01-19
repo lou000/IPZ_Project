@@ -23,10 +23,12 @@ void main(){
     vec3 hdrCol = texture(screenTexture, o_TexCoord).rgb;
     vec3 bloom  = texture(bloomTexture, o_TexCoord).rgb;
     float ssao  = texture(ssaoTexture, o_TexCoord).r;
-    vec3 color  = hdrCol+bloom*u_bloomIntensity;
+    vec3 color  = hdrCol;
+    color      *= ssao;
+    color      += volumetric;
+    color      += bloom*u_bloomIntensity;
 
-    color *= ssao;
-    color = toneMapACES(color+volumetric);
+    color = toneMapACES(color);
 
     o_Color = vec4(color, 1) ;
 }

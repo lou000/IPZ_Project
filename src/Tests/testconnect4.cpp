@@ -36,7 +36,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 }
 
 TestConnect4::TestConnect4()
-    :Scene("testConnect4", false)
+    :Scene("testConnect4", true)
 {
     if(!deserialized())
     {
