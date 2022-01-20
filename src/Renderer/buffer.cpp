@@ -382,19 +382,19 @@ void FrameBuffer::update()  // create/recreate framebuffer
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-StorageBuffer::StorageBuffer(size_t size, uint bufferIndex, void *data, uint usage)
-    :size(size), bufferIndex(bufferIndex)
+StorageBuffer::StorageBuffer(size_t size, void *data, uint usage)
+    :size(size)
 {
     glGenBuffers(1, &id);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
     glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, id);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
-void StorageBuffer::bind()
+void StorageBuffer::bind(uint bufferIndex)
 {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, id);
 }
 
 void StorageBuffer::unbind()
