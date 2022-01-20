@@ -6,6 +6,7 @@
 
 struct RenderConfig;
 struct DirectionalLight;
+struct PerlinOctave;
 class Scene;
 class Camera;
 class Entity;
@@ -30,4 +31,6 @@ public:
     static bool serializeScene(Scene* scene, const std::filesystem::path &filepath);
     static bool deserializeScene(Scene* scene, const std::filesystem::path &filepath);
 
+    static bool serializeOctave(YAML::Emitter &e, const PerlinOctave& octave);
+    static PerlinOctave deserializeOctave(const YAML::Node &node);
 };

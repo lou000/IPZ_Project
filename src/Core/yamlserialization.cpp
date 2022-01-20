@@ -175,6 +175,25 @@ bool writeFile(const char* str, const std::filesystem::path& path)
     return true;
 }
 
+bool Serializer::serializeOctave(Emitter& e, const PerlinOctave &octave)
+{
+    e << BeginMap;
+    SERIALIZE_PRIMITIVE(e, octave.frequency);
+    SERIALIZE_PRIMITIVE(e, octave.offset);
+    SERIALIZE_PRIMITIVE(e, octave.amplitude);
+    e << EndMap;
+    return true;
+}
+
+PerlinOctave Serializer::deserializeOctave(const Node& node)
+{
+    PerlinOctave octave;
+    DESERIALIZE_PRIMITIVE(node, octave.frequency, vec4);
+    DESERIALIZE_PRIMITIVE(node, octave.offset,    vec4);
+    DESERIALIZE_PRIMITIVE(node, octave.amplitude, float);
+    return octave;
+}
+
 bool Serializer::serializeRenderConfig(const RenderConfig &config, const std::filesystem::path &filepath)
 {
     LOG("Config: Serializing render pipeline config to file %s\n",
@@ -208,6 +227,20 @@ bool Serializer::serializeRenderConfig(const RenderConfig &config, const std::fi
     SERIALIZE_PRIMITIVE(e, config.fog_strength);
     SERIALIZE_PRIMITIVE(e, config.fog_y);
     SERIALIZE_PRIMITIVE(e, config.lightShaftIntensity);
+
+    e << Key << "FogOctaves" << Value << BeginSeq;
+    for(auto octave : config.perlinOctavesFog)
+    {
+        serializeOctave(e, octave);
+    }
+    e<<EndSeq;
+
+    e << Key << "TerrainOctaves" << Value << BeginSeq;
+    for(auto octave : config.perlinOctavesTerrain)
+    {
+        serializeOctave(e, octave);
+    }
+    e<<EndSeq;
 
     SERIALIZE_PRIMITIVE(e, config.renderStatsCorner);
     e << EndMap;
@@ -249,6 +282,30 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
     DESERIALIZE_PRIMITIVE(data, config.fog_strength,        float);
     DESERIALIZE_PRIMITIVE(data, config.fog_y,               float);
     DESERIALIZE_PRIMITIVE(data, config.lightShaftIntensity, float);
+
+    auto octaves = data["FogOctaves"];
+    if (octaves)
+    {
+        ASSERT(octaves.Type() == NodeType::Sequence);
+        for (const auto& octave : octaves)
+        {
+            auto o = deserializeOctave(octave);
+            config.perlinOctavesFog.push_back(o);
+        }
+//        std::reverse(config.perlinOctavesFog.begin(), config.perlinOctavesFog.end());
+    }
+
+    octaves = data["TerrainOctaves"];
+    if (octaves)
+    {
+        ASSERT(octaves.Type() == NodeType::Sequence);
+        for (const auto& octave : octaves)
+        {
+            auto o = deserializeOctave(octave);
+            config.perlinOctavesTerrain.push_back(o);
+        }
+//        std::reverse(config.perlinOctavesTerrain.begin(), config.perlinOctavesTerrain.end());
+    }
 
     DESERIALIZE_PRIMITIVE(data, config.renderStatsCorner, int);
 
