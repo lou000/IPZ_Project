@@ -53,6 +53,8 @@ RenderPipeline::RenderPipeline()
 
     //---------------------------------------------------------------//
 
+    generateNoise();
+
 }
 
 
@@ -60,7 +62,6 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 {
     oldWinSize = winSize;
     winSize = App::getWindowSize();
-    generateNoise(); //TODO: not every frame...
 
     // gather instanced entities
     instancedGroups.clear();
@@ -227,13 +228,13 @@ void RenderPipeline::initFBOs()
     depthAtt.format = GL_DEPTH24_STENCIL8;
     depthAtt.renderBuffer = false;
 
-    hdrFBO = FrameBuffer(winSize.x, winSize.y, 1, {colorAtt, bloomTresholdImage}, depthAtt, 0);
+    hdrFBO = FrameBuffer(winSize.x, winSize.y, 1, {colorAtt, bloomTresholdImage}, depthAtt, 1);
 
     FrameBufferAttachment smDepthAtt;
     smDepthAtt.type = GL_DEPTH_ATTACHMENT;
     smDepthAtt.format = GL_DEPTH_COMPONENT32F;
     smDepthAtt.renderBuffer = false;
-    csmFBO = FrameBuffer(config.csmResolution, config.csmResolution, config.shadowCascadeCount+1, {}, smDepthAtt, 0);
+    csmFBO = FrameBuffer(config.csmResolution, config.csmResolution, config.shadowCascadeCount+1, {}, smDepthAtt, 1);
 
     FrameBufferAttachment ssaoAtt;
     ssaoAtt.type = GL_COLOR_ATTACHMENT0;
@@ -1041,6 +1042,7 @@ void RenderPipeline::guiNoiseSettings()
         case 1: perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave)); break;
         default: break;
         }
+        generateNoise();
     }
     ImGui::End();
 }

@@ -18,17 +18,17 @@ config.enableVolumetric: true
 config.volumetricHalfRes: true
 config.volumetricSamples: 100
 config.volumetricBlurSize: 2
-config.g_factor: 0.838
-config.fog_strength: 1.04999995
-config.fog_y: 9.21000004
+config.g_factor: 0.739000022
+config.fog_strength: 1.17999995
+config.fog_y: 6.78999996
 config.lightShaftIntensity: 0.980000019
 FogOctaves:
-  - octave.frequency: [68.6999969, 184.399994, 8.60000038, 0]
-    octave.offset: [12, 17.6000004, 0, 0]
-    octave.amplitude: 2.5
-  - octave.frequency: [4.9000001, 11.8999996, 8.80000019, 0]
-    octave.offset: [114.599998, 66, 53.9000015, 0]
-    octave.amplitude: 11.6999998
+  - octave.frequency: [45.7000008, 68.1999969, 0, 0]
+    octave.offset: [11.3000002, 17.6000004, 6.5, 0]
+    octave.amplitude: 1
+  - octave.frequency: [8.80000019, -6.30000019, 0, 0]
+    octave.offset: [115.099998, 45.5, 58.7000008, 0]
+    octave.amplitude: 17.7999992
 TerrainOctaves:
   - octave.frequency: [1.20000005, 1.39999998, 0, 0]
     octave.offset: [0, 0, 0, 0]

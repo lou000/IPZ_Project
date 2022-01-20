@@ -68,7 +68,7 @@ float ComputeScattering(float lightDotView)
     return result;
 }
 float dirLightShadow(vec3 fPos);
-float sample_fog(vec3 pos);
+float sample_fog(vec3 pos, float time);
 void main()
 {
     float depth = texture(depthMap, o_TexCoord, 0).r;
@@ -112,11 +112,14 @@ void main()
     { 
         float shadow = dirLightShadow(currentPosition);
 
-        float fog = extraFog*pow(sample_fog(currentPosition), 1); //TODO: replace with nicer noise texture
+        float fog = extraFog*pow(sample_fog(currentPosition, u_timeAccum), 1); //TODO: replace with nicer noise texture
 
         if(shadow != 1 )
-            L += (dirScatter*u_DirLightCol+(fog*u_DirLightCol))*u_DirLightIntensity;
+            L += (dirScatter*u_DirLightCol)*u_DirLightIntensity;
         L += fog*u_AmbientIntensity;
+        
+        if(currentPosition.y<u_FogY)
+            L+=(fog*u_DirLightCol)*u_DirLightIntensity;
 
         for (int i = 0; i < u_PointLightCount; i++) 
         { 
@@ -124,7 +127,6 @@ void main()
             float dist = length(currentPosition-light.position.xyz);
             L += ((pointScatters[i]*light.color.rgb+(fog*light.color.rgb))*light.intensity)*clamp(1/(dist*dist)-0.01, 0.0001, 1.0);
         }
-
         currentPosition += oneStep;
     }
     o_Color = vec4(L/u_Samples, 1);
@@ -169,10 +171,11 @@ float dirLightShadow(vec3 fPos)
     return shadow;
 }
 
-float sample_fog(vec3 pos) 
+float sample_fog(vec3 pos, float time) 
 {
     vec3 resolution = textureSize(fogMap, 0);
-    float col = texture(fogMap, vec3(pos.x, pos.z, pos.y)/resolution).r;
-    // col = step(0.1, col);
+    float speed = 3;
+    float col = texture(fogMap, vec3(pos.x+time*speed, pos.z+time*speed, pos.y)/resolution).r;
+    col = smoothstep(0.1, 0.5, col);
 	return col;
 }
