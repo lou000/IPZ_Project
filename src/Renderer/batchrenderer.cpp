@@ -60,7 +60,8 @@ void BatchRenderer::x_begin(std::shared_ptr<Camera> camera)
 {
     // bind all uniforms
 //    glDisable(GL_CULL_FACE);
-    viewProj3d = camera->getViewProjectionMatrix();
+    if(camera)
+        viewProj3d = camera->getViewProjectionMatrix();
     currentCamera = camera;
     m_debugShader->bind();
     m_debugShader->setUniformArray("u_Textures", BufferElement::Int, texSamplers, maxTextureSlots);
