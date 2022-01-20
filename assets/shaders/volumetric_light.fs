@@ -17,6 +17,7 @@ uniform float u_timeAccum;
 
 layout(binding = 0) uniform sampler2DArray shadowMap;
 layout(binding = 1) uniform sampler2D depthMap;
+layout(binding = 2) uniform sampler2DArray fogMap;
 
 uniform int u_cascadeCount;
 uniform float u_cascadePlaneDistances[20];
@@ -67,7 +68,7 @@ float ComputeScattering(float lightDotView)
     return result;
 }
 float dirLightShadow(vec3 fPos);
-float sample_fog(vec3 pos, float time);
+float sample_fog(vec3 pos);
 void main()
 {
     float depth = texture(depthMap, o_TexCoord, 0).r;
@@ -105,13 +106,13 @@ void main()
 
 
     if(worldPos.y < u_FogY)
-        extraFog = pow(mix(u_FogStrength, 0, clamp(worldPos.y/u_FogY, 0, 1)), 2);
+        extraFog = pow(mix(u_FogStrength, 0, clamp(worldPos.y/u_FogY, 0, 1)), 4);
 
     for (int i = 0; i < u_Samples; i++) 
     { 
         float shadow = dirLightShadow(currentPosition);
 
-        float fog = extraFog*pow(sample_fog(currentPosition+.8-float(i)*0.1, u_timeAccum), 1); //TODO: replace with nicer noise texture
+        float fog = extraFog*pow(sample_fog(currentPosition), 1); //TODO: replace with nicer noise texture
 
         if(shadow != 1 )
             L += (dirScatter*u_DirLightCol+(fog*u_DirLightCol))*u_DirLightIntensity;
@@ -168,44 +169,10 @@ float dirLightShadow(vec3 fPos)
     return shadow;
 }
 
-float tri( float x ){ 
-  return abs( fract(x) - .5 );
-}
-
-vec3 tri3( vec3 p ){
- 
-  return vec3( 
-      tri( p.z + tri( p.y * 1. ) ), 
-      tri( p.z + tri( p.x * 1. ) ), 
-      tri( p.y + tri( p.x * 1. ) )
-  );
-
-}
-
-// Taken from https://www.shadertoy.com/view/4ts3z2
-// By NIMITZ  (twitter: @stormoid)
-float triNoise3d(in vec3 p, in float spd, in float time)
+float sample_fog(vec3 pos) 
 {
-    float z=1.4;
-	float rz = 0.;
-    vec3 bp = p;
-	for (float i=0.; i<=3.; i++ )
-	{
-        vec3 dg = tri3(bp*2.);
-        p += (dg+time*spd);
-
-        bp *= 1.8;
-		z *= 1.5;
-		p *= 1.2;
-        //p.xz*= m2;
-        
-        rz+= (tri(p.z+tri(p.x+tri(p.y))))/z;
-        bp += 0.14;
-	}
-	return rz;
-}
-
-float sample_fog(vec3 pos, float time) 
-{
-	return triNoise3d(pos/50, 0.1, time);
+    vec3 resolution = textureSize(fogMap, 0);
+    float col = texture(fogMap, vec3(pos.x, pos.z, pos.y)/resolution).r;
+    // col = step(0.1, col);
+	return col;
 }

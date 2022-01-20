@@ -3,6 +3,7 @@
 #include "glad/glad.h"
 #include "math.h"
 #include "application.h"
+#include "../AssetManagement/asset_manager.h"
 #define IM_VEC2_CLASS_EXTRA                                                 \
 ImVec2(const glm::vec2& f) { x = f.x; y = f.y; }                       \
 operator glm::vec2() const { return glm::vec2(x,y); }
@@ -22,31 +23,31 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #define TWEAK_FLOAT(label, v, ...) \
 ImGui::Columns(2, label); \
 ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();\
-ImGui::Columns();
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::DragFloat("##"#v, &v, __VA_ARGS__); ImGui::PopItemWidth();\
+ImGui::Columns();\
 
 #define TWEAK_INT(label, v, ...) \
 ImGui::Columns(2, label); \
 ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragInt("##"#v, &v, __VA_ARGS__); ImGui::NextColumn();\
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::DragInt("##"#v, &v, __VA_ARGS__); ImGui::PopItemWidth();\
 ImGui::Columns();
 
 #define TWEAK_BOOL(label, v) \
 ImGui::Columns(2, label); \
 ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::Checkbox("##"#v, &v); ImGui::NextColumn();\
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::Checkbox("##"#v, &v); ImGui::PopItemWidth();\
 ImGui::Columns();
 
 #define TWEAK_VEC3(label, v, ...) \
 ImGui::Columns(2, label); \
 ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::DragFloat3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();\
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::DragFloat3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::PopItemWidth();\
 ImGui::Columns();
 
 #define TWEAK_COLOR3(label, v, ...) \
 ImGui::Columns(2, label); \
 ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::ColorPicker3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::NextColumn();\
+ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::ColorPicker3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::PopItemWidth();\
 ImGui::Columns();
 
 inline void imguiInit()

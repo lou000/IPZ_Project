@@ -9,6 +9,16 @@
 #define MAX_SHADOW_CASCADES 20
 #define MAX_INSTANCED 10000
 #define MAX_SSAO_KERNEL_SIZE 256
+#define MAX_NOISE_OCTAVES 10
+
+
+struct PerlinOctave //TODO: move this
+{
+    alignas(16) vec4 frequency = {0,0,0,0};
+    alignas(16) vec4 offset    = {0,0,0,0};
+    float amplitude= 0;
+    float padding = 0;
+};
 
 struct RenderConfig
 {
@@ -40,6 +50,10 @@ struct RenderConfig
     float fog_y = 5;
     float lightShaftIntensity = 1.f;
 
+    // TODO: move this
+    std::vector<PerlinOctave> perlinOctavesFog;
+    std::vector<PerlinOctave> perlinOctavesTerrain;
+
 
     int renderStatsCorner = 0;
 };
@@ -64,6 +78,7 @@ private:
     RenderConfig config;
     bool showRenderSettings = true;
     bool showRenderStats = true;
+    bool showNoiseSettings = true;
     bool syncGPU = false;
     uvec2 winSize;
     uvec2 oldWinSize;
@@ -128,8 +143,12 @@ private:
     std::shared_ptr<Shader> solidShader;
 
     //Noise
+    StorageBuffer perlinOctavesFogSSBO;
+    StorageBuffer perlinOctavesTerrainSSBO;
     std::shared_ptr<Shader> perlinNoiseGen;
-    std::shared_ptr<Texture> perlinTexture;
+    std::shared_ptr<Texture> perlinTextureFog;
+    std::shared_ptr<Texture> perlinTextureTerrain;
+    void guiNoiseSettings();
 
 
 

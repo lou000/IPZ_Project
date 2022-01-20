@@ -22,7 +22,8 @@ RenderPipeline::RenderPipeline()
     // Initialize bloom buffers
     resizeBloomBuffers();
 
-    perlinTexture = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
+    perlinTextureFog = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
+    perlinTextureTerrain = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
 
 
     // TODO: move everything below this to primitive generation
@@ -205,6 +206,7 @@ void RenderPipeline::initShaders()
     };
     vlShader = std::make_shared<Shader>("volumetric_light", shaderSrcs);
     AssetManager::addShader(vlShader);
+
 }
 
 void RenderPipeline::initFBOs()
@@ -297,17 +299,21 @@ void RenderPipeline::updateSSAOKernel()
 void RenderPipeline::initSSBOs()
 {
     // Create lights SSBO
-    lightsSSBO = StorageBuffer(MAX_LIGHTS*sizeof(GPU_PointLight), 0);
+    lightsSSBO = StorageBuffer(MAX_LIGHTS*sizeof(GPU_PointLight));
 
     // Create light space matrix for DirLight
-    csmSSBO = StorageBuffer(MAX_SHADOW_CASCADES*sizeof(mat4), 1);
+    csmSSBO = StorageBuffer(MAX_SHADOW_CASCADES*sizeof(mat4));
 
     // Create instanced transforms SSBO for pbr and csm
-    instanceTransformsSSBO = StorageBuffer(MAX_INSTANCED*sizeof(mat4), 2);
+    instanceTransformsSSBO = StorageBuffer(MAX_INSTANCED*sizeof(mat4));
 
     // Create light space matrix for DirLight
-    ssaoKernelSSBO = StorageBuffer(MAX_SSAO_KERNEL_SIZE*sizeof(vec3), 4);
+    ssaoKernelSSBO = StorageBuffer(MAX_SSAO_KERNEL_SIZE*sizeof(vec3));
     ssaoKernelSSBO.setData(ssaoKernel.data(), config.ssaoKernelSize*sizeof(vec3));
+
+    // Create perlin octaves ssbos
+    perlinOctavesFogSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
+    perlinOctavesTerrainSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
 }
 
 void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
@@ -450,7 +456,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
     UNUSED(scene);
     // Draw cascading shadow maps to depth
     csmFBO.bind();
-    csmSSBO.bind();
+    csmSSBO.bind(1);
     csmShader->bind();
     glDisable(GL_BLEND);
     glCullFace(GL_FRONT);
@@ -481,7 +487,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
         ASSERT(group.second.size()>0);
         auto grpTransforms = instancedTransforms[group.first];
         instanceTransformsSSBO.setData(grpTransforms.data(), grpTransforms.size()*sizeof(mat4));
-        instanceTransformsSSBO.bind();
+        instanceTransformsSSBO.bind(2);
         auto model = group.second[0].getComponent<MeshComponent>().model;
         for(auto mesh : model->meshes())
         {
@@ -508,7 +514,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     pbrShader->bind();
 
     // Pointlights
-    lightsSSBO.bind();
+    lightsSSBO.bind(0);
     pbrShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
 
     // Set camera data
@@ -523,6 +529,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     pbrShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
 
     // CSM data
+    csmSSBO.bind(1);
     pbrShader->setUniform("u_farPlane", BufferElement::Float, sceneCamera->getFarClip());
     pbrShader->setUniform("u_cascadeCount", BufferElement::Int, config.shadowCascadeCount+1);
     pbrShader->setUniformArray("u_cascadePlaneDistances", BufferElement::Float, cascadeRanges.data(), (uint)cascadeRanges.size());
@@ -570,7 +577,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
         ASSERT(group.second.size()>0);
         auto grpTransforms = instancedTransforms[group.first];
         instanceTransformsSSBO.setData(grpTransforms.data(), grpTransforms.size()*sizeof(mat4));
-        instanceTransformsSSBO.bind();
+        instanceTransformsSSBO.bind(2);
         auto model = group.second[0].getComponent<MeshComponent>().model;
         for(auto mesh : model->meshes())
         {
@@ -681,6 +688,7 @@ void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
     vlShader->setUniform("u_FogY", BufferElement::Float, config.fog_y);
     vlShader->setUniform("u_LightShaftIntensity", BufferElement::Float, config.lightShaftIntensity);
     vlShader->setUniform("u_timeAccum", BufferElement::Float, (float)App::getTime());
+    perlinTextureFog->bind(2);
 
     //Camera
     vlShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
@@ -693,9 +701,10 @@ void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
     vlShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
     vlShader->setUniform("u_AmbientIntensity", BufferElement::Float, scene->directionalLight.ambientIntensity);
     vlShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
-    lightsSSBO.bind();
+    lightsSSBO.bind(0);
 
     // CSM data
+    csmSSBO.bind(1);
     vlShader->setUniform("u_nearPlane", BufferElement::Float, sceneCamera->getNearClip());
     vlShader->setUniform("u_farPlane", BufferElement::Float, sceneCamera->getFarClip());
     vlShader->setUniform("u_cascadeCount", BufferElement::Int, config.shadowCascadeCount+1);
@@ -734,7 +743,7 @@ void RenderPipeline::ssaoPass(std::shared_ptr<Scene> scene)
         hdrFBO.getDepthTex()->bind(0);
 
     ssaoNoiseTex->bind(1);
-    ssaoKernelSSBO.bind();
+    ssaoKernelSSBO.bind(0);
 
     screenQuad.bind();
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -897,7 +906,7 @@ void RenderPipeline::resizeOrClearResources()
 
         blurSsaoFBO.resize(winSize.x, winSize.y, 1);
         blurVlFBO.resize(winSize.x, winSize.y, 1);
-        downSampledDepth->resize({winSize.x/2, winSize.y/2, 1});
+        downSampledDepth->resize({ceil(winSize.x/2.f), ceil(winSize.y/2.f), 1});
         upSampledSSAO->resize({winSize.x, winSize.y, 1});
         upSampledVL->resize({winSize.x, winSize.y, 1});
         resizeBloomBuffers();
@@ -926,9 +935,11 @@ void RenderPipeline::resizeOrClearResources()
 void RenderPipeline::generateNoise()
 {
     perlinNoiseGen->bind();
-    perlinNoiseGen->bindImage(perlinTexture, 0, GL_WRITE_ONLY, false);
+    perlinOctavesFogSSBO.bind(0);
+    perlinNoiseGen->setUniform("u_octaveCount", BufferElement::Int, (int)config.perlinOctavesFog.size());
+    perlinNoiseGen->bindImage(perlinTextureFog, 0, GL_WRITE_ONLY, false);
 
-    vec3 size = perlinTexture->getDimensions();
+    vec3 size = perlinTextureFog->getDimensions();
     perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)ceil(size.z/4));
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
@@ -963,8 +974,8 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
     case 0: break;
     case 1:
     {
-        perlinTexture->selectLayerForNextDraw(0);
-        BatchRenderer::drawQuad({0,0}, winSize, perlinTexture); break;
+        perlinTextureFog->selectLayerForNextDraw(0);
+        BatchRenderer::drawQuad({0,0}, perlinTextureFog->getDimensions(), perlinTextureFog); break;
     }
     case 2: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
     case 3: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
@@ -978,10 +989,66 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
     outputFBO.unbind();
 }
 
+void RenderPipeline::guiNoiseSettings()
+{
+    if(ImGui::Begin("Noise settings", &showNoiseSettings))
+    {
+        const char* items[] = { "Fog", "Terrain" };
+        static int item_current = 0;
+        ImGui::Combo("##combo", &item_current, items, IM_ARRAYSIZE(items));
+        std::vector<PerlinOctave>* octaves;
+        std::vector<PerlinOctave> dummy;
+
+        std::shared_ptr<Texture> tex = nullptr;
+        switch(item_current)
+        {
+        case 0: octaves = &config.perlinOctavesFog; tex = perlinTextureFog; break;
+        case 1: octaves = &config.perlinOctavesTerrain; tex = perlinTextureTerrain; break;
+        default: octaves = &dummy; break;
+        }
+
+
+        static int selectedLayer = 0;
+        TWEAK_INT("Layer", selectedLayer, 1, 0, tex->getDimensions().z);
+
+        auto winPos = ImGui::GetWindowPos();
+        auto winWidth = ImGui::GetWindowWidth();
+
+        BatchRenderer::begin(nullptr);
+        perlinTextureFog->selectLayerForNextDraw(selectedLayer);
+        BatchRenderer::drawQuad({winPos.x + winWidth,winPos.y}, {300, 300}, perlinTextureFog);
+        BatchRenderer::end();
+
+
+        if (ImGui::Button("Add octave")) { octaves->push_back({});}
+        for(size_t i=0; i<octaves->size(); i++)
+        {
+            auto name = "Octave "+std::to_string(i);
+            if (ImGui::TreeNode(name.c_str()))
+            {
+                if (ImGui::Button("Remove")) { octaves->erase(octaves->begin()+i); i--;}
+                auto octave = (octaves->data()+i);
+                TWEAK_VEC3("Frequencies", octave->frequency, 0.1f);
+                TWEAK_VEC3("Offsets", octave->offset, 0.1f);
+                TWEAK_FLOAT("Amplitude", octave->amplitude, 0.1f);
+                ImGui::TreePop();
+            }
+        }
+
+        switch(item_current)
+        {
+        case 0: perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave)); break;
+        case 1: perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave)); break;
+        default: break;
+        }
+    }
+    ImGui::End();
+}
+
 void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
 {
     ImGui::SetNextWindowSize(ImVec2(200, 400), ImGuiCond_FirstUseEver);
-    if (ImGui::Begin("Render settings", &showRenderSettings))
+    if(ImGui::Begin("Render settings", &showRenderSettings))
     {
         // CSM
         if (ImGui::CollapsingHeader("CSM"))
@@ -1084,4 +1151,5 @@ void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
     for(auto& [key, result] : InstrumentationStorage::getInstance().storage)
         result.ms = 0;
     scene->sceneSettingsRender();
+    guiNoiseSettings();
 }
