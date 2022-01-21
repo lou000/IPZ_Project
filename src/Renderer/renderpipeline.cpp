@@ -24,6 +24,7 @@ RenderPipeline::RenderPipeline()
 
     perlinTextureFog = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
     perlinTextureTerrain = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
+    generateNoise();
 
 
     // TODO: move everything below this to primitive generation
@@ -52,8 +53,6 @@ RenderPipeline::RenderPipeline()
     screenQuad.addVBuffer(vbo);
 
     //---------------------------------------------------------------//
-
-    generateNoise();
 
 }
 
@@ -314,6 +313,7 @@ void RenderPipeline::initSSBOs()
 
     // Create perlin octaves ssbos
     perlinOctavesFogSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
+    perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave));
     perlinOctavesTerrainSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
 }
 
@@ -999,6 +999,7 @@ void RenderPipeline::guiNoiseSettings()
         ImGui::Combo("##combo", &item_current, items, IM_ARRAYSIZE(items));
         std::vector<PerlinOctave>* octaves;
         std::vector<PerlinOctave> dummy;
+        bool changed = false;
 
         std::shared_ptr<Texture> tex = nullptr;
         switch(item_current)
@@ -1021,28 +1022,30 @@ void RenderPipeline::guiNoiseSettings()
         BatchRenderer::end();
 
 
-        if (ImGui::Button("Add octave")) { octaves->push_back({});}
+        if (ImGui::Button("Add octave")) { octaves->push_back({}); changed = true;}
         for(size_t i=0; i<octaves->size(); i++)
         {
             auto name = "Octave "+std::to_string(i);
             if (ImGui::TreeNode(name.c_str()))
             {
-                if (ImGui::Button("Remove")) { octaves->erase(octaves->begin()+i); i--;}
+                if (ImGui::Button("Remove")) { octaves->erase(octaves->begin()+i); i--; changed = true;}
                 auto octave = (octaves->data()+i);
-                TWEAK_VEC3("Frequencies", octave->frequency, 0.1f);
-                TWEAK_VEC3("Offsets", octave->offset, 0.1f);
-                TWEAK_FLOAT("Amplitude", octave->amplitude, 0.1f);
+                changed |= TWEAK_VEC3("Frequencies", octave->frequency, 0.1f);
+                changed |= TWEAK_VEC3("Offsets", octave->offset, 0.1f);
+                changed |= TWEAK_FLOAT("Amplitude", octave->amplitude, 0.1f);
                 ImGui::TreePop();
             }
         }
-
-        switch(item_current)
+        if(changed)
         {
-        case 0: perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave)); break;
-        case 1: perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave)); break;
-        default: break;
+            switch(item_current)
+            {
+            case 0: perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave)); break;
+            case 1: perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave)); break;
+            default: break;
+            }
+            generateNoise();
         }
-        generateNoise();
     }
     ImGui::End();
 }
