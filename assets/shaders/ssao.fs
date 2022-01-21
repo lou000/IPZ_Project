@@ -13,7 +13,7 @@ uniform mat4 u_Projection;
 layout(binding = 0) uniform sampler2D depthTexture;
 layout(binding = 1) uniform sampler2D noiseTexture;
 
-layout (std430, binding = 4) buffer LightSpaceMatrices
+layout (std430, binding = 0) buffer LightSpaceMatrices
 {
     vec3 u_Samples[];
 };
@@ -62,5 +62,5 @@ void main()
         occlusion += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck;   
     }
     occlusion = 1.0 - (occlusion / kernelSize);
-    o_Color = vec4(vec3(occlusion), 1);
+    o_Color = vec4(occlusion);
 }
