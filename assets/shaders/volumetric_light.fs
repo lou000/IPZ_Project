@@ -14,6 +14,7 @@ uniform float u_nearPlane;
 uniform float u_farPlane;
 uniform float u_AmbientIntensity;
 uniform float u_timeAccum;
+uniform float u_LightShaftIntensity;
 
 layout(binding = 0) uniform sampler2DArray shadowMap;
 layout(binding = 1) uniform sampler2D depthMap;
@@ -112,10 +113,10 @@ void main()
     { 
         float shadow = dirLightShadow(currentPosition);
 
-        float fog = extraFog*pow(sample_fog(currentPosition, u_timeAccum), 1); //TODO: replace with nicer noise texture
+        float fog = extraFog*sample_fog(currentPosition, u_timeAccum);
 
         if(shadow != 1 )
-            L += (dirScatter*u_DirLightCol)*u_DirLightIntensity;
+            L += (dirScatter*u_DirLightCol)*u_DirLightIntensity*u_LightShaftIntensity;
         L += fog*u_AmbientIntensity;
         
         if(currentPosition.y<u_FogY)
@@ -174,8 +175,8 @@ float dirLightShadow(vec3 fPos)
 float sample_fog(vec3 pos, float time) 
 {
     vec3 resolution = textureSize(fogMap, 0);
-    float speed = 3;
+    float speed = 2.5;
     float col = texture(fogMap, vec3(pos.x+time*speed, pos.z+time*speed, pos.y)/resolution).r;
-    col = smoothstep(0.1, 0.5, col);
+    col = smoothstep(0.3, 0.9, col);
 	return col;
 }

@@ -125,7 +125,7 @@ void main()
         amplitudeSum += o.amplitude;
     }
     outCol /= amplitudeSum;
-    outCol = perlin(outCol*2, outCol*20, outCol);
+    // outCol = perlin(outCol*2, outCol*20, outCol);
     imageStore(output_image, ivec3(gl_GlobalInvocationID), vec4(vec3(outCol), 1.0));
 
 }
