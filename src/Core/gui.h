@@ -20,35 +20,85 @@ operator glm::vec4() const { return glm::vec4(x,y,z,w); }
 #include <unordered_map>
 
 
-#define TWEAK_FLOAT(label, v, ...) \
-ImGui::Columns(2, label); \
-ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::DragFloat("##"#v, &v, __VA_ARGS__); ImGui::PopItemWidth();\
-ImGui::Columns();\
+inline bool __dragFloat(const char* label, float* v, float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0)
+{
+    ImGui::Columns(2, label);
+    ImGui::SetColumnWidth(0, 100);
+    ImGui::TextUnformatted(label);
+    ImGui::NextColumn();
+    ImGui::PushItemWidth(-1);
+    std::string str = "##"+std::string(label);
+    bool changed = false;
+    changed = ImGui::DragFloat(str.c_str(), v, v_speed, v_min, v_max, format, flags);
+    ImGui::PopItemWidth();
+    ImGui::Columns();
+    return changed;
+}
+#define TWEAK_FLOAT(label, v, ...) __dragFloat(label, &v, __VA_ARGS__);
 
-#define TWEAK_INT(label, v, ...) \
-ImGui::Columns(2, label); \
-ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::DragInt("##"#v, &v, __VA_ARGS__); ImGui::PopItemWidth();\
-ImGui::Columns();
+inline bool __dragInt(const char* label, int* v, float v_speed = 1.0f, int v_min = 0, int v_max = 0, const char* format = "%d", ImGuiSliderFlags flags = 0)
+{
+    ImGui::Columns(2, label);
+    ImGui::SetColumnWidth(0, 100);
+    ImGui::TextUnformatted(label);
+    ImGui::NextColumn();
+    ImGui::PushItemWidth(-1);
+    std::string str = "##"+std::string(label);
+    bool changed = false;
+    changed = ImGui::DragInt(str.c_str(), v, v_speed, v_min, v_max, format, flags);
+    ImGui::PopItemWidth();
+    ImGui::Columns();
+    return changed;
+}
+#define TWEAK_INT(label, v, ...) __dragInt(label, &v, __VA_ARGS__);
 
-#define TWEAK_BOOL(label, v) \
-ImGui::Columns(2, label); \
-ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::Checkbox("##"#v, &v); ImGui::PopItemWidth();\
-ImGui::Columns();
+inline bool __checkbox(const char* label, bool* v)
+{
+    ImGui::Columns(2, label);
+    ImGui::SetColumnWidth(0, 100);
+    ImGui::TextUnformatted(label);
+    ImGui::NextColumn();
+    ImGui::PushItemWidth(-1);
+    std::string str = "##"+std::string(label);
+    bool changed = false;
+    changed = ImGui::Checkbox(str.c_str(), v);
+    ImGui::PopItemWidth();
+    ImGui::Columns();
+    return changed;
+}
+#define TWEAK_BOOL(label, v) __checkbox(label, &v);
 
-#define TWEAK_VEC3(label, v, ...) \
-ImGui::Columns(2, label); \
-ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::DragFloat3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::PopItemWidth();\
-ImGui::Columns();
+inline bool __dragFloat3(const char* label, float v[3], float v_speed = 1.0f, float v_min = 0.0f, float v_max = 0.0f, const char* format = "%.3f", ImGuiSliderFlags flags = 0)
+{
+    ImGui::Columns(2, label);
+    ImGui::SetColumnWidth(0, 100);
+    ImGui::TextUnformatted(label);
+    ImGui::NextColumn();
+    ImGui::PushItemWidth(-1);
+    std::string str = "##"+std::string(label);
+    bool changed = false;
+    changed = ImGui::DragFloat3(str.c_str(), v, v_speed, v_min, v_max, format, flags);
+    ImGui::PopItemWidth();
+    ImGui::Columns();
+    return changed;
+}
+#define TWEAK_VEC3(label, v, ...) __dragFloat3(label, glm::value_ptr(v), __VA_ARGS__);
 
-#define TWEAK_COLOR3(label, v, ...) \
-ImGui::Columns(2, label); \
-ImGui::SetColumnWidth(0, 100);  \
-ImGui::TextUnformatted(label); ImGui::NextColumn(); ImGui::PushItemWidth(-1); ImGui::ColorPicker3("##"#v, glm::value_ptr(v), __VA_ARGS__); ImGui::PopItemWidth();\
-ImGui::Columns();
+inline bool __colorPicker3(const char* label, float col[3], ImGuiColorEditFlags flags = 0)
+{
+    ImGui::Columns(2, label);
+    ImGui::SetColumnWidth(0, 100);
+    ImGui::TextUnformatted(label);
+    ImGui::NextColumn();
+    ImGui::PushItemWidth(-1);
+    std::string str = "##"+std::string(label);
+    bool changed = false;
+    changed = ImGui::ColorPicker3(str.c_str(), col, flags);
+    ImGui::PopItemWidth();
+    ImGui::Columns();
+    return changed;
+}
+#define TWEAK_COLOR3(label, v, ...) __colorPicker3(label, glm::value_ptr(v), __VA_ARGS__);
 
 inline void imguiInit()
 {
