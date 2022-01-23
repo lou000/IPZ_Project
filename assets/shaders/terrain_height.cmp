@@ -12,7 +12,7 @@ layout (std430, binding = 0) buffer TerrainVertexBuffer
 {
     MeshVertex vertices[];
 };
-vec2 meshSize = vec2(200, 200);
+vec2 meshSize = vec2(10, 10);
 layout(binding = 0) uniform sampler2DArray noiseTexture;
 
 void main()
@@ -25,10 +25,10 @@ void main()
     vec2 resolution = textureSize(noiseTexture, 0).xy;
     
 
-    vertices[int(pos0.y*meshSize.y+pos0.x)*6+0].position.y = (texture(noiseTexture, vec3(pos3/resolution, 0)).r)*10-5;
-    vertices[int(pos0.y*meshSize.y+pos0.x)*6+1].position.y = (texture(noiseTexture, vec3(pos2/resolution, 0)).r)*10-5;
-    vertices[int(pos0.y*meshSize.y+pos0.x)*6+2].position.y = (texture(noiseTexture, vec3(pos0/resolution, 0)).r)*10-5;
-    vertices[int(pos0.y*meshSize.y+pos0.x)*6+3].position.y = (texture(noiseTexture, vec3(pos0/resolution, 0)).r)*10-5;
-    vertices[int(pos0.y*meshSize.y+pos0.x)*6+4].position.y = (texture(noiseTexture, vec3(pos1/resolution, 0)).r)*10-5;
-    vertices[int(pos0.y*meshSize.y+pos0.x)*6+5].position.y = (texture(noiseTexture, vec3(pos2/resolution, 0)).r)*10-5;
+    vertices[0].position.y = (texture(noiseTexture, vec3(pos3/resolution, 0)).r)*5;
+    vertices[int(pos0.y*meshSize.y+pos0.x)*6+2].position.y = (texture(noiseTexture, vec3(pos0/resolution, 0)).r);
+    vertices[int(pos0.y*meshSize.y+pos0.x)*6+3].position.y = (texture(noiseTexture, vec3(pos0/resolution, 0)).r);
+    vertices[int(pos0.y*meshSize.y+pos0.x)*6+1].position.y = (texture(noiseTexture, vec3(pos2/resolution, 0)).r);
+    vertices[int(pos0.y*meshSize.y+pos0.x)*6+4].position.y = (texture(noiseTexture, vec3(pos1/resolution, 0)).r);
+    vertices[int(pos0.y*meshSize.y+pos0.x)*6+5].position.y = (texture(noiseTexture, vec3(pos2/resolution, 0)).r);
 }

@@ -39,7 +39,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 TestConnect4::TestConnect4()
     :Scene("testConnect4", false)
 {
-    AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 200, 200));
+    AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 10, 10));
     if(!deserialized())
     {
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4_board.fbx"));
@@ -58,16 +58,16 @@ TestConnect4::TestConnect4()
         directionalLight.color = {0.979f, 0.931f, 0.736f};
         directionalLight.intensity = 1;
 
-        createEntity("../assets/meshes/connect4_board.fbx");
-        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
-                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
-        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
-                      vec3(1),  quat({-radians(90.f), 0, 0}));
-        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
-                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
-        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
-                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
-        createEntity("terrain", vec3(-100,0,-100), vec3(1));
+//        createEntity("../assets/meshes/connect4_board.fbx");
+//        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
+//                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
+//        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
+//                      vec3(1),  quat({-radians(90.f), 0, 0}));
+//        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
+//                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+//        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
+//                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+        createEntity("terrain", vec3(-5,0,-5), vec3(1));
 
         createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
 
@@ -81,22 +81,22 @@ TestConnect4::TestConnect4()
         srand(glfwGetTime()); // initialize random seed
         float radius = 40.0;
         float offset = 25.f;
-        for(unsigned int i = 0; i < amount; i++)
-        {
-            // 1. translation: displace along circle with 'radius' in range [-offset, offset]
-            float angle = (float)i / (float)amount * 360.0f;
-            float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-            float x = sin(angle) * radius + displacement;
-            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-            float z = cos(angle) * radius + displacement;
+//        for(unsigned int i = 0; i < amount; i++)
+//        {
+//            // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+//            float angle = (float)i / (float)amount * 360.0f;
+//            float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+//            float x = sin(angle) * radius + displacement;
+//            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+//            float z = cos(angle) * radius + displacement;
 
-            // 2. scale: scale between 0.05 and 0.25f
-            float scale = (rand() % 10) / 100.0f + 0.3;
+//            // 2. scale: scale between 0.05 and 0.25f
+//            float scale = (rand() % 10) / 100.0f + 0.3;
 
-            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
-            float rotAngle = (rand() % 360);
-            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
-        }
+//            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+//            float rotAngle = (rand() % 360);
+//            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
+//        }
     }
 
 
