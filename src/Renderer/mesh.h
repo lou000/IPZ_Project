@@ -4,8 +4,8 @@
 using namespace glm;
 
 struct MeshVertex{
-    vec3 position;
-    vec3 normal;
+    vec4 position;
+    vec4 normal;
     vec2 texCoords;
 };
 

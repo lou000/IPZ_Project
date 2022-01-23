@@ -445,18 +445,18 @@ std::shared_ptr<Model> Model::makeUnitPlane()
         {0.0f, 1.0f}
     };
 
-    constexpr vec3 vertexPos[4]={
-        {-0.5f,  0.0f,  0.5f},
-        { 0.5f,  0.0f,  0.5f},
-        { 0.5f,  0.0f, -0.5f},
-        {-0.5f,  0.0f, -0.5f}
+    constexpr vec4 vertexPos[4]={
+        {-0.5f,  0.0f,  0.5f, 0},
+        { 0.5f,  0.0f,  0.5f, 0},
+        { 0.5f,  0.0f, -0.5f, 0},
+        {-0.5f,  0.0f, -0.5f, 0}
     };
 
-    constexpr vec3 normals[4]={
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f}
+    constexpr vec4 normals[4]={
+        {0.0f, 1.0f, 0.0f, 0},
+        {0.0f, 1.0f, 0.0f, 0},
+        {0.0f, 1.0f, 0.0f, 0},
+        {0.0f, 1.0f, 0.0f, 0}
     };
 
     constexpr uint32 indices[6]={

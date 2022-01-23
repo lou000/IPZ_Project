@@ -146,6 +146,7 @@ private:
     StorageBuffer perlinOctavesFogSSBO;
     StorageBuffer perlinOctavesTerrainSSBO;
     std::shared_ptr<Shader> perlinNoiseGen;
+    std::shared_ptr<Shader> terrainHeightShader;
     std::shared_ptr<Texture> perlinTextureFog;
     std::shared_ptr<Texture> perlinTextureTerrain;
     void guiNoiseSettings();
@@ -168,8 +169,10 @@ private:
 
 
     void resizeOrClearResources();
-    void generateNoise();
+    void generateFogNoise();
     void maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene);
     void initSSAO();
     void updateSSAOKernel();
+    void generateTerrainNoise();
+    void applyTerrainHeight();
 };

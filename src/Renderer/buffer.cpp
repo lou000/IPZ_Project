@@ -24,8 +24,8 @@ void BufferLayout::processElements()
 VertexBuffer::VertexBuffer(const BufferLayout &layout, size_t size, void *data)
     : m_size(size), m_layout(layout)
 {
-    glCreateBuffers(1, &id);
-    glBindBuffer(GL_ARRAY_BUFFER, id);
+    glCreateBuffers(1, &m_id);
+    glBindBuffer(GL_ARRAY_BUFFER, m_id);
     if(data)
         glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
     else
@@ -34,12 +34,12 @@ VertexBuffer::VertexBuffer(const BufferLayout &layout, size_t size, void *data)
 
 VertexBuffer::~VertexBuffer()
 {
-    glDeleteBuffers(1, &id);
+    glDeleteBuffers(1, &m_id);
 }
 
 void VertexBuffer::bind()
 {
-    glBindBuffer(GL_ARRAY_BUFFER, id);
+    glBindBuffer(GL_ARRAY_BUFFER, m_id);
 }
 
 void VertexBuffer::unbind()
@@ -49,7 +49,7 @@ void VertexBuffer::unbind()
 
 void VertexBuffer::setData(const void *data, size_t size)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, id);
+    glBindBuffer(GL_ARRAY_BUFFER, m_id);
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 }
 

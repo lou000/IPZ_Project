@@ -28,8 +28,9 @@ RenderPipeline::RenderPipeline()
     resizeBloomBuffers();
 
     perlinTextureFog = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
-    perlinTextureTerrain = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
-    generateNoise();
+    perlinTextureTerrain = std::make_shared<Texture>(512, 512, 1, GL_R16F, GL_REPEAT);
+    generateFogNoise();
+    generateTerrainNoise();
 
 
     // TODO: move everything below this to primitive generation
@@ -147,6 +148,12 @@ void RenderPipeline::initShaders()
     };
     bilinearDownsample = std::make_shared<Shader>("bilinear_downsample", shaderSrcs);
     AssetManager::addShader(bilinearDownsample);
+
+    shaderSrcs = {
+        {"../assets/shaders/terrain_height.cmp"}
+    };
+    terrainHeightShader = std::make_shared<Shader>("terrain_height", shaderSrcs);
+    AssetManager::addShader(terrainHeightShader);
 
     shaderSrcs = {
         {"../assets/shaders/tent_upsampleR11F_G11F_B10F.cmp"}
@@ -320,6 +327,7 @@ void RenderPipeline::initSSBOs()
     perlinOctavesFogSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
     perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave));
     perlinOctavesTerrainSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
+    perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave));
 }
 
 void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
@@ -943,18 +951,49 @@ void RenderPipeline::resizeOrClearResources()
     }
 }
 
-void RenderPipeline::generateNoise()
+void RenderPipeline::generateFogNoise()
 {
     perlinNoiseGen->bind();
     perlinOctavesFogSSBO.bind(0);
     perlinNoiseGen->setUniform("u_octaveCount", BufferElement::Int, (int)config.perlinOctavesFog.size());
-    perlinNoiseGen->bindImage(perlinTextureFog, 0, GL_WRITE_ONLY, false);
+    perlinNoiseGen->bindImage(perlinTextureFog, 0, GL_WRITE_ONLY, true);
 
     vec3 size = perlinTextureFog->getDimensions();
+    LOG("size: %f", size.z);
     perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)ceil(size.z/4));
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     perlinNoiseGen->unbind();
+}
+
+void RenderPipeline::generateTerrainNoise()
+{
+    perlinNoiseGen->bind();
+    perlinOctavesTerrainSSBO.bind(0);
+    perlinNoiseGen->setUniform("u_octaveCount", BufferElement::Int, (int)config.perlinOctavesTerrain.size());
+    perlinNoiseGen->bindImage(perlinTextureTerrain, 0, GL_WRITE_ONLY, true);
+
+    vec3 size = perlinTextureTerrain->getDimensions();
+    perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), 1);
+
+    glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    perlinNoiseGen->unbind();
+}
+
+void RenderPipeline::applyTerrainHeight()
+{
+    terrainHeightShader->bind();
+    auto model = AssetManager::getAsset<Model>("terrain");
+    auto vb = model->meshes()[0]->m_vao->vertexBuffers()[0]; //FIXME: jesus christ
+    vb->bind();
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vb->id());
+    perlinTextureTerrain->bind(0);
+
+    vec3 size = perlinTextureTerrain->getDimensions();
+    terrainHeightShader->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), 1);
+
+    glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+    terrainHeightShader->unbind();
 }
 
 void RenderPipeline::drawSceneDebug(std::shared_ptr<Scene> scene)
@@ -978,20 +1017,15 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
         debugView--;
     if(App::getKeyOnce(GLFW_KEY_KP_0))
         debugView = 0;
-    glm::clamp(debugView, 0, 5);
+    glm::clamp(debugView, 0, 4);
     BatchRenderer::begin(sceneCamera);
     switch(debugView)
     {
     case 0: break;
-    case 1:
-    {
-        perlinTextureFog->selectLayerForNextDraw(0);
-        BatchRenderer::drawQuad({0,0}, perlinTextureFog->getDimensions(), perlinTextureFog); break;
-    }
-    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
-    case 3: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
-    case 4: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
-    case 5: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
+    case 1: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
+    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
+    case 3: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
+    case 4: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
     default:
         break;
     }
@@ -1012,26 +1046,39 @@ void RenderPipeline::guiNoiseSettings()
         bool changed = false;
 
         std::shared_ptr<Texture> tex = nullptr;
+        static int selectedLayer = 0;
+        auto winPos = ImGui::GetWindowPos();
+        auto winWidth = ImGui::GetWindowWidth();
         switch(item_current)
         {
-        case 0: octaves = &config.perlinOctavesFog; tex = perlinTextureFog; break;
-        case 1: octaves = &config.perlinOctavesTerrain; tex = perlinTextureTerrain; break;
+        case 0:
+        {
+            octaves = &config.perlinOctavesFog;
+            tex = perlinTextureFog;
+
+            BatchRenderer::begin(nullptr);
+            perlinTextureFog->selectLayerForNextDraw(selectedLayer);
+            BatchRenderer::drawQuad({winPos.x + winWidth,winPos.y}, {300, 300}, perlinTextureFog);
+            BatchRenderer::end();
+
+            break;
+        }
+        case 1:
+        {
+            octaves = &config.perlinOctavesTerrain;
+            tex = perlinTextureTerrain;
+
+            BatchRenderer::begin(nullptr);
+            perlinTextureTerrain->selectLayerForNextDraw(selectedLayer);
+            BatchRenderer::drawQuad({winPos.x + winWidth,winPos.y}, {300, 300}, perlinTextureTerrain);
+            BatchRenderer::end();
+
+            break;
+        }
         default: octaves = &dummy; break;
         }
 
-
-        static int selectedLayer = 0;
-        TWEAK_INT("Layer", selectedLayer, 1, 0, tex->getDimensions().z);
-
-        auto winPos = ImGui::GetWindowPos();
-        auto winWidth = ImGui::GetWindowWidth();
-
-        BatchRenderer::begin(nullptr);
-        perlinTextureFog->selectLayerForNextDraw(selectedLayer);
-        BatchRenderer::drawQuad({winPos.x + winWidth,winPos.y}, {300, 300}, perlinTextureFog);
-        BatchRenderer::end();
-
-
+        TWEAK_INT("Layer", selectedLayer, 1, 0, tex->getDimensions().z-1, "%d", (0 == tex->getDimensions().z-1) ? 1 << 21 : 0);
         if (ImGui::Button("Add octave")) { octaves->push_back({}); changed = true;}
         for(size_t i=0; i<octaves->size(); i++)
         {
@@ -1050,11 +1097,21 @@ void RenderPipeline::guiNoiseSettings()
         {
             switch(item_current)
             {
-            case 0: perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave)); break;
-            case 1: perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave)); break;
+            case 0:
+            {
+                perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave));
+                generateFogNoise();
+                break;
+            }
+            case 1:
+            {
+                perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave));
+                generateTerrainNoise();
+                applyTerrainHeight();
+                break;
+            }
             default: break;
             }
-            generateNoise();
         }
     }
     ImGui::End();

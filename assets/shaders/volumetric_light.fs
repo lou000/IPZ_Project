@@ -176,7 +176,7 @@ float sample_fog(vec3 pos, float time)
 {
     vec3 resolution = textureSize(fogMap, 0);
     float speed = 2.5;
-    float col = texture(fogMap, vec3(pos.x+time*speed, pos.z+time*speed, pos.y)/resolution).r;
+    float col = texture(fogMap, vec3(vec2(pos.x+time*speed, pos.z+time*speed)/resolution.xy, pos.y)).r;
     col = smoothstep(0.3, 0.9, col);
 	return col;
 }

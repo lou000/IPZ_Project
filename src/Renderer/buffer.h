@@ -110,12 +110,13 @@ public:
 
     void bind();
     void unbind();
+    uint id(){return m_id;}
     void setData(const void* data, size_t size);
     size_t size(){return m_size;}
     BufferLayout layout(){return m_layout;}
 
 private:
-    uint id = 0;
+    uint m_id = 0;
     size_t m_size = 0;
     BufferLayout m_layout;
 
