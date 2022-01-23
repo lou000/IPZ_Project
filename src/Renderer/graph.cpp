@@ -37,10 +37,10 @@ void Graph3d::setMesh(uint sizeX, uint sizeZ, bool smooth)
             p.z = i*stepZ;
             p.y = 0;
         }
-    if(m_smooth)
-        mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
-    else
-        mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
+//    if(m_smooth)
+//        mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
+//    else
+//        mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
 }
 
 void Graph3d::addPoints(vec3 *_points, uint count, const vec4& color)
@@ -108,10 +108,10 @@ void Graph3d::updateMesh(std::function<float(const vec2&)> func)
         float y = clamp(func({x1, x2}), -1.f, 1.f);
         p.y = mapToRange({-1,1}, {0, m_scale}, y);
     }
-    if(m_smooth)
-        mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
-    else
-        mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
+//    if(m_smooth)
+//        mesh = MeshRenderer::createSmoothMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
+//    else
+//        mesh = MeshRenderer::createQuadMeshGrid(meshGrid, meshX, meshZ, palette, paletteCount);
 }
 
 void Graph3d::animateTo(std::function<float(const vec2&)> func, float time)

@@ -4,6 +4,7 @@
 #include <gtx/compatibility.hpp>
 #include <gtc/type_ptr.hpp>
 #include <gtx/quaternion.hpp>
+#include <gtx/normal.hpp>
 #include "gtc/random.hpp"
 #include <sstream>
 #include <iomanip>

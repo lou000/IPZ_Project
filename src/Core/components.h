@@ -36,13 +36,13 @@ struct TransformComponent
     quat rotation = {1,0,0,0};
 };
 
-struct RenderSpecComponent
+struct NormalDrawComponent
 {
     // without this component or light component
     // render pipeline will ignore the entity
     // for now its only color, there will come more
-    RenderSpecComponent(){}
-    RenderSpecComponent(vec4 col)
+    NormalDrawComponent(){}
+    NormalDrawComponent(vec4 col)
         : color(col){}
     vec4 color = {0,0,0,0};
 };

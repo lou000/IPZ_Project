@@ -83,7 +83,7 @@ Entity Scene::createEntity(const std::string &meshName, vec3 pos, vec3 scale, qu
     Entity entity = createEntity();
     entity.addComponent<TransformComponent>(pos, scale, rotation);
     entity.addComponent<MeshComponent>(meshName);
-    entity.addComponent<RenderSpecComponent>(color);
+    entity.addComponent<NormalDrawComponent>(color);
     return entity;
 }
 
@@ -92,7 +92,6 @@ Entity Scene::createInstanced(uint instancedGroup, const std::string &meshName, 
     Entity entity = createEntity();
     entity.addComponent<TransformComponent>(pos, scale, rotation);
     entity.addComponent<MeshComponent>(meshName);
-    entity.addComponent<RenderSpecComponent>(vec4(0,0,0,0));
     entity.addComponent<InstancedDrawComponent>(instancedGroup);
     return entity;
 }

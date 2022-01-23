@@ -25,7 +25,8 @@ public:
     void operator=(MeshRenderer const&) = delete;
 
     static std::shared_ptr<Mesh> createCubeSphere(int vPerEdge);
-    static std::shared_ptr<Mesh> createQuadMeshGrid(vec3* points, uint xSize, uint zSize, vec4* palette, uint pCount);
-    static std::shared_ptr<Mesh> createSmoothMeshGrid(vec3* points, uint xSize, uint zSize, vec4* palette, uint pCount);
+    static std::shared_ptr<Mesh> createQuadMeshGrid(vec3* points, uint xSize, uint zSize);
+    static std::shared_ptr<Mesh> createSmoothMeshGrid(vec3* points, uint xSize, uint zSize);
+    static std::shared_ptr<Model> createTriMeshGrid(const std::string &name, uint xSize, uint zSize);
 };
 

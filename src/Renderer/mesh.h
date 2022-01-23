@@ -34,7 +34,7 @@ struct Material
 class Mesh
 {
 public:
-    Mesh(float* vertexData, size_t vCount, uint16* indexData, size_t iCount, Material material = {}, AABB boundingBox = {});
+    Mesh(float* vertexData, size_t vCount, uint32* indexData, size_t iCount, Material material = {}, AABB boundingBox = {});
     std::shared_ptr<VertexArray> vao(){return m_vao;}
 
     Material material;

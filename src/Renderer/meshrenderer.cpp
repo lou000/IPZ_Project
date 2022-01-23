@@ -45,11 +45,11 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
 
     // INDICES
     int iCount = 6*(vPerEdge-1)*(vPerEdge-1)*2*3; //six faces of (vPerEdge-1)^2 quads 2 tris per quad 3 indices per tri
-    uint16* indices = (uint16*)malloc(iCount*sizeof(uint16));
+    uint32* indices = (uint32*)malloc(iCount*sizeof(uint32));
     size_t ind = 0;
 
 
-    auto indexQuad = [&](uint16 p0, uint16 p1, uint16 p2, uint16 p3){
+    auto indexQuad = [&](uint32 p0, uint32 p1, uint32 p2, uint32 p3){
         indices[ind+0] = p0;
         indices[ind+1] = p1;
         indices[ind+2] = p3;
@@ -102,7 +102,7 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
 
 
     // bottom
-    auto indexQuadInv = [&](uint16 p0, uint16 p1, uint16 p2, uint16 p3){
+    auto indexQuadInv = [&](uint32 p0, uint32 p1, uint32 p2, uint32 p3){
         indices[ind+0] = p3;
         indices[ind+1] = p2;
         indices[ind+2] = p0;
@@ -155,17 +155,16 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
     return m;
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize, uint zSize, vec4* palette, uint pCount)
+std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize, uint zSize)
 {
     uint vCount = (xSize-1)*(zSize-1)*4; // num of quads
     uint iCount = (xSize-1)*(zSize-1)*2*3;
 
     MeshVertex* vertices = (MeshVertex*)calloc(vCount, sizeof(MeshVertex));
-    uint16* indices      = (uint16*)malloc(iCount * sizeof(uint16));
-    vec4* colorData      = (vec4*)malloc(vCount*sizeof(vec4));
+    uint32* indices      = (uint32*)malloc(iCount * sizeof(uint32));
 
     size_t ind = 0;
-    auto indexQuad = [&](uint16 p0, uint16 p1, uint16 p2, uint16 p3){
+    auto indexQuad = [&](uint32 p0, uint32 p1, uint32 p2, uint32 p3){
         indices[ind+0] = p0;
         indices[ind+1] = p1;
         indices[ind+2] = p3;
@@ -203,15 +202,6 @@ std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize,
             vertices[j2].position = points[i2];
             vertices[j3].position = points[i3];
 
-            auto avgY = (points[i0].y+points[i1].y+points[i2].y+points[i3].y)/4;
-            int index = (int)mapToRange({0, 10}, {0, pCount-1}, avgY);
-            auto col = palette[index];
-
-            colorData[j0] = col;
-            colorData[j1] = col;
-            colorData[j2] = col;
-            colorData[j3] = col;
-
             vertices[j0].normal = normalize(normal1);
             vertices[j1].normal = normalize(normal1+normal2);
             vertices[j2].normal = normalize(normal2);
@@ -220,24 +210,78 @@ std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize,
     }
 
     auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
-    BufferLayout layout = {{BufferElement::Float4, "a_Color" }};
-    m->vao()->addVBuffer(std::make_shared<VertexBuffer>(layout, vCount*sizeof(vec4), colorData));
     free(indices);
     free(vertices);
-    free(colorData);
     return m;
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec3 *points, uint xSize, uint zSize, vec4* palette, uint pCount) //left to right, top to bottom
+std::shared_ptr<Model> MeshRenderer::createTriMeshGrid(const std::string& name, uint xSize, uint zSize)
+{
+    uint vCount = xSize*zSize*6; // num of triangle verts is the same as indices
+    uint iCount = xSize*zSize*6;
+
+    MeshVertex* vertices = (MeshVertex*)calloc(vCount, sizeof(MeshVertex));
+    uint32* indices      = (uint32*)malloc(iCount * sizeof(uint32));
+
+    size_t ind = 0;
+
+    for(uint z=0; z<zSize; z++)
+    {
+        for(uint x=0; x<xSize; x++)
+        {
+            vec3 pos0 = {x,   0, z  };
+            vec3 pos1 = {x+1, 0, z+1};
+            vec3 pos2 = {x,   0, z+1};
+            vec3 pos3 = {x,   0, z  };
+            vec3 pos4 = {x+1, 0, z  };
+            vec3 pos5 = {x+1, 0, z+1};
+
+            vertices[ind+2].position = pos0;
+            vertices[ind+1].position = pos1;
+            vertices[ind+0].position = pos2;
+            vertices[ind+5].position = pos3;
+            vertices[ind+4].position = pos4;
+            vertices[ind+3].position = pos5;
+
+            vec3 up = {0,1,0};
+            vertices[ind+0].normal = normalize(up);
+            vertices[ind+1].normal = normalize(up);
+            vertices[ind+2].normal = normalize(up);
+            vertices[ind+3].normal = normalize(up);
+            vertices[ind+4].normal = normalize(up);
+            vertices[ind+5].normal = normalize(up);
+
+            indices[ind+0] = ind+0;
+            indices[ind+1] = ind+1;
+            indices[ind+2] = ind+2;
+            indices[ind+3] = ind+3;
+            indices[ind+4] = ind+4;
+            indices[ind+5] = ind+5;
+
+            ind+=6;
+        }
+    }
+
+    Material mat;
+    mat.metallic = 0;
+    mat.roughness = 0.8;
+    mat.color = {1,1,1,1};
+
+    auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount, mat);
+    free(indices);
+    free(vertices);
+    return std::make_shared<Model>(name, std::vector<std::shared_ptr<Mesh>>{m});
+}
+
+std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec3 *points, uint xSize, uint zSize) //left to right, top to bottom
 {
     uint vCount = xSize*zSize;
     uint iCount = (xSize-1)*(zSize-1)*2*3;
     MeshVertex* vertices = (MeshVertex*)calloc(vCount, sizeof(MeshVertex));
-    uint16* indices      = (uint16*)malloc(iCount*sizeof(uint16));
-    vec4* colorData      = (vec4*)malloc(vCount*sizeof(vec4));
+    uint32* indices      = (uint32*)malloc(iCount*sizeof(uint32));
 
     size_t ind = 0;
-    auto indexQuad = [&](uint16 p0, uint16 p1, uint16 p2, uint16 p3){
+    auto indexQuad = [&](uint32 p0, uint32 p1, uint32 p2, uint32 p3){
         indices[ind+0] = p0;
         indices[ind+1] = p1;
         indices[ind+2] = p3;
@@ -275,17 +319,10 @@ std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec3 *points, uint xSiz
         }
     }
     for(uint i=0; i<xSize*zSize; i++)
-    {
         vertices[i].normal = normalize(vertices[i].normal);
-        int index = (int)mapToRange({0, 10}, {0, pCount-1}, vertices[i].position.y);
-        colorData[i] = palette[index];
-    }
 
     auto m = std::make_shared<Mesh>((float*)vertices, vCount, indices, iCount);
-    BufferLayout layout = {{BufferElement::Float4, "a_Color" }};
-    m->vao()->addVBuffer(std::make_shared<VertexBuffer>(layout, vCount*sizeof(vec4), colorData));
     free(indices);
     free(vertices);
-    free(colorData);
     return m;
 }

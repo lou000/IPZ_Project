@@ -381,9 +381,9 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
         SERIALIZE_PRIMITIVE(e, component.rotation);
         e << YAML::EndMap;
     }
-    if (entity.hasComponent<RenderSpecComponent>())
+    if (entity.hasComponent<NormalDrawComponent>())
     {
-        auto& component = entity.getComponent<RenderSpecComponent>();
+        auto& component = entity.getComponent<NormalDrawComponent>();
         e << Key << "RenderSpecComponent";
         e << YAML::BeginMap;
         SERIALIZE_PRIMITIVE(e, component.color);
@@ -464,7 +464,7 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
     auto renderSpec = node["RenderSpecComponent"];
     if(renderSpec)
     {
-        auto& component = entity->addComponent<RenderSpecComponent>();
+        auto& component = entity->addComponent<NormalDrawComponent>();
         DESERIALIZE_PRIMITIVE(renderSpec, component.color, vec4);
     }
     auto mesh = node["MeshComponent"];

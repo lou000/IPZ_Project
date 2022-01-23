@@ -459,7 +459,7 @@ std::shared_ptr<Model> Model::makeUnitPlane()
         {0.0f, 1.0f, 0.0f}
     };
 
-    constexpr uint16 indices[6]={
+    constexpr uint32 indices[6]={
         0,1,3,3,1,2
     };
 
@@ -472,9 +472,9 @@ std::shared_ptr<Model> Model::makeUnitPlane()
     }
     Material mat;
     mat.metallic = 0;
-    mat.roughness = 0.2;
+    mat.roughness = 0.8;
     mat.color = {1,1,1,1};
-    auto m = std::make_shared<Mesh>((float*)&vertices[0], 4, (uint16*)&indices[0], 6, mat);
+    auto m = std::make_shared<Mesh>((float*)&vertices[0], 4, (uint32*)&indices[0], 6, mat);
 
     return std::make_shared<Model>("unitPlane", std::vector<std::shared_ptr<Mesh>>{m});
 }
@@ -507,7 +507,7 @@ bool Model::loadModel()
 
     // For now consider only one mesh and only vertices/indices.
     // Materials, textures and scenes will come later
-    std::vector<uint16> indices;
+    std::vector<uint32> indices;
     std::vector<float> vertices; // resize
 
     AABB modelBB;

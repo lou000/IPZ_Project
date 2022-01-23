@@ -17,13 +17,13 @@ config.ssaoBias: 0.100000001
 config.enableVolumetric: true
 config.volumetricHalfRes: true
 config.volumetricSamples: 100
-config.volumetricBlurSize: 2
+config.volumetricBlurSize: 4
 config.g_factor: 0.493000001
-config.fog_strength: 1.50999999
+config.fog_strength: 1.41999996
 config.fog_y: 4.13999987
 config.lightShaftIntensity: 1.41999996
 FogOctaves:
-  - octave.frequency: [52.7000008, 58.2000008, 0, 0]
+  - octave.frequency: [52.7000008, 55.0999985, 0, 0]
     octave.offset: [11.3000002, 17.6000004, 6.5, 0]
     octave.amplitude: 8.39999962
   - octave.frequency: [22.7999992, 33.7000008, 6.4000001, 0]

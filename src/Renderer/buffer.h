@@ -126,13 +126,13 @@ private:
 class IndexBuffer{
 
 public:
-    IndexBuffer(size_t size, uint16* indices = nullptr);
+    IndexBuffer(size_t size, uint32* indices = nullptr);
     ~IndexBuffer();
 
     void bind();
     void unbind();
-    void setData(const uint16* data, uint size);
-    uint count(){return m_size/sizeof(uint16);}
+    void setData(const uint32* data, uint size);
+    uint count(){return m_size/sizeof(uint32);}
 
 private:
     uint id = 0;

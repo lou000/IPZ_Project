@@ -14,11 +14,7 @@ layout (std430, binding = 2) buffer InstancedTransforms
     
 void main()
 {
-    mat4 transform;
-    if(u_DrawInstanced>0)
-        transform = instancedTransforms[gl_InstanceID];
-    else
-        transform = u_Model;
+    mat4 transform = instancedTransforms[gl_InstanceID] * u_Model;  //one of these will be set to identity
         
     gl_Position = transform * vec4(a_Position, 1.0);
 }

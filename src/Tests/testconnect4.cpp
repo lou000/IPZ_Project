@@ -3,6 +3,7 @@
 #include "../Core/math.h"
 #include "../Core/entity.h"
 #include "../Core/components.h"
+#include "../Renderer/meshrenderer.h"
 
 Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorted
 {
@@ -38,6 +39,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 TestConnect4::TestConnect4()
     :Scene("testConnect4", false)
 {
+    AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 200, 200));
     if(!deserialized())
     {
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4_board.fbx"));
@@ -65,9 +67,9 @@ TestConnect4::TestConnect4()
                      vec3(0.3f), quat({-radians(90.f), 0, 0}));
         createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
                      vec3(0.3f), quat({-radians(90.f), 0, 0}));
-        createEntity("unitPlane", vec3(0,0,0), vec3(100));
+        createEntity("terrain", vec3(-100,0,-100), vec3(1));
+
         createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
-        createEntity("unitPlane", vec3(0,0,0), vec3(100));
 
         auto soundTest = createEntity();
         soundTest.addComponent<TransformComponent>(vec3(0,0,0));

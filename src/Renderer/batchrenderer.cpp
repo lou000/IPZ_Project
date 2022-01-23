@@ -32,9 +32,9 @@ void BatchRenderer::x_init()
 
     // setup buffers
     vertexBuffer = (byte*)malloc(MAX_VERTEX_BUFFER_SIZE);
-    indexBuffer = (uint16*)malloc(MAX_INDEX_BUFFER_SIZE);
+    indexBuffer = (uint32*)malloc(MAX_INDEX_BUFFER_SIZE);
     vertexBufferEnd = vertexBuffer + MAX_VERTEX_BUFFER_SIZE/sizeof(byte);
-    indexBufferEnd  = indexBuffer  + MAX_INDEX_BUFFER_SIZE /sizeof(uint16);
+    indexBufferEnd  = indexBuffer  + MAX_INDEX_BUFFER_SIZE /sizeof(uint32);
 
     BufferLayout layout = {
         {BufferElement::Float4, "a_Position"    },
@@ -154,7 +154,7 @@ void BatchRenderer::flush()
     vertexArray->indexBuffer()->setData(indexBuffer, sizeIB);
 
     // draw
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_SHORT, nullptr);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
@@ -262,7 +262,7 @@ void BatchRenderer::x_drawPoint(const vec3 &pos, float lWidth, float lLen, const
     BatchRenderer::drawLine(pos-vec3(0, 0, lLen/2), pos+vec3(0, 0, lLen/2), lWidth, color);
 }
 
-void BatchRenderer::x_drawTris(vec3 *verts, uint16 *indices, uint iCount, float lWidth, const vec4 &color)
+void BatchRenderer::x_drawTris(vec3 *verts, uint32 *indices, uint iCount, float lWidth, const vec4 &color)
 {
     for(size_t i=0; i<iCount; i+=6)
     {

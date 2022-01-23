@@ -64,7 +64,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     // gather instanced entities
     instancedGroups.clear();
-    auto group = scene->entities().group<TransformComponent, MeshComponent, RenderSpecComponent, InstancedDrawComponent>();
+    auto group = scene->entities().group<TransformComponent, MeshComponent, InstancedDrawComponent>();
     for(auto& ent : group)
     {
         auto& spec = group.get<InstancedDrawComponent>(ent);
@@ -464,19 +464,20 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
 
     // Render single entities
     csmShader->setUniform("u_DrawInstanced", BufferElement::Int, 0);
-    auto view = scene->entities().view<TransformComponent, MeshComponent, RenderSpecComponent>(entt::exclude<InstancedDrawComponent>);
-    for(auto& ent : view)
+    auto group = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
+    for(auto& ent : group)
     {
         // draw here
-        auto transform = view.get<TransformComponent>(ent).transform();
+        auto transform = group.get<TransformComponent>(ent).transform();
         csmShader->setUniform("u_Model", BufferElement::Mat4, transform);
-
-        auto model = view.get<MeshComponent>(ent).model;
+        instanceTransformsSSBO.setData(glm::value_ptr(mat4(1.0f)), sizeof(mat4));
+        instanceTransformsSSBO.bind(2);
+        auto model = group.get<MeshComponent>(ent).model;
         for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
             vao->bind();
-            glDrawElements(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
+            glDrawElements(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
             vao->unbind();
         }
     }
@@ -487,6 +488,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
     {
         ASSERT(group.second.size()>0);
         auto grpTransforms = instancedTransforms[group.first];
+        csmShader->setUniform("u_Model", BufferElement::Mat4, mat4(1.0f));
         instanceTransformsSSBO.setData(grpTransforms.data(), grpTransforms.size()*sizeof(mat4));
         instanceTransformsSSBO.bind(2);
         auto model = group.second[0].getComponent<MeshComponent>().model;
@@ -494,7 +496,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
         {
             auto vao = mesh->vao();
             vao->bind();
-            glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_SHORT, 0, group.second.size());
+            glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_INT, 0, group.second.size());
             vao->unbind();
         }
         instanceTransformsSSBO.unbind();
@@ -543,13 +545,15 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
 
     // Render single entities
     pbrShader->setUniform("u_DrawInstanced", BufferElement::Int, 0);
-    auto view = scene->entities().view<TransformComponent, MeshComponent, RenderSpecComponent>(entt::exclude<InstancedDrawComponent>);
+    auto view = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
     for(auto& ent : view)
     {
-        auto renderSpec = view.get<RenderSpecComponent>(ent);
+        auto renderSpec = view.get<NormalDrawComponent>(ent);
         auto transform = view.get<TransformComponent>(ent).transform();
         auto model = view.get<MeshComponent>(ent).model;
         pbrShader->setUniform("u_Model", BufferElement::Mat4, transform);
+        instanceTransformsSSBO.setData(glm::value_ptr(mat4(1.0f)), sizeof(mat4));
+        instanceTransformsSSBO.bind(2);
 
         for(auto mesh : model->meshes())
         {
@@ -566,7 +570,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
             else
                 pbrShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
             vao->bind();
-            glDrawElements(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_SHORT, nullptr);
+            glDrawElements(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_INT, nullptr);
             vao->unbind();
         }
     }
@@ -577,6 +581,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     {
         ASSERT(group.second.size()>0);
         auto grpTransforms = instancedTransforms[group.first];
+        pbrShader->setUniform("u_Model", BufferElement::Mat4, mat4(1.0f));
         instanceTransformsSSBO.setData(grpTransforms.data(), grpTransforms.size()*sizeof(mat4));
         instanceTransformsSSBO.bind(2);
         auto model = group.second[0].getComponent<MeshComponent>().model;
@@ -589,7 +594,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
             pbrShader->setUniform("u_Roughness", BufferElement::Float, mesh->material.roughness);
             pbrShader->setUniform("u_Color", BufferElement::Float4, mesh->material.color);
             vao->bind();
-            glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_SHORT, 0, group.second.size());
+            glDrawElementsInstanced(GL_TRIANGLES, (GLsizei)vao->indexBuffer()->count(), GL_UNSIGNED_INT, 0, group.second.size());
             vao->unbind();
         }
         instanceTransformsSSBO.unbind();
