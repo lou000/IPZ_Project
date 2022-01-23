@@ -7,6 +7,11 @@
 #include <random>
 
 
+// TODO: compute shader to aapply terrain height map to terrain vbo
+// TODO: get terrain map from GPU to accesss height on CPU
+// TODO: terrain_pbr.vs to compute the color of the terrain
+// TODO: UI to change the colors based on height
+
 RenderPipeline::RenderPipeline()
 {
     winSize = App::getWindowSize();
