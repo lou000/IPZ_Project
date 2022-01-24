@@ -960,7 +960,7 @@ void RenderPipeline::generateFogNoise()
 
     vec3 size = perlinTextureFog->getDimensions();
     LOG("size: %f", size.z);
-    perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)ceil(size.z/4));
+    perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)size.z);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     perlinNoiseGen->unbind();
@@ -974,7 +974,7 @@ void RenderPipeline::generateTerrainNoise()
     perlinNoiseGen->bindImage(perlinTextureTerrain, 0, GL_WRITE_ONLY, true);
 
     vec3 size = perlinTextureTerrain->getDimensions();
-    perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), 1);
+    perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)size.z);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
     perlinNoiseGen->unbind();
@@ -986,7 +986,7 @@ void RenderPipeline::applyTerrainHeight()
     auto model = AssetManager::getAsset<Model>("terrain");
     auto vb = model->meshes()[0]->m_vao->vertexBuffers()[0]; //FIXME: jesus christ
     vb->bind();
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, vb->id());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, vb->id());
     perlinTextureTerrain->bind(0);
 
     vec3 size = perlinTextureTerrain->getDimensions();

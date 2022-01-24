@@ -38,9 +38,14 @@ protected:
     Entity createEntity(const std::string &meshName, vec3 pos = {0,0,0},
                         vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0},
                         vec4 color = {0,0,0,0});
+    Entity createNamedEntity(const std::string &entityName, const std::string &meshName, vec3 pos = {0,0,0},
+                             vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0},
+                             vec4 color = {0,0,0,0});
     Entity createInstanced(uint instancedGroup, const std::string &meshName, vec3 pos = {0,0,0},
                            vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0});
     Entity createPointLight(vec3 pos, vec3 color = {1,1,1}, float intensity = 1.0f, float radius = 10.f, bool shadowCasting = false);
+
+    Entity getEntity(const std::string &entityName);
     void removeEntity(Entity entity);
 
 
@@ -61,5 +66,6 @@ private:
     bool showSceneSettings = true;
     entt::registry m_entities;
     AudioListener m_audioListener;
+    std::unordered_map<std::string, Entity> namedEntities;
 };
 

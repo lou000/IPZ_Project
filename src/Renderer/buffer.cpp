@@ -53,6 +53,11 @@ void VertexBuffer::setData(const void *data, size_t size)
     glBufferSubData(GL_ARRAY_BUFFER, 0, size, data);
 }
 
+void *VertexBuffer::mapBuffer(GLenum access)
+{
+    return glMapNamedBuffer(m_id, access);
+}
+
 IndexBuffer::IndexBuffer(size_t size, uint32 *indices)
     :m_size(size)
 {

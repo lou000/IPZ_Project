@@ -87,6 +87,17 @@ Entity Scene::createEntity(const std::string &meshName, vec3 pos, vec3 scale, qu
     return entity;
 }
 
+Entity Scene::createNamedEntity(const std::string &entityName, const std::string &meshName, vec3 pos, vec3 scale, quat rotation, vec4 color)
+{
+    Entity entity = createEntity();
+    namedEntities.emplace(entityName, entity);
+    entity.addComponent<TagComponent>(entityName);
+    entity.addComponent<TransformComponent>(pos, scale, rotation);
+    entity.addComponent<MeshComponent>(meshName);
+    entity.addComponent<NormalDrawComponent>(color);
+    return entity;
+}
+
 Entity Scene::createInstanced(uint instancedGroup, const std::string &meshName, vec3 pos, vec3 scale, quat rotation)
 {
     Entity entity = createEntity();
@@ -103,6 +114,11 @@ Entity Scene::createPointLight(vec3 pos, vec3 color,
     Entity entity = createEntity();
     entity.addComponent<PointLightComponent>(pos, color, intensity, radius, shadowCasting);
     return entity;
+}
+
+Entity Scene::getEntity(const std::string &entityName)
+{
+    return namedEntities.at(entityName);
 }
 
 void Scene::removeEntity(Entity entity)

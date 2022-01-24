@@ -232,16 +232,14 @@ std::shared_ptr<Model> MeshRenderer::createTriMeshGrid(const std::string& name, 
             vec4 pos0 = {x,   0, z  , 0};
             vec4 pos1 = {x+1, 0, z+1, 0};
             vec4 pos2 = {x,   0, z+1, 0};
-            vec4 pos3 = {x,   0, z  , 0};
-            vec4 pos4 = {x+1, 0, z  , 0};
-            vec4 pos5 = {x+1, 0, z+1, 0};
+            vec4 pos3 = {x+1, 0, z  , 0};
 
             vertices[ind+2].position = pos0;
             vertices[ind+1].position = pos1;
             vertices[ind+0].position = pos2;
-            vertices[ind+5].position = pos3;
-            vertices[ind+4].position = pos4;
-            vertices[ind+3].position = pos5;
+            vertices[ind+5].position = pos0;
+            vertices[ind+4].position = pos3;
+            vertices[ind+3].position = pos1;
 
             vec4 up = {0,1,0,0};
             vertices[ind+0].normal = normalize(up);

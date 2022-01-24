@@ -112,6 +112,7 @@ public:
     void unbind();
     uint id(){return m_id;}
     void setData(const void* data, size_t size);
+    void* mapBuffer(GLenum access);
     size_t size(){return m_size;}
     BufferLayout layout(){return m_layout;}
 

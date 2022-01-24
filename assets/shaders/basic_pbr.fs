@@ -131,9 +131,9 @@ float dirLightShadow(vec3 fPos)
     float bias = max(0.0001 * (1.0 - dot(normal, -u_DirLightDirection)), 0.0001);
     
     if (layer == u_cascadeCount)
-        bias *= 1 / (u_farPlane * 0.5f);
+        bias *= 1 / (u_farPlane * 0.5);
     else
-        bias *= 1 / (u_cascadePlaneDistances[layer] * 0.5f);
+        bias *= 1 / (u_cascadePlaneDistances[layer] * 0.5);
 
     // PCF
     float shadow = 0.0;
