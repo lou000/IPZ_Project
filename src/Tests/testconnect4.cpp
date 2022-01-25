@@ -122,34 +122,34 @@ void TestConnect4::onStart()
 
 void TestConnect4::onUpdate(float dt)
 {
-//    auto terrain = getEntity("terrain");
-//    // TODO: mouseposition using compute based on depth and uv
-//    auto transform = terrain.getComponent<TransformComponent>();
-//    auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
+    auto terrain = getEntity("terrain");
+    // TODO: mouseposition using compute based on depth and uv
+    auto transform = terrain.getComponent<TransformComponent>();
+    auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
 
-//    if(terrainMap.heightMap)
-//    {
-//        auto group = entities().view<TransformComponent, MeshComponent>(entt::exclude<TerrainGenComponent>);
-////        for(int y=511; y>0; y--)
-////            for(int x=0; x<200; x++)
-////                LOG("(%d, %d): %f\n", x, y, terrainMap.heightMap[y*512+x]);
-//        for(auto& ent : group)
-//        {
-//            auto pos = group.get<TransformComponent>(ent).pos - transform.pos;
-//            // calculate x coords
-//            float x1 = glm::round(pos.x);
+    if(terrainMap.heightMap)
+    {
+        auto group = entities().view<TransformComponent, MeshComponent>(entt::exclude<TerrainGenComponent>);
+//        for(int y=511; y>0; y--)
+//            for(int x=0; x<200; x++)
+//                LOG("(%d, %d): %f\n", x, y, terrainMap.heightMap[y*512+x]);
+        for(auto& ent : group)
+        {
+            auto pos = group.get<TransformComponent>(ent).pos - transform.pos;
+            // calculate x coords
+            float x1 = glm::round(pos.x);
 
-//            // calculate z coords
-//            float y1 = glm::round(pos.z);
+            // calculate z coords
+            float y1 = glm::round(pos.z);
 
-//            int index = (int)(y1*terrainMap.width+(x1));
-//            float h1 = terrainMap.heightMap[index]*30-15;
+            int index = (int)(y1*terrainMap.width+(x1));
+            float h1 = terrainMap.heightMap[index]*30-15;
 
-////            group.get<TransformComponent>(ent).pos.y = h1;
-//        }
-//        terrainMap.terrainChanged = false;
+            group.get<TransformComponent>(ent).pos.y = h1;
+        }
+        terrainMap.terrainChanged = false;
 
-//    }
+    }
 
 
 

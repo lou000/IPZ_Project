@@ -17,31 +17,31 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
     {
         // front row
         for (int i = 0; i < vPerEdge; i++)
-            vertices[v++].position = vec4(-0.5+i*offset, -0.5+y*offset, 0.5, 0);
+            vertices[v++].position = vec3(-0.5+i*offset, -0.5+y*offset, 0.5);
 
         // right row
         for (int i = 1; i < vPerEdge; i++)
-            vertices[v++].position = vec4(0.5, -0.5+y*offset, 0.5-i*offset, 0);
+            vertices[v++].position = vec3(0.5, -0.5+y*offset, 0.5-i*offset);
 
         // back row
         for (int i = 1; i < vPerEdge; i++)
-            vertices[v++].position = vec4(0.5-i*offset, -0.5+y*offset, -0.5, 0);
+            vertices[v++].position = vec3(0.5-i*offset, -0.5+y*offset, -0.5);
 
         // left row
         for (int i = 1; i < vPerEdge-1; i++)
-            vertices[v++].position = vec4(-0.5, -0.5+y*offset, -0.5+i*offset, 0);
+            vertices[v++].position = vec3(-0.5, -0.5+y*offset, -0.5+i*offset);
     }
     // top face
     int topStart = (int)v;
     for (int z = 1; z < vPerEdge-1; z++)
         for (int x = 1; x < vPerEdge-1; x++)
-            vertices[v++].position = vec4(-0.5+x*offset,  0.5, 0.5-z*offset, 0);
+            vertices[v++].position = vec3(-0.5+x*offset,  0.5, 0.5-z*offset);
 
     // bottom face
     int bottomStart = (int)v;
     for (int z = 1; z < vPerEdge-1; z++)
         for (int x = 1; x < vPerEdge-1; x++)
-            vertices[v++].position = vec4(-0.5+x*offset, -0.5, 0.5-z*offset, 0);
+            vertices[v++].position = vec3(-0.5+x*offset, -0.5, 0.5-z*offset);
 
     // INDICES
     int iCount = 6*(vPerEdge-1)*(vPerEdge-1)*2*3; //six faces of (vPerEdge-1)^2 quads 2 tris per quad 3 indices per tri
@@ -155,7 +155,7 @@ std::shared_ptr<Mesh> MeshRenderer::createCubeSphere(int vPerEdge)
     return m;
 }
 
-std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec4 *points, uint xSize, uint zSize)
+std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec3 *points, uint xSize, uint zSize)
 {
     uint vCount = (xSize-1)*(zSize-1)*4; // num of quads
     uint iCount = (xSize-1)*(zSize-1)*2*3;
@@ -194,8 +194,8 @@ std::shared_ptr<Mesh> MeshRenderer::createQuadMeshGrid(vec4 *points, uint xSize,
 
 
             indexQuad(j0, j1, j2, j3);
-            vec4 normal1 = vec4(cross(vec3(points[i0]-points[i1]), vec3(points[i0]-points[i3])), 0);
-            vec4 normal2 = vec4(cross(vec3(points[i2]-points[i3]), vec3(points[i2]-points[i1])), 0);
+            vec3 normal1 = cross(vec3(points[i0]-points[i1]), vec3(points[i0]-points[i3]));
+            vec3 normal2 = cross(vec3(points[i2]-points[i3]), vec3(points[i2]-points[i1]));
 
             vertices[j0].position = points[i0];
             vertices[j1].position = points[i1];
@@ -229,10 +229,10 @@ std::shared_ptr<Model> MeshRenderer::createTriMeshGrid(const std::string& name, 
     {
         for(uint x=0; x<xSize; x++)
         {
-            vec4 pos0 = {x,   0, z  , 0};
-            vec4 pos1 = {x+1, 0, z+1, 0};
-            vec4 pos2 = {x,   0, z+1, 0};
-            vec4 pos3 = {x+1, 0, z  , 0};
+            vec3 pos0 = {x,   0, z  };
+            vec3 pos1 = {x+1, 0, z+1};
+            vec3 pos2 = {x,   0, z+1};
+            vec3 pos3 = {x+1, 0, z  };
 
             vertices[ind+2].position = pos0;
             vertices[ind+1].position = pos1;
@@ -241,7 +241,7 @@ std::shared_ptr<Model> MeshRenderer::createTriMeshGrid(const std::string& name, 
             vertices[ind+4].position = pos3;
             vertices[ind+3].position = pos1;
 
-            vec4 up = {0,1,0,0};
+            vec3 up = {0,1,0};
             vertices[ind+0].normal = normalize(up);
             vertices[ind+1].normal = normalize(up);
             vertices[ind+2].normal = normalize(up);
@@ -302,8 +302,8 @@ std::shared_ptr<Mesh> MeshRenderer::createSmoothMeshGrid(vec4 *points, uint xSiz
             uint i3 = i;
 
             indexQuad(i0, i1, i2, i3);
-            vec4 normal1 = vec4(cross(vec3(points[i0]-points[i1]), vec3(points[i0]-points[i3])), 0);
-            vec4 normal2 = vec4(cross(vec3(points[i2]-points[i3]), vec3(points[i2]-points[i1])), 0);
+            vec3 normal1 = vec3(cross(vec3(points[i0]-points[i1]), vec3(points[i0]-points[i3])));
+            vec3 normal2 = vec3(cross(vec3(points[i2]-points[i3]), vec3(points[i2]-points[i1])));
 
             vertices[i0].position = points[i0];
             vertices[i1].position = points[i1];

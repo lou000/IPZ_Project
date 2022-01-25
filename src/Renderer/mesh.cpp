@@ -8,8 +8,8 @@ Mesh::Mesh(float *vertexData, size_t vCount, uint32 *indexData, size_t iCount, M
     auto iBuffer = std::make_shared<IndexBuffer>(iCount*sizeof(uint32), indexData);
 
         BufferLayout layout = {
-            {BufferElement::Float4, "a_Position" },
-            {BufferElement::Float4, "a_Normal"   },
+            {BufferElement::Float3, "a_Position" },
+            {BufferElement::Float3, "a_Normal"   },
             {BufferElement::Float2, "a_TexCoords"}
         };
 

@@ -3,8 +3,8 @@ layout(local_size_x = 16, local_size_y = 16) in;
 
 
 struct MeshVertex{
-    float posX, posY, posZ, posW;
-    float normX, normY, normZ, normW;
+    float posX, posY, posZ;
+    float normX, normY, normZ;
     float texX, texY;
 };
 
