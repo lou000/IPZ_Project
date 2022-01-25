@@ -12,8 +12,8 @@ layout (std430, binding = 1) buffer TerrainVertexBuffer
 {
     MeshVertex vertices[];
 };
-ivec2 meshSize = ivec2(200, 200);
-vec2 meshPos = vec2(-100, -100);
+ivec2 meshSize = ivec2(512, 512);
+vec2 meshPos = vec2(-256, -256);
 float amplitude = 30;
 layout(binding = 0) uniform sampler2D noiseTexture;
 

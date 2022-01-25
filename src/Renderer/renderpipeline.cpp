@@ -27,10 +27,9 @@ RenderPipeline::RenderPipeline()
     // Initialize bloom buffers
     resizeBloomBuffers();
 
-    perlinTextureFog = std::make_shared<Texture>(512, 512, 64, GL_R16F, GL_REPEAT);
-    perlinTextureTerrain = std::make_shared<Texture>(512, 512, 1, GL_R16F, GL_REPEAT);
+    perlinTextureFog = std::make_shared<Texture>(512, 512, 64, GL_R32F, GL_REPEAT);
+    perlinTextureTerrain = std::make_shared<Texture>(512, 512, 1, GL_R32F, GL_REPEAT);
     generateFogNoise();
-    generateTerrainNoise();
 
 
     // TODO: move everything below this to primitive generation
@@ -84,6 +83,30 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
         for(auto ent : group.second)
             groupTransforms.push_back(ent.getComponent<TransformComponent>().transform());
         instancedTransforms[group.first] = groupTransforms;
+    }
+
+    // if there is a terrain component (one for now) add the height map to it and generate terrain if first pass
+
+    auto terrain = scene->entities().view<MeshComponent, TerrainGenComponent>();
+
+    for(auto& ent : terrain)
+    {
+        auto& map = terrain.get<TerrainGenComponent>(ent);
+        if(terrainMapChanged)
+        {
+            generateTerrainNoise();
+            applyTerrainHeight();
+            if(map.heightMap)
+                free(map.heightMap);
+            // TODO: make all this nonblocking, to be honest rewrite all this completely
+            auto dimensions = perlinTextureTerrain->getDimensions();
+            uint64 size = dimensions.x*dimensions.y*sizeof(float);
+            map.heightMap = (float*)malloc(size);
+            map.width = dimensions.x;
+            map.height = dimensions.y;
+            map.terrainChanged = true;
+            perlinTextureTerrain->getImage(size, map.heightMap);
+        }
     }
 
     maybeUpdateDynamicShaders(scene);
@@ -486,6 +509,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
         instanceTransformsSSBO.setData(glm::value_ptr(mat4(1.0f)), sizeof(mat4));
         instanceTransformsSSBO.bind(2);
         auto model = group.get<MeshComponent>(ent).model;
+
         for(auto mesh : model->meshes())
         {
             auto vao = mesh->vao();
@@ -1036,6 +1060,7 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
 
 void RenderPipeline::guiNoiseSettings()
 {
+    terrainMapChanged = false;
     if(ImGui::Begin("Noise settings", &showNoiseSettings))
     {
         const char* items[] = { "Fog", "Terrain" };
@@ -1043,7 +1068,6 @@ void RenderPipeline::guiNoiseSettings()
         ImGui::Combo("##combo", &item_current, items, IM_ARRAYSIZE(items));
         std::vector<PerlinOctave>* octaves;
         std::vector<PerlinOctave> dummy;
-        bool changed = false;
 
         std::shared_ptr<Texture> tex = nullptr;
         static int selectedLayer = 0;
@@ -1079,21 +1103,21 @@ void RenderPipeline::guiNoiseSettings()
         }
 
         TWEAK_INT("Layer", selectedLayer, 1, 0, tex->getDimensions().z-1, "%d", (0 == tex->getDimensions().z-1) ? 1 << 21 : 0);
-        if (ImGui::Button("Add octave")) { octaves->push_back({}); changed = true;}
+        if (ImGui::Button("Add octave")) { octaves->push_back({}); terrainMapChanged = true;}
         for(size_t i=0; i<octaves->size(); i++)
         {
             auto name = "Octave "+std::to_string(i);
             if (ImGui::TreeNode(name.c_str()))
             {
-                if (ImGui::Button("Remove")) { octaves->erase(octaves->begin()+i); i--; changed = true;}
+                if (ImGui::Button("Remove")) { octaves->erase(octaves->begin()+i); i--; terrainMapChanged = true;}
                 auto octave = (octaves->data()+i);
-                changed |= TWEAK_VEC3("Frequencies", octave->frequency, 0.1f);
-                changed |= TWEAK_VEC3("Offsets", octave->offset, 0.1f);
-                changed |= TWEAK_FLOAT("Amplitude", octave->amplitude, 0.1f);
+                terrainMapChanged |= TWEAK_VEC3("Frequencies", octave->frequency, 0.1f);
+                terrainMapChanged |= TWEAK_VEC3("Offsets", octave->offset, 0.1f);
+                terrainMapChanged |= TWEAK_FLOAT("Amplitude", octave->amplitude, 0.1f);
                 ImGui::TreePop();
             }
         }
-        if(changed)
+        if(terrainMapChanged)
         {
             switch(item_current)
             {

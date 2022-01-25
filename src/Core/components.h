@@ -55,6 +55,18 @@ struct InstancedDrawComponent
     uint instancedGroup = 0;
 };
 
+struct TerrainGenComponent
+{
+    // TODO: for now renderer will assign a heightmap here,
+    //       later it should be created according to user spec
+    TerrainGenComponent(){};
+
+    float* heightMap = nullptr;
+    bool terrainChanged = false;
+    uint width  = 0;
+    uint height = 0;
+};
+
 struct EmissiveComponent
 {
     EmissiveComponent(){}

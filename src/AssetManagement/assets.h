@@ -71,6 +71,7 @@ public:
     GLenum glType(){return m_glType;}
     void resize(vec3 size);
     void bind(uint slot);
+    void getImage(uint64 size, void* memory);
     void bindLayer(uint slot, uint layer);
     uint id() {return m_id;}
     uint selectedLayer(){return m_selectedLayer;}

@@ -149,6 +149,7 @@ private:
     std::shared_ptr<Shader> terrainHeightShader;
     std::shared_ptr<Texture> perlinTextureFog;
     std::shared_ptr<Texture> perlinTextureTerrain;
+    bool terrainMapChanged = true;
     void guiNoiseSettings();
 
 

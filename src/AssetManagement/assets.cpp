@@ -273,6 +273,12 @@ void Texture::bind(uint slot)
     glBindTextureUnit(slot, m_id);
 }
 
+void Texture::getImage(uint64 size, void *memory)
+{
+    glBindTexture(m_glType, m_id);
+    glGetTextureImage(m_id, 0, textureSizedFormatToFormat(m_glFormatSized), GL_FLOAT, size, memory);
+}
+
 void Texture::selectLayerForNextDraw(uint layer)
 {
     m_selectedLayer = layer;
