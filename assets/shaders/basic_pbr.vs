@@ -20,12 +20,6 @@ layout (std430, binding = 2) buffer InstancedTransforms
     mat4 instancedTransforms[];
 };
 
-uniform int u_offsetToHeightMap;
-layout(binding = 5) uniform sampler2D noiseTexture;
-ivec2 meshSize = ivec2(200, 200);
-vec2 meshPos = vec2(-100, -100);
-float amplitude = 30;
-
 void main()
 {
     v_Color = u_Color;
@@ -34,13 +28,6 @@ void main()
 
     v_TexCoords = a_TexCoords;
     v_Pos = vec3(transform * vec4(a_Position, 1.0));
-    
-    ivec2 resolution = textureSize(noiseTexture, 0);
-    if(u_offsetToHeightMap == 1)
-    {
-        float yOffset = texture(noiseTexture, (v_Pos.xz-meshSize)/resolution).r*amplitude-amplitude/2;
-        v_Pos.y += yOffset;
-    }
 
     v_Normal = mat3(transform) * a_Normal;   
 

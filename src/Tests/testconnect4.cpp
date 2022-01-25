@@ -39,7 +39,7 @@ Move pickRandomTopMove(std::vector<std::pair<Move, double>> moves) //input sorte
 TestConnect4::TestConnect4()
     :Scene("testConnect4", false)
 {
-    AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 512, 512));
+    AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 200, 200));
     if(!deserialized())
     {
         AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/connect4_board.fbx"));
@@ -58,22 +58,22 @@ TestConnect4::TestConnect4()
         directionalLight.color = {0.979f, 0.931f, 0.736f};
         directionalLight.intensity = 1;
 
-        auto terrain = createNamedEntity("terrain", "terrain", vec3(-256,0,-256), vec3(1));
+        auto terrain = createNamedEntity("terrain", "terrain", vec3(-100,0,-100), vec3(1));
         terrain.addComponent<TerrainGenComponent>();
         terrain.getComponent<TransformComponent>();
 
         createEntity("../assets/meshes/connect4_board.fbx");
-//        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
-//                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
-//        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
-//                      vec3(1),  quat({-radians(90.f), 0, 0}));
-//        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
-//                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
-//        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
-//                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
+                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
+        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
+                      vec3(1),  quat({-radians(90.f), 0, 0}));
+        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
+                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
+                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
 
 
-//        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
+        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
 
 //        auto soundTest = createEntity();
 //        soundTest.addComponent<TransformComponent>(vec3(0,0,0));
@@ -81,37 +81,37 @@ TestConnect4::TestConnect4()
 //        src.source->play();
 //        src.source->setLoop(true);
 
-//        unsigned int amount = 1000;
-//        srand(glfwGetTime()); // initialize random seed
-//        float radius = 40.0;
-//        float offset = 25.f;
-//        for(unsigned int i = 0; i < amount; i++)
-//        {
-//            // 1. translation: displace along circle with 'radius' in range [-offset, offset]
-//            float angle = (float)i / (float)amount * 360.0f;
-//            float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-//            float x = sin(angle) * radius + displacement;
-//            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-//            float z = cos(angle) * radius + displacement;
+        unsigned int amount = 2000;
+        srand(glfwGetTime()); // initialize random seed
+        float radius = 20.0;
+        float offset = 80.f;
+        for(unsigned int i = 0; i < amount; i++)
+        {
+            // 1. translation: displace along circle with 'radius' in range [-offset, offset]
+            float angle = (float)i / (float)amount * 360.0f;
+            float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+            float x = sin(angle) * radius + displacement;
+            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
+            float z = cos(angle) * radius + displacement;
 
-//            // 2. scale: scale between 0.05 and 0.25f
-//            float scale = (rand() % 10) / 100.0f + 0.3;
+            // 2. scale: scale between 0.05 and 0.25f
+            float scale = (rand() % 10) / 100.0f + 0.3;
 
-//            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
-//            float rotAngle = (rand() % 360);
-//            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
-//        }
+            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
+            float rotAngle = (rand() % 360);
+            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
+        }
     }
 
 
 
-    for(int i=0;i<7; i++)
-        hPositions[i] = leftSlot + i*hOffset;
-    for(int i=0;i<6; i++)
-        vPositions[i] = top      - i*vOffset;
+//    for(int i=0;i<7; i++)
+//        hPositions[i] = leftSlot + i*hOffset;
+//    for(int i=0;i<6; i++)
+//        vPositions[i] = top      - i*vOffset;
 
-    c4 = new Connect4(7, 6);
-    searcher = new alpha_beta_searcher<Move, true>(3,true);
+//    c4 = new Connect4(7, 6);
+//    searcher = new alpha_beta_searcher<Move, true>(3,true);
 
 }
 
@@ -122,31 +122,34 @@ void TestConnect4::onStart()
 
 void TestConnect4::onUpdate(float dt)
 {
-    auto terrain = getEntity("terrain");
-    // TODO: mouseposition using compute based on depth and uv
-    auto transform = terrain.getComponent<TransformComponent>();
-    auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
+//    auto terrain = getEntity("terrain");
+//    // TODO: mouseposition using compute based on depth and uv
+//    auto transform = terrain.getComponent<TransformComponent>();
+//    auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
 
-    if(terrainMap.heightMap)
-    {
-        auto group = entities().view<TransformComponent, MeshComponent>(entt::exclude<TerrainGenComponent>);
-        for(auto& ent : group)
-        {
-            auto pos = group.get<TransformComponent>(ent).pos - transform.pos;
-            // calculate x coords
-            float x1 = glm::round(pos.x);
+//    if(terrainMap.heightMap)
+//    {
+//        auto group = entities().view<TransformComponent, MeshComponent>(entt::exclude<TerrainGenComponent>);
+////        for(int y=511; y>0; y--)
+////            for(int x=0; x<200; x++)
+////                LOG("(%d, %d): %f\n", x, y, terrainMap.heightMap[y*512+x]);
+//        for(auto& ent : group)
+//        {
+//            auto pos = group.get<TransformComponent>(ent).pos - transform.pos;
+//            // calculate x coords
+//            float x1 = glm::round(pos.x);
 
-            // calculate z coords
-            float y1 = glm::round(pos.z);
+//            // calculate z coords
+//            float y1 = glm::round(pos.z);
 
-            int index = (int)((512-y1)*terrainMap.width+x1);
-            float h1 = terrainMap.heightMap[index]*30-15;
+//            int index = (int)(y1*terrainMap.width+(x1));
+//            float h1 = terrainMap.heightMap[index]*30-15;
 
-            group.get<TransformComponent>(ent).pos.y = h1;
-        }
-        terrainMap.terrainChanged = false;
+////            group.get<TransformComponent>(ent).pos.y = h1;
+//        }
+//        terrainMap.terrainChanged = false;
 
-    }
+//    }
 
 
 

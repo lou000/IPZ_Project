@@ -12,8 +12,7 @@ layout (std430, binding = 1) buffer TerrainVertexBuffer
 {
     MeshVertex vertices[];
 };
-ivec2 meshSize = ivec2(512, 512);
-vec2 meshPos = vec2(-256, -256);
+ivec2 meshSize = ivec2(200, 200);
 float amplitude = 30;
 layout(binding = 0) uniform sampler2D noiseTexture;
 
@@ -30,12 +29,12 @@ void main()
     vec2 pos5 = vec2(vertices[localID+5].posX, vertices[localID+5].posZ);
 
 
-    float y0 = texture(noiseTexture, (pos0-meshSize)/resolution).r*amplitude-amplitude/2;
-    float y1 = texture(noiseTexture, (pos1-meshSize)/resolution).r*amplitude-amplitude/2;
-    float y2 = texture(noiseTexture, (pos2-meshSize)/resolution).r*amplitude-amplitude/2;
-    float y3 = texture(noiseTexture, (pos3-meshSize)/resolution).r*amplitude-amplitude/2;
-    float y4 = texture(noiseTexture, (pos4-meshSize)/resolution).r*amplitude-amplitude/2;
-    float y5 = texture(noiseTexture, (pos5-meshSize)/resolution).r*amplitude-amplitude/2;
+    float y0 = texture(noiseTexture, (pos0)/resolution).r*amplitude-amplitude/2;
+    float y1 = texture(noiseTexture, (pos1)/resolution).r*amplitude-amplitude/2;
+    float y2 = texture(noiseTexture, (pos2)/resolution).r*amplitude-amplitude/2;
+    float y3 = texture(noiseTexture, (pos3)/resolution).r*amplitude-amplitude/2;
+    float y4 = texture(noiseTexture, (pos4)/resolution).r*amplitude-amplitude/2;
+    float y5 = texture(noiseTexture, (pos5)/resolution).r*amplitude-amplitude/2;
 
     vertices[localID+0].posY = y0;
     vertices[localID+1].posY = y1;
