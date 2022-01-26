@@ -222,13 +222,15 @@ class StorageBuffer
 {
 public:
     StorageBuffer() = default;
-    StorageBuffer(size_t size, void* data = nullptr, uint usage = GL_DYNAMIC_DRAW);
+    StorageBuffer(size_t size, void* data = nullptr, uint usage = GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
     void bind(uint bufferIndex);
     void unbind();
     void setData(const void* data, size_t size);
     void setSubData(const void* data, size_t offset, size_t size); // this does not bind the buffer beforehand
+    void *mapBuffer(GLenum access);
+    void getData(void* storage);
 
 private:
-    uint id = 0;
+    uint m_id = 0;
     uint size = 0;
 };

@@ -152,6 +152,10 @@ private:
     bool terrainMapChanged = true;
     void guiNoiseSettings();
 
+    // MousePicking ????
+    StorageBuffer mouseWorldPositionSSBO;
+    std::shared_ptr<Shader> mousePositionShader;
+
 
 
     void pbrPass(std::shared_ptr<Scene> scene);
@@ -176,4 +180,5 @@ private:
     void updateSSAOKernel();
     void generateTerrainNoise();
     void applyTerrainHeight();
+    void getMouseWorldPosition(std::shared_ptr<Scene> scene);
 };

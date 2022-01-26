@@ -119,6 +119,8 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     pbrPass(scene);
     glDisable(GL_DEPTH_TEST);
 
+    getMouseWorldPosition(scene);
+
     if(config.enableBloom)
         bloomComputePass();
 
@@ -195,6 +197,12 @@ void RenderPipeline::initShaders()
     };
     perlinNoiseGen = std::make_shared<Shader>("perlin_texture", shaderSrcs);
     AssetManager::addShader(perlinNoiseGen);
+
+    shaderSrcs = {
+        {"../assets/shaders/mouse_world_pos.cmp"}
+    };
+    mousePositionShader = std::make_shared<Shader>("mouse_world_pos", shaderSrcs);
+    AssetManager::addShader(mousePositionShader);
 
     shaderSrcs = {
         {
@@ -351,6 +359,10 @@ void RenderPipeline::initSSBOs()
     perlinOctavesFogSSBO.setData(config.perlinOctavesFog.data(), config.perlinOctavesFog.size()*sizeof(PerlinOctave));
     perlinOctavesTerrainSSBO = StorageBuffer(MAX_NOISE_OCTAVES*sizeof(PerlinOctave));
     perlinOctavesTerrainSSBO.setData(config.perlinOctavesTerrain.data(), config.perlinOctavesTerrain.size()*sizeof(PerlinOctave));
+
+    //MousePosition
+    mouseWorldPositionSSBO = StorageBuffer(sizeof(vec3), nullptr, GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT);
+//    mouseWorldPos = (vec3*)mouseWorldPositionSSBO.mapBuffer(GL_READ_ONLY);
 }
 
 void RenderPipeline::maybeUpdateDynamicShaders(std::shared_ptr<Scene> scene)
@@ -1020,6 +1032,32 @@ void RenderPipeline::applyTerrainHeight()
     terrainHeightShader->unbind();
 }
 
+void RenderPipeline::getMouseWorldPosition(std::shared_ptr<Scene> scene)
+{
+    auto sceneCamera= scene->activeCamera();
+
+    mousePositionShader->bind();
+    mouseWorldPositionSSBO.bind(0);
+    hdrFBO.getDepthTex()->bind(0);
+
+    //Camera
+    mousePositionShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
+    mousePositionShader->setUniform("u_Projection", BufferElement::Mat4, sceneCamera->getProjMatrix());
+
+    vec2 mouseUVs = App::getMousePos()/(vec2)App::getWindowSize();
+    mouseUVs.y = 1-mouseUVs.y;
+    mousePositionShader->setUniform("u_mouseUV", BufferElement::Float2, mouseUVs);
+
+    mousePositionShader->dispatch(1,1,1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+    mousePositionShader->unbind();
+    mouseWorldPositionSSBO.unbind();
+//    mouseWorldPos = (vec3*)mouseWorldPositionSSBO.mapBuffer(GL_READ_WRITE);
+//    glGetNamedBufferSubData(buffer, 0, sizeof(vec3), &mouseWorldPos);
+    mouseWorldPositionSSBO.getData(&scene->mouseWorldPosition);
+//    LOG("uvs: %f, %f    mousePos: %f, %f, %f\n", mouseUVs.x, mouseUVs.y, mouseWorldPos.x, mouseWorldPos.y, mouseWorldPos.z);
+}
+
 void RenderPipeline::drawSceneDebug(std::shared_ptr<Scene> scene)
 {
     auto sceneCamera = scene->activeCamera();
@@ -1041,15 +1079,16 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
         debugView--;
     if(App::getKeyOnce(GLFW_KEY_KP_0))
         debugView = 0;
-    glm::clamp(debugView, 0, 4);
+    glm::clamp(debugView, 0, 5);
     BatchRenderer::begin(sceneCamera);
     switch(debugView)
     {
     case 0: break;
     case 1: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
-    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
-    case 3: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
-    case 4: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
+    case 2: BatchRenderer::drawQuad({0,0}, winSize, hdrFBO.getDepthTex()); break;
+    case 3: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
+    case 4: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
+    case 5: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
     default:
         break;
     }

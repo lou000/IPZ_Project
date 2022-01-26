@@ -390,16 +390,16 @@ void FrameBuffer::update()  // create/recreate framebuffer
 StorageBuffer::StorageBuffer(size_t size, void *data, uint usage)
     :size(size)
 {
-    glGenBuffers(1, &id);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, size, data, usage);
+    glGenBuffers(1, &m_id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_id);
+    glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, usage);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
 void StorageBuffer::bind(uint bufferIndex)
 {
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_id);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, bufferIndex, m_id);
 }
 
 void StorageBuffer::unbind()
@@ -410,7 +410,7 @@ void StorageBuffer::unbind()
 void StorageBuffer::setData(const void *data, size_t size)
 {
     ASSERT(size<=this->size);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, id);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, m_id);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, size, data);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
@@ -419,4 +419,14 @@ void StorageBuffer::setSubData(const void *data, size_t offset, size_t size)
 {
     ASSERT(size+offset<=this->size);
     glBufferSubData(GL_SHADER_STORAGE_BUFFER, offset, size, data);
+}
+
+void* StorageBuffer::mapBuffer(GLenum access)
+{
+    return glMapNamedBuffer(m_id, access);
+}
+
+void StorageBuffer::getData(void *storage)
+{
+    glGetNamedBufferSubData(m_id, 0, size, storage);
 }

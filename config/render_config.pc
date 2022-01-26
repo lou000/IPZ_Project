@@ -1,4 +1,4 @@
-config.enableBloom: false
+config.enableBloom: true
 config.bloomRadius: 8
 config.bloomIntensity: 0.600000024
 config.bloomTreshold: 1
@@ -14,9 +14,9 @@ config.ssaoKernelSize: 100
 config.ssaoBlurSize: 2
 config.ssaoRadius: 0.670000017
 config.ssaoBias: 0.219999999
-config.enableVolumetric: false
+config.enableVolumetric: true
 config.volumetricHalfRes: false
-config.volumetricSamples: 60
+config.volumetricSamples: 40
 config.volumetricBlurSize: 2
 config.g_factor: 0.493000001
 config.fog_strength: 1.24000001

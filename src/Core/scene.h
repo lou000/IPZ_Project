@@ -32,6 +32,7 @@ public:
     std::shared_ptr<Camera> activeCamera(){return m_activeCamera;}
     std::shared_ptr<Camera> sceneCamera(){return m_gameCamera;}
     std::shared_ptr<Camera> editorCamera(){return m_editorCamera;}
+    vec3 mouseWorldPosition = {0,0,0};
 
 protected:
     Entity createEntity();

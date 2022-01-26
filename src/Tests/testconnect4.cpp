@@ -127,6 +127,8 @@ void TestConnect4::onUpdate(float dt)
     auto transform = terrain.getComponent<TransformComponent>();
     auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
 
+
+    // move this to entity behaviour later and set for static entities once
     if(terrainMap.heightMap)
     {
         auto group = entities().view<TransformComponent, MeshComponent>(entt::exclude<TerrainGenComponent>);
@@ -150,7 +152,11 @@ void TestConnect4::onUpdate(float dt)
         terrainMap.terrainChanged = false;
 
     }
-
+    if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+    {
+        createEntity("../assets/meshes/obelisk1.fbx", mouseWorldPosition,
+                     vec3(.4), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
+    }
 
 
 
