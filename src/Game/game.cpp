@@ -21,25 +21,16 @@ Game::Game() : Scene("TheGame", false)
         terrainGen.height = 200;
 
 
-        unsigned int amount = 2000;
-        srand(glfwGetTime()); // initialize random seed
-        float radius = 20.0;
-        float offset = 80.f;
-        for(unsigned int i = 0; i < amount; i++)
+        auto clearings = generateClearings({200, 200});
+
+        for(auto c : clearings)
         {
-            // 1. translation: displace along circle with 'radius' in range [-offset, offset]
-            float angle = (float)i / (float)amount * 360.0f;
-            float displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-            float x = sin(angle) * radius + displacement;
-            displacement = (rand() % (int)(2 * offset * 100)) / 100.0f - offset;
-            float z = cos(angle) * radius + displacement;
-
-            // 2. scale: scale between 0.05 and 0.25f
-            float scale = (rand() % 10) / 100.0f + 0.3;
-
-            // 3. rotation: add random rotation around a (semi)randomly picked rotation axis vector
-            float rotAngle = (rand() % 360);
-            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(x,0,z), vec3(scale), quat({-radians(90.f),radians(rotAngle),0}));
+            for(uint i=0; i<50; i++)
+            {
+                auto randAngle = linearRand(0.f, PI*2.f);
+                auto pos = vec2(glm::cos(randAngle)*c.radius, glm::sin(randAngle)*c.radius);
+                createInstanced(1, "../assets/meshes/tree5.fbx", vec3(c.pos.x+pos.x, 0,c.pos.y+pos.y), vec3(0.3), quat({-radians(90.f),0,0}));
+            }
         }
     }
 }
@@ -96,6 +87,56 @@ void Game::updateEntityHeightToTerrain(Entity terrain)
         }
         terrainMap.terrainChanged = false;
     }
+}
+
+std::vector<Clearing> Game::generateClearings(vec2 terrainSize)
+{
+    //generate first clearing
+    std::vector<Clearing> out;
+    Clearing first;
+    float border = 20.f;
+    float radiusMin = 5.f;
+    float radiusMax = 15.f;
+    vec2 maxPos = terrainSize/2.f - vec2(border);
+    vec2 minPos = (terrainSize/2.f - terrainSize) + vec2(border);
+    first.pos = {0,0};
+    first.radius = linearRand(radiusMin, radiusMax);
+    out.push_back(first);
+
+    for(uint i=0; i<25; i++)
+    {
+        bool positionOK = false;
+        Clearing c;
+        int fuck = 0;
+        while(!positionOK && fuck<=1000)
+        {
+            // random distance and direction that is not in prev clearing or outside of bounds
+            c.pos = linearRand(minPos, maxPos);
+            c.radius = linearRand(radiusMin, radiusMax);
+            positionOK = true;
+            for(auto clearing : out)
+            {
+                if(glm::distance(c.pos, clearing.pos) < c.radius+clearing.radius+5)
+                {
+                    positionOK = false;
+                    break;
+                }
+            }
+            fuck++;
+            if(fuck>1000)
+                LOG("Too many clearings man!");
+        }
+        if(fuck<=1000)
+            out.push_back(c);
+    }
+    return out;
+}
+
+std::vector<Path> Game::generatePaths(std::vector<Clearing> clearings)
+{
+    // try to randomize the connections so we get intersections, we have to avoid intersecting with clearings with weird angle
+    // maybe do frustum culling, the dumb way
+    return {};
 }
 
 

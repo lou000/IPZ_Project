@@ -298,6 +298,7 @@ void App::x_submitFrame()
     mouseButtonBuffer.clear();
     glfwSwapBuffers(m_window);
     glfwPollEvents();
+    m_gotTimeThisFrame = false;
 }
 
 void App::x_quit()
@@ -324,9 +325,13 @@ GLFWwindow* App::x_getWindowHandle()
 
 float App::x_getTimeStep()
 {
-    float currentFrame = (float)glfwGetTime();
-    float dt = currentFrame - m_lastFrameTime;
-    m_lastFrameTime = currentFrame;
+    if(!m_gotTimeThisFrame)
+    {
+        m_lastFrameTime = m_currentFrameTime;
+        m_currentFrameTime = (float)glfwGetTime();
+        m_gotTimeThisFrame = true;
+    }
+    float dt = m_currentFrameTime - m_lastFrameTime;
     return dt;
 }
 

@@ -58,6 +58,8 @@ private:
     uint m_windowHeight = 0;
     uint m_windowWidth = 0;
     float m_lastFrameTime = 0;
+    float m_currentFrameTime = 0;
+    bool m_gotTimeThisFrame = false;
     vec2 m_prevMousePos = {0,0};
     float mouseScrollYOffset = 0;
 

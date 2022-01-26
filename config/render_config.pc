@@ -4,9 +4,9 @@ config.bloomIntensity: 0.280000001
 config.bloomTreshold: 1
 config.exposure: 1
 config.enableCSM: true
-config.shadowCascadeCount: 4
-config.cascadeZextra: 20.5
-config.firstCascadeOffset: 21.5599995
+config.shadowCascadeCount: 2
+config.cascadeZextra: 24.6499996
+config.firstCascadeOffset: 40
 config.csmResolution: 1024
 config.enableSSAO: true
 config.ssaoHalfRes: true

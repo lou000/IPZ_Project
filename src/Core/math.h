@@ -12,6 +12,8 @@
 
 using namespace glm;
 
+#define PI 3.14159265358979323846f
+
 template<typename T>
 inline T mapToRange(vec<2,T> startRange, vec<2,T> finalRange, T value)
 {

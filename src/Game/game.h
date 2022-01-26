@@ -3,6 +3,18 @@
 #include "../Core/application.h"
 #include "../Core/scene.h"
 
+struct Clearing
+{
+    vec2 pos = {0,0};
+    float radius = 0;
+};
+
+struct Path
+{
+    vec2 pointBegin, pointEnd;
+    float width;
+};
+
 class Game : public Scene
 {
 public:
@@ -17,4 +29,6 @@ public:
 private:
 
     void updateEntityHeightToTerrain(Entity terrain);
+    std::vector<Clearing> generateClearings(vec2 terrainSize);
+    std::vector<Path> generatePaths(std::vector<Clearing> clearings);
 };
