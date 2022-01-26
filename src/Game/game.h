@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "../Core/application.h"
 #include "../Core/scene.h"
@@ -29,6 +29,10 @@ public:
 private:
 
     void updateEntityHeightToTerrain(Entity terrain);
+    void generateTrees();
     std::vector<Clearing> generateClearings(vec2 terrainSize);
     std::vector<Path> generatePaths(std::vector<Clearing> clearings);
+
+    std::vector<Clearing> m_clearings;
+    std::vector<Path> m_paths;
 };

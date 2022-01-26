@@ -1,35 +1,75 @@
-#include "game.h"
+﻿#include "game.h"
 #include "../Core/entity.h"
 #include "../Core/components.h"
 #include "../Renderer/meshrenderer.h"
+#include "../Core/yamlserialization.h"
 
-Game::Game() : Scene("TheGame", false)
+
+
+Game::Game() : Scene("TheGame", true)
 {
     AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 200, 200));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree2.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree3.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree4.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/torch2.fbx"));
+
+    Serializer::deserializeScene(this, "../Config/"+m_name+".pc");
     if(!deserialized())
     {
-        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
-        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
-        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
-        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
-        AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/torch2.fbx"));
-
         auto terrain = createNamedEntity("terrain", "terrain", vec3(-100,0,-100), vec3(1));
         auto& terrainGen = terrain.addComponent<TerrainGenComponent>();
         terrainGen.amplitude = 30;
         terrainGen.width = 200;
         terrainGen.height = 200;
+    }
 
+    m_clearings = generateClearings({200, 200});
+    m_paths = generatePaths(m_clearings);
+    generateTrees();
 
-        auto clearings = generateClearings({200, 200});
+//    for(auto c : m_clearings)
+//    {
+//        for(uint i=0; i<50; i++)
+//        {
+//            auto randAngle = linearRand(0.f, PI*2.f);
+//            auto pos = vec2(glm::cos(randAngle)*c.radius, glm::sin(randAngle)*c.radius);
+//            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(c.pos.x+pos.x, 0,c.pos.y+pos.y), vec3(0.3), quat({-radians(90.f),0,0}));
+//        }
+//    }
 
-        for(auto c : clearings)
+    for(auto path : m_paths)
+    {
+        auto dir = glm::normalize(path.pointEnd-path.pointBegin);
+        auto distance = glm::distance(path.pointBegin, path.pointEnd);
+        auto step = 20.f;
+        uint count = distance/step;
+//        if(count>5)
+//            count-=5;
+        for(uint i=1; i<count; i++)
         {
-            for(uint i=0; i<50; i++)
+            auto pos = path.pointBegin+(dir*step*(float)i);
+            bool weGood = true;
+            // check if inside one of circles
+            for(auto c : m_clearings)
             {
-                auto randAngle = linearRand(0.f, PI*2.f);
-                auto pos = vec2(glm::cos(randAngle)*c.radius, glm::sin(randAngle)*c.radius);
-                createInstanced(1, "../assets/meshes/tree5.fbx", vec3(c.pos.x+pos.x, 0,c.pos.y+pos.y), vec3(0.3), quat({-radians(90.f),0,0}));
+                if(glm::distance(c.pos, pos)<c.radius)
+                {
+                    weGood = false;
+                    break;
+                }
+            }
+            glm::vec2 perp = glm::perp(glm::vec2(0, 1), dir);
+            pos+=normalize(perp)*1.2f;
+            if(weGood)
+            {
+                createInstanced(10, "../assets/meshes/torch2.fbx", vec3(pos.x, 0, pos.y), vec3(0.05), quat({-radians(90.f),0,0}));
+                createPointLight({pos.x, 5, pos.y}, false, {1.f,0.6f,0.f}, 15.f, 20.f);
             }
         }
     }
@@ -51,6 +91,9 @@ void Game::onUpdate(float dt)
 
     if(terrainMap.terrainChanged)
         updateEntityHeightToTerrain(terrain);
+
+    if(App::getKeyOnce(GLFW_KEY_C))
+        swapCamera();
 }
 
 void Game::onDebugDraw()
@@ -63,9 +106,57 @@ void Game::onGuiRender()
 
 }
 
+void Game::generateTrees()
+{
+    const char* treeMeshes[5] ={
+        "../assets/meshes/tree.fbx",
+        "../assets/meshes/tree2.fbx",
+        "../assets/meshes/tree3.fbx",
+        "../assets/meshes/tree4.fbx",
+        "../assets/meshes/tree5.fbx"
+    };
+
+    for(uint i=0; i<8000; i++)
+    {
+        uint meshIndex = linearRand(0, 4);
+        const char* randomTree = treeMeshes[meshIndex];
+        float randomScale = linearRand(0.4f, 0.5f);
+        float randomHeight = linearRand(0.6f, 0.8f);
+        float randomRotation = linearRand(0.f, PI*2.f);
+        vec2 pos = linearRand(vec2(-100.f, -100.f), vec2(100.f, 100.f));
+
+        bool weGood = true;
+        // check if inside one of circles
+        for(auto c : m_clearings)
+        {
+            if(distance(c.pos, pos)<c.radius)
+            {
+                weGood = false;
+                break;
+            }
+        }
+        if(weGood)        //check paths
+        {
+            for(auto path : m_paths)
+            {
+                float dist = distancePointToLine(path.pointBegin, path.pointEnd, pos);
+                if(dist<path.width)
+                {
+                    weGood = false;
+                    break;
+                }
+            }
+        }
+        if(!weGood)
+            i--;
+        else
+            createInstanced(meshIndex, randomTree, vec3(pos.x, 0, pos.y), vec3(randomScale, randomHeight, randomScale),
+                            quat({-radians(90.f),randomRotation,0}));
+    }
+}
+
 void Game::updateEntityHeightToTerrain(Entity terrain)
 {
-    // snap all entities to terrain height at the start
     auto transform = terrain.getComponent<TransformComponent>();
     auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
     if(terrainMap.heightMap)
@@ -80,14 +171,34 @@ void Game::updateEntityHeightToTerrain(Entity terrain)
             // calculate z coords
             float y1 = glm::round(pos.z);
 
-            int index = (int)(y1*terrainMap.width+(x1));
-            float h1 = terrainMap.heightMap[index]*30-15;
 
-            group.get<TransformComponent>(ent).offsetPos.y = h1;
+            int index = (int)(y1*terrainMap.width+(x1));
+            if(index<512*512 && index>0)
+            {
+                float h1 = terrainMap.heightMap[index]*30-15;
+                group.get<TransformComponent>(ent).offsetPos.y = h1;
+            }
         }
         terrainMap.terrainChanged = false;
     }
+    auto view = entities().view<PointLightComponent>();
+    for(auto &ent : view)
+    {
+        auto pos = view.get<PointLightComponent>(ent).light.pos - vec4(transform.pos, 0);
+        // calculate x coords
+        float x1 = glm::round(pos.x);
+
+        // calculate z coords
+        float y1 = glm::round(pos.z);
+
+        int index = (int)(y1*terrainMap.width+(x1));
+        float h1 = terrainMap.heightMap[index]*30-15;
+
+        view.get<PointLightComponent>(ent).light.pos.y = h1+2; //add offset to pointlight
+    }
 }
+
+
 
 std::vector<Clearing> Game::generateClearings(vec2 terrainSize)
 {
@@ -103,7 +214,7 @@ std::vector<Clearing> Game::generateClearings(vec2 terrainSize)
     first.radius = linearRand(radiusMin, radiusMax);
     out.push_back(first);
 
-    for(uint i=0; i<25; i++)
+    for(uint i=0; i<15; i++)
     {
         bool positionOK = false;
         Clearing c;
@@ -136,7 +247,27 @@ std::vector<Path> Game::generatePaths(std::vector<Clearing> clearings)
 {
     // try to randomize the connections so we get intersections, we have to avoid intersecting with clearings with weird angle
     // maybe do frustum culling, the dumb way
-    return {};
+    std::vector<Path> out;
+
+    //we pass clearings by value so we can delete them here
+    ASSERT(clearings.size()>1);
+
+    auto first = clearings[0];
+    clearings.erase(clearings.begin());
+    for(uint i=0; i<clearings.size();)
+    {
+        auto randomIndex = linearRand(0ull, clearings.size()-1);
+        auto second = clearings[randomIndex];
+        Path p;
+        p.pointBegin = first.pos;
+        p.pointEnd = second.pos;
+        p.width = 2;
+        out.push_back(p);
+        clearings.erase(clearings.begin()+randomIndex);
+        first = second;
+    }
+
+    return out;
 }
 
 

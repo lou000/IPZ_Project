@@ -10,6 +10,7 @@ struct IDComponent
 {
     IDComponent(uint64 id) : m_id(id){}
     uint64 m_id = 0;
+    bool serialize = true;
     operator uint64() const {return m_id;}
 };
 

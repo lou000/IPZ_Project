@@ -416,23 +416,9 @@ Model::Model(std::string name, std::vector<std::shared_ptr<Mesh> > meshes)
     : Asset(AssetType::meshFile)
 {
     m_name = name;
-    AABB modelBB;
+    vec3 globalMax, globalMin;
     for(const auto& m : meshes)
     {
-        auto bb = m->boundingBox;
-        if(modelBB.max.x<bb.max.x)
-            modelBB.max.x = bb.max.x;
-        if(modelBB.max.y<bb.max.y)
-            modelBB.max.y = bb.max.y;
-        if(modelBB.max.z<bb.max.z)
-            modelBB.max.z = bb.max.z;
-
-        if(modelBB.min.x>bb.min.x)
-            modelBB.min.x = bb.min.x;
-        if(modelBB.min.y>bb.min.y)
-            modelBB.min.y = bb.min.y;
-        if(modelBB.min.z>bb.min.z)
-            modelBB.min.z = bb.min.z;
         m_meshes.push_back(m);
     }
 }
@@ -516,7 +502,12 @@ bool Model::loadModel()
     std::vector<uint32> indices;
     std::vector<float> vertices; // resize
 
-    AABB modelBB;
+    vec3 globalMin = {std::numeric_limits<float>::infinity(),
+                      std::numeric_limits<float>::infinity(),
+                      std::numeric_limits<float>::infinity()};
+    vec3 globalMax = {-std::numeric_limits<float>::infinity(),
+                      -std::numeric_limits<float>::infinity(),
+                      -std::numeric_limits<float>::infinity()};
     LOG("Loading mesh %s\n", c_str);
     for(uint s=0; s<scene->mNumMeshes; s++)
     {
@@ -601,29 +592,30 @@ bool Model::loadModel()
         }
 //        LOG("Mesh %s\n v: %d  i: %d\nRoughness: %f  Metallness: %f\n", mesh->mName.C_Str(),
 //            (int)vertices.size()/vertexSize, (int)indices.size(), material.roughness, material.metallic);
-        AABB bb;
-        memcpy(&bb.min, &mesh->mAABB.mMin, sizeof (vec3));
-        memcpy(&bb.max, &mesh->mAABB.mMax, sizeof (vec3));
+        vec3 localMin, localMax;
+        memcpy(&localMin, &mesh->mAABB.mMin, sizeof (vec3));
+        memcpy(&localMax, &mesh->mAABB.mMax, sizeof (vec3));
 
         // correct mesh AABB
-        if(modelBB.max.x<bb.max.x)
-            modelBB.max.x = bb.max.x;
-        if(modelBB.max.y<bb.max.y)
-            modelBB.max.y = bb.max.y;
-        if(modelBB.max.z<bb.max.z)
-            modelBB.max.z = bb.max.z;
+        if(globalMax.x<localMax.x)
+            globalMax.x = localMax.x;
+        if(globalMax.y<localMax.y)
+            globalMax.y = localMax.y;
+        if(globalMax.z<localMax.z)
+            globalMax.z = localMax.z;
 
-        if(modelBB.min.x>bb.min.x)
-            modelBB.min.x = bb.min.x;
-        if(modelBB.min.y>bb.min.y)
-            modelBB.min.y = bb.min.y;
-        if(modelBB.min.z>bb.min.z)
-            modelBB.min.z = bb.min.z;
+        if(globalMin.x>localMin.x)
+            globalMin.x = localMin.x;
+        if(globalMin.y>localMin.y)
+            globalMin.y = localMin.y;
+        if(globalMin.z>localMin.z)
+            globalMin.z = localMin.z;
+
 
         m_meshes.push_back(std::make_shared<Mesh>(vertices.data(), vertices.size()/vertexSize,
-                                                  indices.data(), indices.size(), material, bb));
+                                                  indices.data(), indices.size(), material, AABB(localMin, localMax)));
     }
-    m_boundingBox = modelBB;
+    m_boundingBox = AABB(globalMin, globalMax);
 
     return true;
 }

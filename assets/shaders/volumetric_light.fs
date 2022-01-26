@@ -35,7 +35,7 @@ layout (std430, binding = 0) buffer pointLightsSSBO
     PointLight pointLights[];
 };
 
-uniform uint u_PointLightCount;
+uniform int u_PointLightCount;
 
 layout (std430, binding = 1) buffer LightSpaceMatrices
 {
@@ -98,13 +98,13 @@ void main()
 
 
     vec3 L = vec3(0.0, 0.0, 0.0);
-
+    L += vec3((pow(rayLength, 2))*0.001)*vec3(0.8, 0.8, 1);
     float extraFog = 0;
     vec3 dirScatter = ComputeScattering(dot(normalize(rayDirection), normalize(-u_DirLightDirection)))*u_DirLightCol*u_DirLightIntensity*u_LightShaftIntensity;
 
-    float pointScatters[1000]; //FIXME: should be u_PointLightCount
-    for(int i=0; i<1; i++)
-        pointScatters[i] = ComputeScattering(dot(normalize(rayDirection), normalize(startPosition-pointLights[i].position.xyz)));
+    // float pointScatters[1000]; //FIXME: should be u_PointLightCount
+    // for(int i=0; i<1; i++)
+    //     pointScatters[i] = ComputeScattering(dot(normalize(rayDirection), normalize(startPosition-pointLights[i].position.xyz)));
 
 
     if(worldPos.y < u_FogY)
@@ -123,15 +123,20 @@ void main()
         if(currentPosition.y<u_FogY)
             L+=(fog*u_DirLightCol)*u_DirLightIntensity;
 
-        for (int i = 0; i < u_PointLightCount; i++) 
-        { 
-            PointLight light = pointLights[i];
-            float dist = length(currentPosition-light.position.xyz);
-            L += ((pointScatters[i]*light.color.rgb+(fog*light.color.rgb))*light.intensity)*clamp(1/(dist*dist)-0.01, 0.0001, 1.0);
-        }
+        // for (int i = 0; i < u_PointLightCount; i++) 
+        // { 
+        //     PointLight light = pointLights[i];
+        //     float dist = length(currentPosition-light.position.xyz);
+        //     L += ((pointScatters[i]*light.color.rgb+(fog*light.color.rgb))*light.intensity)*clamp(1/(dist*dist)-0.01, 0.0001, 1.0);
+        // }
         currentPosition += oneStep;
     }
-    o_Color = vec4(L/u_Samples, 1);
+    if(rayLength>800)
+    {
+        o_Color = vec4(0.2,0.2,0.4,1)*50/clamp(worldPos.y, 0.2, 1000.0);
+    }
+    else
+        o_Color = vec4(L/u_Samples, 1);
     // o_Color = vec4(vec3(sample_fog(worldPos.xyz, u_timeAccum)), 1);
     // o_Color = vec4(rayCoord, 1);
 }
@@ -176,7 +181,7 @@ float dirLightShadow(vec3 fPos)
 float sample_fog(vec3 pos, float time) 
 {
     vec3 resolution = textureSize(fogMap, 0);
-    float speed = 2.5;
+    float speed = 5;
     float col = texture(fogMap, vec3(vec2(pos.x+time*speed, pos.z+time*speed)/resolution.xy, pos.y)).r;
     col = smoothstep(0.3, 0.9, col);
 	return col;

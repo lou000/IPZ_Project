@@ -20,6 +20,19 @@ std::vector<vec4> calcFrustumCornersWS(const mat4& proj, const mat4& cameraView)
     return corners;
 }
 
+float distancePointToLine(vec2 v, vec2 w, vec2 p) {
+    // Return minimum distance between line segment vw and point p
+    const float l2 = pow(distance(v,w), 2);  // i.e. |w-v|^2 -  avoid a sqrt
+    if (l2 == 0.0) return distance(p, v);   // v == w case
+    // Consider the line extending the segment, parameterized as v + t (w - v).
+    // We find projection of point p onto the line.
+    // It falls where t = [(p-v) . (w-v)] / |w-v|^2
+    // We clamp t from [0,1] to handle points outside the segment vw.
+    const float t = glm::max(0.f, glm::min(1.0f, glm::dot(p - v, w - v) / l2));
+    const vec2 projection = v + t * (w - v);  // Projection falls on the segment
+    return distance(p, projection);
+}
+
 mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, DirectionalLight dirLight,
                                 float nearPlane, float farPlane, float zCorrection)
 {

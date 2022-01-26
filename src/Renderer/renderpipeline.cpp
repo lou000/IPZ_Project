@@ -67,13 +67,42 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     oldWinSize = winSize;
     winSize = App::getWindowSize();
 
-    // gather instanced entities
     instancedGroups.clear();
+    pbrDrawGroup.clear();
+    lightsGroup.clear();
+
+
+    // frustum cull
+    auto frustum = scene->editorCamera()->getCameraFrustum();
+    auto view = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
+    for(auto& ent : view)
+    {
+        auto transform = view.get<TransformComponent>(ent).transform();
+        auto model = view.get<MeshComponent>(ent).model;
+        if(model->boundingBox().isOnFrustum(frustum, transform) || model->getName() == "terrain")
+            pbrDrawGroup.push_back(scene->fromEntID(ent));
+    }
+
+    auto view2 = scene->entities().view<PointLightComponent>();
+    for(auto ent : view2)
+    {
+        auto light = view2.get<PointLightComponent>(ent).light;
+        BoundingSphere sphere = {light.pos, light.radius};
+        if(sphere.isOnFrustum(frustum))
+            lightsGroup.push_back(light);
+    }
+
+    // gather instanced entities and frustum cull
     auto group = scene->entities().group<TransformComponent, MeshComponent, InstancedDrawComponent>();
     for(auto& ent : group)
     {
-        auto& spec = group.get<InstancedDrawComponent>(ent);
-        instancedGroups[spec.instancedGroup].push_back(scene->fromEntID(ent));
+        auto transform = group.get<TransformComponent>(ent).transform();
+        auto& model = group.get<MeshComponent>(ent).model;
+        if(model->boundingBox().isOnFrustum(frustum, transform))
+        {
+            auto& spec = group.get<InstancedDrawComponent>(ent);
+            instancedGroups[spec.instancedGroup].push_back(scene->fromEntID(ent));
+        }
     }
 
     // gather the transforms
@@ -392,13 +421,8 @@ void RenderPipeline::updateSSBOs(std::shared_ptr<Scene> scene)
     }
 
     // Set point lights data
-    std::vector<GPU_PointLight> lights;
-    auto view = scene->entities().view<PointLightComponent>();
-    for(auto ent : view)
-        lights.push_back(view.get<PointLightComponent>(ent).light);
-
-    enabledPointLightCount = (uint)lights.size();
-    lightsSSBO.setData(lights.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
+    enabledPointLightCount = (uint)lightsGroup.size();
+    lightsSSBO.setData(lightsGroup.data(), sizeof(GPU_PointLight)*enabledPointLightCount);
 
     auto camera = scene->activeCamera();
 
@@ -513,7 +537,7 @@ void RenderPipeline::CSMdepthPrePass(std::shared_ptr<Scene> scene)
     // Render single entities
     csmShader->setUniform("u_DrawInstanced", BufferElement::Int, 0);
     auto group = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
-    for(auto& ent : group)
+    for(auto& ent : pbrDrawGroup)
     {
         // draw here
         auto transform = group.get<TransformComponent>(ent).transform();
@@ -567,7 +591,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
 
     // Pointlights
     lightsSSBO.bind(0);
-    pbrShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
+    pbrShader->setUniform("u_PointLightCount", BufferElement::Int, (int)enabledPointLightCount);
 
     // Set camera data
     pbrShader->setUniform("u_View", BufferElement::Mat4, sceneCamera->getViewMatrix());
@@ -595,7 +619,7 @@ void RenderPipeline::pbrPass(std::shared_ptr<Scene> scene)
     // Render single entities
     pbrShader->setUniform("u_DrawInstanced", BufferElement::Int, 0);
     auto view = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
-    for(auto& ent : view)
+    for(auto& ent : pbrDrawGroup)
     {
         auto renderSpec = view.get<NormalDrawComponent>(ent);
         auto transform = view.get<TransformComponent>(ent).transform();
@@ -755,7 +779,7 @@ void RenderPipeline::volumetricPass(std::shared_ptr<Scene> scene)
     vlShader->setUniform("u_DirLightCol", BufferElement::Float3, scene->directionalLight.color);
     vlShader->setUniform("u_DirLightIntensity", BufferElement::Float, scene->directionalLight.intensity);
     vlShader->setUniform("u_AmbientIntensity", BufferElement::Float, scene->directionalLight.ambientIntensity);
-    vlShader->setUniform("u_PointLightCount", BufferElement::Uint, enabledPointLightCount);
+    vlShader->setUniform("u_PointLightCount", BufferElement::Int, (int)enabledPointLightCount);
     lightsSSBO.bind(0);
 
     // CSM data
@@ -969,7 +993,7 @@ void RenderPipeline::resizeOrClearResources()
     else
     {
         // Clear FBOs and textures if we didnt resize the window
-        hdrFBO.clearColorAttachment(0, {0.302f, 0.345f, 0.388f});
+        hdrFBO.clearColorAttachment(0, {0.11f, 0.11f, 0.12f});
         hdrFBO.clearColorAttachment(1, {0, 0, 0});
         hdrFBO.clearDepthAttachment();
         csmFBO.clearDepthAttachment();
@@ -995,7 +1019,7 @@ void RenderPipeline::generateFogNoise()
     perlinNoiseGen->bindImage(perlinTextureFog, 0, GL_WRITE_ONLY, true);
 
     vec3 size = perlinTextureFog->getDimensions();
-    LOG("size: %f", size.z);
+//    LOG("size: %f", size.z);
     perlinNoiseGen->dispatch((uint)ceil(size.x/16), (uint)ceil(size.y/16), (uint)size.z);
 
     glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);

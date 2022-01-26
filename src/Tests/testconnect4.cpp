@@ -62,18 +62,18 @@ TestConnect4::TestConnect4()
         terrain.addComponent<TerrainGenComponent>();
         terrain.getComponent<TransformComponent>();
 
-        createEntity("../assets/meshes/connect4_board.fbx");
-        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
-                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
-        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
-                      vec3(1),  quat({-radians(90.f), 0, 0}));
-        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
-                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
-        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
-                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+//        createEntity("../assets/meshes/connect4_board.fbx");
+//        createEntity("../assets/meshes/obelisk1.fbx", vec3(5,0,5),
+//                     vec3(1), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
+//        createEntity("../assets/meshes/wolf.fbx", vec3(-5,0,5),
+//                      vec3(1),  quat({-radians(90.f), 0, 0}));
+//        createEntity("../assets/meshes/torch2.fbx", vec3(1,0,-10),
+//                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
+//        createEntity("../assets/meshes/campfire.fbx", vec3(1,0,3),
+//                     vec3(0.3f), quat({-radians(90.f), 0, 0}));
 
 
-        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
+//        createPointLight(vec3(1, 2 ,3), vec3(1,0.05,0), 200.f, 10.f);
 
 //        auto soundTest = createEntity();
 //        soundTest.addComponent<TransformComponent>(vec3(0,0,0));
@@ -149,14 +149,17 @@ void TestConnect4::onUpdate(float dt)
 
             group.get<TransformComponent>(ent).pos.y = h1;
         }
+
+
+
         terrainMap.terrainChanged = false;
 
     }
-    if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
-    {
-        createEntity("../assets/meshes/obelisk1.fbx", mouseWorldPosition,
-                     vec3(.4), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
-    }
+//    if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+//    {
+//        createEntity("../assets/meshes/obelisk1.fbx", mouseWorldPosition,
+//                     vec3(.4), quat({-radians(90.f), 0, 0}), vec4(vec3(0.3),1));
+//    }
 
 
 
@@ -230,31 +233,31 @@ void TestConnect4::onGuiRender()
 
 void TestConnect4::onDebugDraw()
 {
-    auto view = entities().view<MeshComponent, TransformComponent>();
-    for(auto ent : view)
-    {
-        auto model = view.get<TransformComponent>(ent).transform();
-        auto bb = view.get<MeshComponent>(ent).model->boundingBox();
-        bb.max = model*vec4(bb.max, 1);
-        bb.min = model*vec4(bb.min, 1);
-        BatchRenderer::drawLine(bb.min, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
-        BatchRenderer::drawLine(bb.min, {bb.min.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
-        BatchRenderer::drawLine(bb.min, {bb.min.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
+//    auto view = entities().view<MeshComponent, TransformComponent>();
+//    for(auto ent : view)
+//    {
+//        auto model = view.get<TransformComponent>(ent).transform();
+//        auto bb = view.get<MeshComponent>(ent).model->boundingBox();
+//        bb.max = model*vec4(bb.max, 1);
+//        bb.min = model*vec4(bb.min, 1);
+//        BatchRenderer::drawLine(bb.min, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine(bb.min, {bb.min.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine(bb.min, {bb.min.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
 
-        BatchRenderer::drawLine(bb.max, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
-        BatchRenderer::drawLine(bb.max, {bb.max.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
-        BatchRenderer::drawLine(bb.max, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine(bb.max, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine(bb.max, {bb.max.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine(bb.max, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
 
-        BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
-        BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine({bb.min.x, bb.max.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
 
-        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
-        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.min.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.max.x, bb.min.y, bb.min.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.max.z}, {bb.min.x, bb.min.y, bb.max.z}, 0.05f, {1,0,0,1});
 
-        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
+//        BatchRenderer::drawLine({bb.max.x, bb.min.y, bb.min.z}, {bb.max.x, bb.max.y, bb.min.z}, 0.05f, {1,0,0,1});
 
-        BatchRenderer::drawLine({bb.min.x, bb.min.y, bb.max.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
-    }
+//        BatchRenderer::drawLine({bb.min.x, bb.min.y, bb.max.z}, {bb.min.x, bb.max.y, bb.max.z}, 0.05f, {1,0,0,1});
+//    }
 
 }
 

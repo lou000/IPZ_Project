@@ -7,8 +7,6 @@
 #include "entt.hpp"
 #include "../Audio/AudioListener.h"
 
-#define MAX_LIGHTS 100
-
 // For now this is base class that represents the "game"
 class Scene
 {
@@ -35,8 +33,8 @@ public:
     vec3 mouseWorldPosition = {0,0,0};
 
 protected:
-    Entity createEntity();
-    Entity createEntity(const std::string &meshName, vec3 pos = {0,0,0},
+    Entity createEntity(bool serialize = false);
+    Entity createEntity(const std::string &meshName, bool serialize = false, vec3 pos = {0,0,0},
                         vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0},
                         vec4 color = {0,0,0,0});
     Entity createNamedEntity(const std::string &entityName, const std::string &meshName, vec3 pos = {0,0,0},
@@ -44,12 +42,14 @@ protected:
                              vec4 color = {0,0,0,0});
     Entity createInstanced(uint instancedGroup, const std::string &meshName, vec3 pos = {0,0,0},
                            vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0});
-    Entity createPointLight(vec3 pos, vec3 color = {1,1,1}, float intensity = 1.0f, float radius = 10.f, bool shadowCasting = false);
+    Entity createPointLight(vec3 pos, bool serialize = false, vec3 color = {1,1,1}, float intensity = 1.0f, float radius = 10.f, bool shadowCasting = false);
 
     Entity getEntity(const std::string &entityName);
     void removeEntity(Entity entity);
+    void swapCamera();
 
 
+    std::string m_name;
 private:
     uint64 genID();
 
@@ -58,7 +58,6 @@ private:
     std::shared_ptr<Camera> m_activeCamera;
     std::shared_ptr<Camera> m_gameCamera;
     std::shared_ptr<Camera> m_editorCamera;
-    std::string m_name;
     //-----------------------------------//
 
     bool m_serialize = true;

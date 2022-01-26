@@ -5,7 +5,8 @@
 #include <gtc/type_ptr.hpp>
 #include <gtx/quaternion.hpp>
 #include <gtx/normal.hpp>
-#include "gtc/random.hpp"
+#include <gtx/perpendicular.hpp>
+#include <gtc/random.hpp>
 #include <sstream>
 #include <iomanip>
 #include <vector>
@@ -68,3 +69,4 @@ mat4 calcDirLightViewProjMatrix(std::shared_ptr<Camera> camera, DirectionalLight
                                 float nearPlane, float farPlane, float zCorrection);
 bool intersectPlane(const vec3 &planeNormal, const vec3 &planePos,
                     const vec3 &rayStartPos, const vec3 &ray, vec3 &intersection);
+float distancePointToLine(vec2 v, vec2 w, vec2 p);

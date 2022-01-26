@@ -84,6 +84,23 @@ vec3 Camera::getMouseRay()
 
 }
 
+Frustum Camera::getCameraFrustum()
+{
+    Frustum frustum;
+    const float halfVSide = m_farClip * tanf(radians(m_fov) * .5f);
+    const float halfHSide = halfVSide * m_aspectRatio;
+    const glm::vec3 frontMultFar = m_farClip * forward();
+
+    frustum.nearFace =   {m_pos + m_nearClip * forward(), forward()};
+    frustum.farFace =    {m_pos + frontMultFar, -forward()};
+    frustum.rightFace =  {m_pos, glm::cross(up(), frontMultFar + right() * halfHSide)};
+    frustum.leftFace =   {m_pos, glm::cross(frontMultFar - right() * halfHSide, up())};
+    frustum.topFace =    {m_pos, glm::cross(right(), frontMultFar - up() * halfVSide) };
+    frustum.bottomFace = {m_pos, glm::cross(frontMultFar + up() * halfVSide, right())};
+
+    return frustum;
+}
+
 mat4 Camera::getViewMatrix()
 {
     updateViewMat();
@@ -106,17 +123,17 @@ mat4 Camera::getViewProjectionMatrix()
 
 vec3 Camera::up()
 {
-    return glm::rotate(getRotation(), vec3(0, 1, 0));
+    return normalize(glm::rotate(getRotation(), vec3(0, 1, 0)));
 }
 
 vec3 Camera::right()
 {
-    return glm::rotate(getRotation(), vec3(1, 0, 0));
+    return normalize(glm::rotate(getRotation(), vec3(1, 0, 0)));
 }
 
 vec3 Camera::forward()
 {
-    return glm::rotate(getRotation(), vec3(0, 0, -1));
+    return normalize(glm::rotate(getRotation(), vec3(0, 0, -1)));
 }
 
 void Camera::onUpdate(float dt)
@@ -169,7 +186,7 @@ void Camera::onUpdate(float dt)
 //    if(App::getKey(GLFW_KEY_SPACE))
 //        pointAt({0,0,0});
 
-    float speed = 3.f*dt;
+    float speed = 5.f*dt;
     vec3 moveVec = {0, 0 ,0};
     if(App::getKey(GLFW_KEY_UP))
     {

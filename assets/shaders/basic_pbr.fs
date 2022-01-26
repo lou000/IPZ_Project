@@ -44,7 +44,7 @@ uniform float u_AmbientIntensity;
 uniform float u_bloomTreshold;
 uniform float u_exposure;
 uniform vec3 u_DirLightCol;
-uniform uint u_PointLightCount;
+uniform int u_PointLightCount;
 
 const float PI = 3.14159265359;
 

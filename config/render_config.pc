@@ -1,13 +1,13 @@
-config.enableBloom: true
+config.enableBloom: false
 config.bloomRadius: 8
-config.bloomIntensity: 0.280000001
+config.bloomIntensity: 1.71000004
 config.bloomTreshold: 1
 config.exposure: 1
 config.enableCSM: true
-config.shadowCascadeCount: 2
+config.shadowCascadeCount: 4
 config.cascadeZextra: 24.6499996
-config.firstCascadeOffset: 40
-config.csmResolution: 1024
+config.firstCascadeOffset: 100
+config.csmResolution: 4096
 config.enableSSAO: true
 config.ssaoHalfRes: true
 config.ssaoKernelSize: 50
@@ -17,23 +17,23 @@ config.ssaoBias: 0.230000004
 config.enableVolumetric: true
 config.volumetricHalfRes: true
 config.volumetricSamples: 40
-config.volumetricBlurSize: 2
+config.volumetricBlurSize: 4
 config.g_factor: 0.493000001
-config.fog_strength: 1.24000001
-config.fog_y: 9.31000042
-config.lightShaftIntensity: 1.00999999
+config.fog_strength: 1.51999998
+config.fog_y: 11.1400003
+config.lightShaftIntensity: 0.810000002
 FogOctaves:
-  - octave.frequency: [46, 68.6999969, 4, 0]
+  - octave.frequency: [42.5999985, 68.6999969, 68.6999969, 0]
     octave.offset: [10.8000002, 16.7000008, 0, 0]
     octave.amplitude: 7.9000001
-  - octave.frequency: [8, 5.9000001, 4, 0]
-    octave.offset: [115.099998, 67.1999969, 55.7000008, 0]
+  - octave.frequency: [3.79999995, 4.5999999, 21, 0]
+    octave.offset: [115.099998, 57.4000015, 55.7000008, 0]
     octave.amplitude: 11
 TerrainOctaves:
-  - octave.frequency: [3.5999999, 3.4000001, 6.5999999, 0]
+  - octave.frequency: [10.8000002, 3.4000001, 6.5999999, 0]
     octave.offset: [2.20000005, 8.10000038, 0, 0]
     octave.amplitude: 47.0999985
-  - octave.frequency: [52.2999992, 53.5999985, 0, 0]
+  - octave.frequency: [56.5999985, 53.5999985, 0, 0]
     octave.offset: [0, 0, 0, 0]
-    octave.amplitude: 6.30000019
+    octave.amplitude: 6
 config.renderStatsCorner: 1

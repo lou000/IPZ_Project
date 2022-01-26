@@ -10,6 +10,7 @@
 #define MAX_INSTANCED 10000
 #define MAX_SSAO_KERNEL_SIZE 256
 #define MAX_NOISE_OCTAVES 10
+#define MAX_LIGHTS 200
 
 
 struct PerlinOctave //TODO: move this
@@ -97,6 +98,8 @@ private:
     std::shared_ptr<Shader> pbrShader;
     std::shared_ptr<Texture> whiteTexture;
     uint enabledPointLightCount = 0;
+    std::vector<Entity> pbrDrawGroup;
+    std::vector<GPU_PointLight> lightsGroup;
     std::unordered_map<int, std::vector<Entity>> instancedGroups;
     std::unordered_map<int, std::vector<mat4>> instancedTransforms;
 

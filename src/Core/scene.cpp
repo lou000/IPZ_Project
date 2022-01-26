@@ -15,17 +15,23 @@ Scene::Scene(std::string name, bool deserialize)
     AssetManager::addAsset(Model::makeUnitPlane());
 
     //Deserialize if enabled and succesful
-    if(m_deserialize && Serializer::deserializeScene(this, "../Config/"+m_name+".pc"))
-        return;
+//    if(m_deserialize && Serializer::deserializeScene(this, "../Config/"+m_name+".pc"))
+//        return;
 
     //Default values in case there is no file or serialization is off
     auto winSize = App::getWindowSize();
     m_editorCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
     m_gameCamera = std::make_shared<Camera>(90, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+
+    m_editorCamera->setFov(50.f);
+    m_editorCamera->setPosition({0, 7, 20});
+    m_editorCamera->setFocusPoint({0,6,0});
+
+    m_gameCamera->setFov(50.f);
+    m_gameCamera->setPosition({0, 7, 20});
+    m_gameCamera->setFocusPoint({0,6,0});
+
     m_activeCamera = m_editorCamera;
-    m_activeCamera->setFov(50.f);
-    m_activeCamera->setPosition({0, 7, 20});
-    m_activeCamera->setFocusPoint({0,6,0});
 
     directionalLight.direction = normalize(vec3(-6, -5, -1.33f));
     directionalLight.color = {1,1,1};
@@ -71,16 +77,17 @@ void Scene::update(float dt)
     }
 }
 
-Entity Scene::createEntity()
+Entity Scene::createEntity(bool serialize)
 {
     Entity entity = { m_entities.create(), this };
-    entity.addComponent<IDComponent>(genID());
+    auto& id = entity.addComponent<IDComponent>(genID());
+    id.serialize = serialize;
     return entity;
 }
 
-Entity Scene::createEntity(const std::string &meshName, vec3 pos, vec3 scale, quat rotation, vec4 color)
+Entity Scene::createEntity(const std::string &meshName, bool serialize, vec3 pos, vec3 scale, quat rotation, vec4 color)
 {
-    Entity entity = createEntity();
+    Entity entity = createEntity(serialize);
     entity.addComponent<TransformComponent>(pos, scale, rotation);
     entity.addComponent<MeshComponent>(meshName);
     entity.addComponent<NormalDrawComponent>(color);
@@ -89,7 +96,7 @@ Entity Scene::createEntity(const std::string &meshName, vec3 pos, vec3 scale, qu
 
 Entity Scene::createNamedEntity(const std::string &entityName, const std::string &meshName, vec3 pos, vec3 scale, quat rotation, vec4 color)
 {
-    Entity entity = createEntity();
+    Entity entity = createEntity(true);
     namedEntities.emplace(entityName, entity);
     entity.addComponent<TagComponent>(entityName);
     entity.addComponent<TransformComponent>(pos, scale, rotation);
@@ -100,18 +107,18 @@ Entity Scene::createNamedEntity(const std::string &entityName, const std::string
 
 Entity Scene::createInstanced(uint instancedGroup, const std::string &meshName, vec3 pos, vec3 scale, quat rotation)
 {
-    Entity entity = createEntity();
+    Entity entity = createEntity(false);
     entity.addComponent<TransformComponent>(pos, scale, rotation);
     entity.addComponent<MeshComponent>(meshName);
     entity.addComponent<InstancedDrawComponent>(instancedGroup);
     return entity;
 }
 
-Entity Scene::createPointLight(vec3 pos, vec3 color,
+Entity Scene::createPointLight(vec3 pos, bool serialize, vec3 color,
                                float intensity, float radius,
                                bool shadowCasting)
 {
-    Entity entity = createEntity();
+    Entity entity = createEntity(serialize);
     entity.addComponent<PointLightComponent>(pos, color, intensity, radius, shadowCasting);
     return entity;
 }
@@ -124,6 +131,17 @@ Entity Scene::getEntity(const std::string &entityName)
 void Scene::removeEntity(Entity entity)
 {
     m_entities.destroy(entity);
+}
+
+void Scene::swapCamera()
+{
+    if(m_activeCamera == m_gameCamera)
+        m_activeCamera = m_editorCamera;
+    else
+    {
+        m_activeCamera = m_gameCamera;
+        m_gameCamera->setPosition(m_editorCamera->getPos());
+    }
 }
 
 Entity Scene::fromEntID(entt::entity id)

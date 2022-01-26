@@ -5,13 +5,13 @@
 #include <fstream>
 
 #define SERIALIZE_PRIMITIVE(e, k) \
-    e << Key << #k << Value << k;
+e << Key << #k << Value << k;
 
 #define DESERIALIZE_PRIMITIVE(node, dest, type)\
 do{                                             \
         auto maybe = node[#dest];               \
         if(maybe)                               \
-            dest = maybe.as<type>();            \
+        dest = maybe.as<type>();            \
 } while(0);
 
 using namespace YAML;
@@ -292,7 +292,7 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
             auto o = deserializeOctave(octave);
             config.perlinOctavesFog.push_back(o);
         }
-//        std::reverse(config.perlinOctavesFog.begin(), config.perlinOctavesFog.end());
+        //        std::reverse(config.perlinOctavesFog.begin(), config.perlinOctavesFog.end());
     }
 
     octaves = data["TerrainOctaves"];
@@ -304,7 +304,7 @@ RenderConfig Serializer::deserializeRenderConfig(const std::filesystem::path &fi
             auto o = deserializeOctave(octave);
             config.perlinOctavesTerrain.push_back(o);
         }
-//        std::reverse(config.perlinOctavesTerrain.begin(), config.perlinOctavesTerrain.end());
+        //        std::reverse(config.perlinOctavesTerrain.begin(), config.perlinOctavesTerrain.end());
     }
 
     DESERIALIZE_PRIMITIVE(data, config.renderStatsCorner, int);
@@ -377,6 +377,7 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
         e << Key << "TransformComponent";
         e << YAML::BeginMap;
         SERIALIZE_PRIMITIVE(e, component.pos);
+        SERIALIZE_PRIMITIVE(e, component.offsetPos);
         SERIALIZE_PRIMITIVE(e, component.scale);
         SERIALIZE_PRIMITIVE(e, component.rotation);
         e << YAML::EndMap;
@@ -427,6 +428,14 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
         SERIALIZE_PRIMITIVE(e, component.instancedGroup);
         e << YAML::EndMap;
     }
+    if (entity.hasComponent<TerrainGenComponent>())
+    {
+        //        auto& component = entity.getComponent<TerrainGenComponent>();
+        e << Key << "TerrainGenComponent";
+        e << YAML::BeginMap;
+        // we dont want to serialize anything for now
+        e << YAML::EndMap;
+    }
     if (entity.hasComponent<AudioSourceComponent>())
     {
         // TODO: maybe save state of the audio source, currently playing etc.
@@ -460,6 +469,7 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
         DESERIALIZE_PRIMITIVE(transform, component.pos, vec3);
         DESERIALIZE_PRIMITIVE(transform, component.scale, vec3);
         DESERIALIZE_PRIMITIVE(transform, component.rotation, quat);
+        DESERIALIZE_PRIMITIVE(transform, component.offsetPos, vec3);
     }
     auto renderSpec = node["RenderSpecComponent"];
     if(renderSpec)
@@ -472,21 +482,21 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
     {
         auto name = mesh["meshName"].as<std::string>();
         auto hasFile = mesh["hasFile"].as<bool>();
-        auto mesh = AssetManager::getAsset<Model>(name);
-        if(!mesh)
+        auto model = AssetManager::getAsset<Model>(name);
+        if(!model)
         {
             if(hasFile)
             {
-                mesh = std::make_shared<Model>(name);
-                AssetManager::addAsset(mesh);
+                model = std::make_shared<Model>(name);
+                AssetManager::addAsset(model);
             }
             else
             {
-                mesh = std::make_shared<Model>(name, true); //TODO debug meshes
+                model = std::make_shared<Model>(name, true); //TODO debug meshes
                 WARN("Serializer: Cant find %s mesh!", name.c_str());
             }
         }
-        entity->addComponent<MeshComponent>(mesh);
+        entity->addComponent<MeshComponent>(model);
     }
     auto pointLight = node["PointLightComponent"];
     if(pointLight)
@@ -511,6 +521,34 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
         auto& component = entity->addComponent<InstancedDrawComponent>();
         DESERIALIZE_PRIMITIVE(instanced, component.instancedGroup, uint);
     }
+    auto terrain = node["TerrainGenComponent"];
+    if(terrain)
+    {
+        entity->addComponent<TerrainGenComponent>();
+    }
+    auto audio = node["AudioSourceComponent"];
+    if(audio)
+    {
+        auto name = audio["soundName"].as<std::string>();
+        auto hasFile = audio["hasFile"].as<bool>();
+
+        auto sound = AssetManager::getAsset<AudioBuffer>(name);
+        if(!sound)
+        {
+            if(hasFile)
+            {
+                sound = std::make_shared<AudioBuffer>(name);
+                AssetManager::addAsset(sound);
+            }
+            else
+            {
+                WARN("Serializer: Cant find %s sound!", name.c_str());
+            }
+        }
+
+        entity->addComponent<AudioSourceComponent>(sound);
+    }
+
     return true;
 }
 
@@ -556,7 +594,9 @@ bool Serializer::serializeScene(Scene* scene, const std::filesystem::path &filep
     e << Key << "Entities" << Value << BeginSeq;
     scene->m_entities.each([&](auto entity)
     {
-        serializeEntity(e, Entity(entity, scene));
+        auto ent = Entity(entity, scene);
+        if(ent.getComponent<IDComponent>().serialize)
+            serializeEntity(e, ent);
     });
     e << EndSeq;
     e << EndMap;
@@ -569,33 +609,35 @@ bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &fil
     if(!readFile(&in, filepath))
         return false;
 
-//     yaml-cpp uses exceptions, we do not use exceptions
-//     return false on any exception and report corrupted save file
-//    try{
-        Node node = Load(in);
-        scene->directionalLight = deserializeDirLight(node["directionalLight"]);
-        scene->m_gameCamera = deserializeCamera(node["m_gameCamera"]);
-        scene->m_editorCamera = deserializeCamera(node["m_editorCamera"]);
-        if(node["m_activeCamera"].as<uint>() == 0)
-            scene->m_activeCamera = scene->m_editorCamera;
-        auto entities = node["Entities"];
-        if (entities)
+    //     yaml-cpp uses exceptions, we do not use exceptions
+    //     return false on any exception and report corrupted save file
+    //    try{
+    Node node = Load(in);
+    scene->directionalLight = deserializeDirLight(node["directionalLight"]);
+    scene->m_gameCamera = deserializeCamera(node["m_gameCamera"]);
+    scene->m_editorCamera = deserializeCamera(node["m_editorCamera"]);
+    if(node["m_activeCamera"].as<uint>() == 0)
+        scene->m_activeCamera = scene->m_editorCamera;
+    auto entities = node["Entities"];
+    if (entities)
+    {
+        ASSERT(entities.Type() == NodeType::Sequence);
+        for (const auto& entity : entities)
         {
-            ASSERT(entities.Type() == NodeType::Sequence);
-            for (const auto& entity : entities)
-            {
-                ASSERT(entity.Type() == NodeType::Map);
-                auto enttID = scene->m_entities.create();
-                auto ent = Entity(enttID, scene);
-                deserializeEntity(entity, &ent);
-            }
+            ASSERT(entity.Type() == NodeType::Map);
+            auto enttID = scene->m_entities.create();
+            auto ent = Entity(enttID, scene);
+            deserializeEntity(entity, &ent);
+            if(ent.hasComponent<TagComponent>())
+                scene->namedEntities.emplace(ent.getComponent<TagComponent>().tag, ent);
         }
-//    }
-//    catch(...)
-//    {
-//        WARN("Serializer: Serialized file corrupted!");
-//        return false;
-//    }
+    }
+    //    }
+    //    catch(...)
+    //    {
+    //        WARN("Serializer: Serialized file corrupted!");
+    //        return false;
+    //    }
 
     scene->m_deserialized = true;
     return true;
