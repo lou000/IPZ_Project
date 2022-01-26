@@ -84,6 +84,11 @@ private:
     uvec2 oldWinSize;
     int debugView = 0;
 
+    // For framecount display
+    float dtSum = 0;
+    int frameCount = 0;
+    float ms = 0;
+
 
     //PBR
     FrameBuffer hdrFBO;

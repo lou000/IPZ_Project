@@ -1250,8 +1250,21 @@ void RenderPipeline::drawImgui(std::shared_ptr<Scene> scene)
         ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
         if (ImGui::Begin("Example: Simple overlay", &showRenderStats, window_flags))
         {
+            float dt = App::getTimeStep();
+            dtSum+=dt;
+            frameCount++;
+            if (frameCount == 20)
+            {
+                ms = dtSum/double(frameCount) * 1000;
+                frameCount = 0;
+                dtSum = 0;
+            }
+
             ImGui::Text("Render profile:");
             ImGui::Separator();
+            ImGui::PushFont(guiFonts.largeBold);
+            ImGui::Text("FPS: %.1f (%.2fms)", 1/ms*1000, ms);
+            ImGui::PopFont();
             ImGui::Checkbox("Synchronize GPU", &syncGPU);
             auto storage = InstrumentationStorage::getInstance().storage;
             ProfileResult gpuRes;

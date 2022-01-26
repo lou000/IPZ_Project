@@ -27,13 +27,14 @@ struct TransformComponent
     TransformComponent(){}
     mat4 transform()
     {
-        return translate(mat4(1.0f), pos) * glm::scale(mat4(1.0f),scale)
+        return translate(mat4(1.0f), pos+offsetPos) * glm::scale(mat4(1.0f),scale)
                * glm::toMat4(rotation);
     }
+    vec3 pos =       {0, 0, 0};
+    vec3 scale =     {1, 1, 1};
+    quat rotation =  {1,0,0,0};
 
-    vec3 pos =      {0, 0, 0};
-    vec3 scale =    {1, 1, 1};
-    quat rotation = {1,0,0,0};
+    vec3 offsetPos = {0, 0, 0};
 };
 
 struct NormalDrawComponent
@@ -65,6 +66,7 @@ struct TerrainGenComponent
     bool terrainChanged = false;
     uint width  = 0;
     uint height = 0;
+    float amplitude = 0;
 };
 
 struct EmissiveComponent
