@@ -75,7 +75,7 @@ void main()
     if(texColor.r>0 && texColor.g == 0 && texColor.b == 0)
     {
         vec3 col = vec3(texColor.r);
-        col = vec3(linearize_Z(col.r, 0.1, 1000));
+        // col = vec3(linearize_Z(col.r, 0.1, 1000));
         texColor = vec4(col, 1);
     }
 	color = texColor;

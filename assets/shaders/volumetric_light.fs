@@ -100,7 +100,8 @@ void main()
     vec3 L = vec3(0.0, 0.0, 0.0);
 
     float extraFog = 0;
-    float dirScatter = ComputeScattering(dot(normalize(rayDirection), normalize(-u_DirLightDirection)));
+    vec3 dirScatter = ComputeScattering(dot(normalize(rayDirection), normalize(-u_DirLightDirection)))*u_DirLightCol*u_DirLightIntensity*u_LightShaftIntensity;
+
     float pointScatters[1000]; //FIXME: should be u_PointLightCount
     for(int i=0; i<1; i++)
         pointScatters[i] = ComputeScattering(dot(normalize(rayDirection), normalize(startPosition-pointLights[i].position.xyz)));
@@ -116,7 +117,7 @@ void main()
         float fog = extraFog*sample_fog(currentPosition, u_timeAccum);
 
         if(shadow != 1 )
-            L += (dirScatter*u_DirLightCol)*u_DirLightIntensity*u_LightShaftIntensity;
+            L += dirScatter;
         L += fog*u_AmbientIntensity;
         
         if(currentPosition.y<u_FogY)
