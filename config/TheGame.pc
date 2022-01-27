@@ -3,12 +3,12 @@ directionalLight:
   dirLight.direction: [-0.757319212, -1.21099997, -0.238000005]
   dirLight.color: [0.756295264, 0.94223243, 0.971590936]
   dirLight.enabled: false
-  dirLight.intensity: 0.100000001
+  dirLight.intensity: 0.200000003
   dirLight.ambientIntensity: 0
 m_activeCamera: 1
 m_gameCamera:
   camera->type: 0
-  camera->m_pos: [2.72080421, 20.4804211, 7.73339748]
+  camera->m_pos: [-48.904171, 19.489584, -8.95885849]
   camera->m_fov: 50
   camera->m_aspectRatio: 1.66666663
   camera->m_nearClip: 0.100000001
@@ -18,15 +18,34 @@ m_gameCamera:
   camera->m_rotation: [-0.44721359, -0, -0, 0.89442718]
 m_editorCamera:
   camera->type: 0
-  camera->m_pos: [0.404111445, 14.132534, -12.4420681]
+  camera->m_pos: [-57.6748428, 27.5853653, 33.006794]
   camera->m_fov: 50
-  camera->m_aspectRatio: 1.8879056
+  camera->m_aspectRatio: 1.85911405
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [-0.00463170279, 0.958305717, 0.285283446, 0.0155585147]
+  camera->m_rotation: [-0.135291666, -0.495472908, -0.0784540474, 0.854428291]
 Entities:
+  - Entity: 3698057823435128197
+    TagComponent:
+      component.tag: player
+    TransformComponent:
+      component.pos: [-48.904171, -0.510416508, -23.9588585]
+      component.offsetPos: [0, 3.24240685, 0]
+      component.scale: [1, 2, 1]
+      component.rotation: [0, 0, 0, 1]
+    RenderSpecComponent:
+      component.color: [3.06637573, 2.97787476, 2.97787476, 1]
+    MeshComponent:
+      hasFile: true
+      meshName: ../assets/meshes/cube.obj
+    PointLightComponent:
+      component.shadowCasting: false
+      component.light.pos: [0, 5.04030991, 0, 1]
+      component.light.color: [1, 1, 1, 1]
+      component.light.intensity: 10
+      component.light.radius: 20
   - Entity: 5251064753760945064
     TagComponent:
       component.tag: terrain
@@ -42,16 +61,3 @@ Entities:
       meshName: terrain
     TerrainGenComponent:
       {}
-  - Entity: 3698057823435128197
-    TagComponent:
-      component.tag: player
-    TransformComponent:
-      component.pos: [2.72080421, 0.480420828, -7.26660252]
-      component.offsetPos: [0, 1.90270424, 0]
-      component.scale: [1, 2, 1]
-      component.rotation: [0, 0, 0, 1]
-    RenderSpecComponent:
-      component.color: [2, 2, 2, 1]
-    MeshComponent:
-      hasFile: true
-      meshName: ../assets/meshes/cube.obj

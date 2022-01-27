@@ -21,6 +21,31 @@ struct PlayerComponent
     float speed = 6.f;
     vec3 moveTarget = {0,0,0};
     bool moving = false;
+    float health = 100.f;
+    bool hurt = false;
+    float hurtTime = 1.f;
+    float hurtTimer = 0.f;
+    vec4 color = {3,3,3,1};
+};
+
+struct MobComponent
+{
+    float speed = 3.2f;
+    float health = 100.f;
+    float collisionRadius = 3.f;
+    float enabledRadius = 20.f;
+    float attackCD = 1.0f;
+
+    float attackCDCurrent = 0.f;
+};
+
+struct Projectile
+{
+    Projectile(){};
+    Projectile(vec3 dir) : direction(dir){};
+    float speed = 6.f;
+    float collisionRadius = 2.f;
+    vec3 direction = {0,0,0};
 };
 
 class Game : public Scene
@@ -35,14 +60,19 @@ public:
     virtual void onGuiRender() override;
 
 private:
-
+    float accumTime = 0.f;
     std::shared_ptr<GameCamera> gameCamera;
     vec3 cameraOffset = {0, 20, 15};
     PlayerComponent playerC;
     void updateEntityHeightToTerrain(Entity terrain);
     void generateTrees();
     void generateLanterns();
+    void generateRandomStuff();
+    void spawnHostiles();
+    void fireProjectile(vec3 direction);
     void updatePlayer(float dt, Entity terrain);
+    void updateHostiles(float dt, Entity terrain);
+    void updateProjectiles(float dt);
     std::vector<Clearing> generateClearings(vec2 terrainSize);
     std::vector<Path> generatePaths(std::vector<Clearing> clearings);
 

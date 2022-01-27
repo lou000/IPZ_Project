@@ -76,6 +76,7 @@ private:
 
 
     // no touchy
+    bool showUI = false;
     RenderConfig config;
     bool showRenderSettings = true;
     bool showRenderStats = true;

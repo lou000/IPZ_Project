@@ -1,4 +1,4 @@
-#include "gamecamera.h"
+﻿#include "gamecamera.h"
 #include "../Core/utilities.h"
 
 void GameCamera::onUpdate(float dt)
@@ -10,20 +10,22 @@ void GameCamera::onUpdate(float dt)
         auto nowDistance = distance(m_pos, targetPos);
         auto animPct = 1-(nowDistance/origDistance);
         auto dir = normalize(targetPos - m_pos);
+        auto oldDir = normalize(targetPos - originalPos);
 
         if(animPct<timeAccelerating/fullTime)
         {
-            LOG("Speeding up!\n");
+//            LOG("Speeding up!\n");
             currentSpeed+=acceleration*dt;
         }
         else if(animPct>(timeAccelerating+timeFullSpeed)/fullTime)
         {
-            LOG("Slowing down!\n");
+//            LOG("Slowing down!\n");
             currentSpeed-=acceleration*dt;
         }
 
         auto step = dir*currentSpeed*dt;
-        if(length(step)>distance(targetPos, m_pos))
+//        LOG("dot: %f, animPCT:%f\n", dot(dir, oldDir), animPct);
+        if(dot(dir, oldDir)<0.7 || animPct>0.99f)
         {
             m_pos = targetPos;
             currentSpeed = 0;

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../Renderer/camera.h"
 
 class GameCamera : public Camera
@@ -13,12 +13,12 @@ public:
     void animateMove(vec3 targetPos);
 
 private:
-    float timeFullSpeed = 0.3f;
-    float timeAccelerating = 0.2f;
+    float timeFullSpeed = 0.5f;
+    float timeAccelerating = 0.3f;
     float desiredSpeed = 0.f;
     float acceleration = 0.f;
     float currentSpeed = 0.f;
-    bool animating = true;
+    bool animating = false;
     vec3 originalPos = {0,0,0};
     vec3 targetPos = {0,0,0};
 

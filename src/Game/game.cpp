@@ -11,6 +11,7 @@ Game::Game() : Scene("TheGame", true)
     AssetManager::addAsset(MeshRenderer::createTriMeshGrid("terrain", 200, 200));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/obelisk1.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/wolf.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/spider.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/campfire.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree2.fbx"));
@@ -19,6 +20,8 @@ Game::Game() : Scene("TheGame", true)
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/torch2.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/cube.obj"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/cross.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/build.fbx"));
 
     Serializer::deserializeScene(this, "../Config/"+m_name+".pc");
     if(!deserialized())
@@ -37,13 +40,17 @@ Game::Game() : Scene("TheGame", true)
     setGameCamera(gameCamera);
 
     auto player = createNamedEntity("player", "../assets/meshes/cube.obj");
-    player.getComponent<NormalDrawComponent>().color = {2,2,2,1};
+    player.getComponent<NormalDrawComponent>().color = playerC.color;
     player.getComponent<TransformComponent>().scale = {1, 2, 1};
+    if(!player.hasComponent<PointLightComponent>())
+        player.addComponent<PointLightComponent>(vec3(0, 1, 0), vec3(1,1,1), 10.f, 20.f, false);
 
     m_clearings = generateClearings({200, 200});
     m_paths = generatePaths(m_clearings);
     generateTrees();
     generateLanterns();
+    generateRandomStuff();
+    spawnHostiles();
 
 
 }
@@ -69,19 +76,38 @@ void Game::onUpdate(float dt)
     if(App::getKeyOnce(GLFW_KEY_C))
         swapCamera();
 
+    if(App::getKeyOnce(GLFW_KEY_Q))
+        fireProjectile(mouseWorldPosition);
+
     updatePlayer(dt, terrain);
+    updateHostiles(dt, terrain);
+    updateProjectiles(dt);
 }
 
 void Game::updatePlayer(float dt, Entity terrain)
 {
     auto player = getEntity("player");
     auto& transform = player.getComponent<TransformComponent>();
+    auto& renderC = player.getComponent<NormalDrawComponent>();
 
-    if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+    if(App::getMouseButton(GLFW_MOUSE_BUTTON_RIGHT))
     {
         playerC.moveTarget = mouseWorldPosition-transform.offsetPos;
         gameCamera->animateMove(cameraOffset+playerC.moveTarget);
         playerC.moving = true;
+    }
+    if(playerC.hurt)
+    {
+        playerC.hurt = false;
+        playerC.hurtTimer = playerC.hurtTime;
+    }
+    if(playerC.hurtTimer>0)
+    {
+        if(playerC.hurtTimer<0.5f)
+            renderC.color = lerp(playerC.color, {6, 2, 2, 1}, playerC.hurtTimer/0.5f);
+        else
+            renderC.color = lerp({6, 2, 2, 1}, playerC.color, playerC.hurtTimer-0.5f/0.5f);
+        playerC.hurtTimer-=dt;
     }
     if(playerC.moving)
     {
@@ -95,25 +121,89 @@ void Game::updatePlayer(float dt, Entity terrain)
         }
         else
             transform.pos += step;
-
-
     }
+}
 
-//        auto terrainTransform = terrain.getComponent<TransformComponent>();
-//        auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
-//        auto pos = transform.pos - terrainTransform.pos;
-//        // calculate x coords
-//        float x1 = glm::round(pos.x);
+void Game::updateHostiles(float dt, Entity terrain)
+{
+    auto terrainTransform = terrain.getComponent<TransformComponent>();
+    auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
+    auto view = entities().view<TransformComponent, MobComponent>();
 
-//        // calculate z coords
-//        float y1 = glm::round(pos.z);
+    auto player = getEntity("player");
+    auto& playerTransform = player.getComponent<TransformComponent>();
 
-//        int index = (int)(y1*terrainMap.width+(x1));
-//        if(index<512*512 && index>0)
-//        {
-//            float h1 = terrainMap.heightMap[index]*30-15;
-//            playerC.heightTarget = h1;
-//        }
+    for(auto ent : view)
+    {
+
+        auto& transform = view.get<TransformComponent>(ent);
+        auto& mobC = view.get<MobComponent>(ent);
+        mobC.attackCDCurrent -= dt;
+
+        auto dist = distance(playerTransform.pos, transform.pos);
+
+        if(dist>mobC.enabledRadius)
+            continue;
+
+        auto dir = normalize(playerTransform.pos - transform.pos);
+        if(dist<4.f)
+        {
+            if(mobC.attackCDCurrent < 0)
+            {
+                // attack animation here?
+                playerC.hurt = true;
+                mobC.attackCDCurrent = mobC.attackCD;
+            }
+        }
+        else
+        {
+            transform.pos += dir*dt*mobC.speed;
+        }
+
+        transform.rotation = quat({-radians(90.f),atan2(dir.x, dir.z)+radians(180.f),0});
+
+        for(auto ent2 : view)
+        {
+            auto& transform2 = view.get<TransformComponent>(ent2);
+            if(distance(transform2.pos, transform.pos)>mobC.collisionRadius || ent2 == ent)
+                continue;
+            else
+            {
+                auto dir2 = normalize(transform.pos - transform2.pos);
+                transform.pos += dir2*dt*mobC.speed;
+            }
+        }
+
+        if(terrainMap.heightMap)
+        {
+            // push up to ground level
+            auto pos = transform.pos - terrainTransform.pos;
+            float x1 = glm::round(pos.x);
+
+            // calculate z coords
+            float y1 = glm::round(pos.z);
+
+            int index = (int)(y1*terrainMap.width+(x1));
+            if(index<512*512 && index>0)
+            {
+                float h1 = terrainMap.heightMap[index]*30-15;
+                transform.pos.y = h1;
+                transform.offsetPos = {0,0,0};
+            }
+        }
+    }
+}
+
+void Game::updateProjectiles(float dt)
+{
+    auto view = entities().view<Projectile, TransformComponent>();
+    for(auto ent : view)
+    {
+        auto& transform = view.get<TransformComponent>(ent);
+        auto& proj = view.get<Projectile>(ent);
+
+        transform.pos += proj.direction*proj.speed*dt;
+    }
 }
 
 void Game::onDebugDraw()
@@ -206,6 +296,79 @@ void Game::generateLanterns()
             }
         }
     }
+}
+
+void Game::generateRandomStuff()
+{
+    const char* stuff[5] ={
+        "../assets/meshes/campfire.fbx",
+        "../assets/meshes/obelisk1.fbx",
+        "../assets/meshes/build.fbx",
+        "../assets/meshes/cross.fbx",
+        "../assets/meshes/tree5.fbx"
+    };
+
+    const float scales[5] ={
+        0.04f, 0.8f, 0.5f, 0.7f, 0.5f
+    };
+
+    for(auto c : m_clearings)
+    {
+        for(uint i=0; i<3; i++)
+        {
+            uint meshIndex = linearRand(0, 4);
+            float randomRotation = linearRand(0.f, PI*2.f);
+            vec2 randomDir = {linearRand(-1.f, 1.f), linearRand(-1.f, 1.f)};
+            vec2 pos = c.pos + randomDir*c.radius;
+
+            createEntity(stuff[meshIndex], false, {pos.x, 0, pos.y}, vec3(scales[meshIndex]),
+                         quat({-radians(90.f),randomRotation,0}));
+            if(meshIndex == 0)
+            {
+                createPointLight({pos.x, 0.2, pos.y}, false, {1.f,0.4f,0.f}, 10.f, 20.f);
+            }
+
+        }
+    }
+
+
+}
+
+void Game::spawnHostiles()
+{
+    const char* meshes[2] ={
+        "../assets/meshes/wolf.fbx",
+        "../assets/meshes/spider.fbx"
+    };
+    const float scales[2] ={
+        0.2f, 0.5f
+    };
+    bool alternate = false;
+    for(auto c : m_clearings)
+    {
+        vec2 randomDir = {linearRand(-1.f, 1.f), linearRand(-1.f, 1.f)};
+        vec2 pos = c.pos + randomDir*c.radius;
+
+        uint count = alternate ? 1 : 4;
+        for(uint i=0; i<count; i++)
+        {
+            auto ent = createEntity(meshes[alternate], false, vec3(pos.x, 0, pos.y)+linearRand(vec3(1,1,1), vec3(2, 2, 2)), vec3(scales[alternate]),
+                         quat({-radians(90.f),0,0}));
+            ent.addComponent<MobComponent>();
+        }
+        alternate = !alternate;
+    }
+}
+
+void Game::fireProjectile(vec3 atPos)
+{
+    auto player = getEntity("player");
+    auto& playerTransform = player.getComponent<TransformComponent>();
+    auto ent = createEntity("../assets/meshes/cube.obj", false, vec3(playerTransform.pos.x, playerTransform.pos.y+1.f, playerTransform.pos.z), vec3(0.2f));
+
+    ent.getComponent<NormalDrawComponent>().color = {2,2,8,1};
+    ent.addComponent<PointLightComponent>(vec3(0,0,0), vec3(0.2f,0.2f,1.f), 10.f, 20.f, false);
+    ent.addComponent<Projectile>(normalize(atPos - playerTransform.pos));
 }
 
 void Game::updateEntityHeightToTerrain(Entity terrain)

@@ -73,7 +73,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
 
     // frustum cull
-    auto frustum = scene->sceneCamera()->getCameraFrustum();
+    auto frustum = scene->activeCamera()->getCameraFrustum();
     auto view = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
     for(auto& ent : view)
     {
@@ -86,7 +86,12 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
     auto view2 = scene->entities().view<PointLightComponent>();
     for(auto ent : view2)
     {
-        auto light = view2.get<PointLightComponent>(ent).light;
+        auto entity = scene->fromEntID(ent);
+        auto light = entity.getComponent<PointLightComponent>().light;
+        if(entity.hasComponent<TransformComponent>())
+        {
+            light.pos += vec4(entity.getComponent<TransformComponent>().pos, 0);
+        }
         BoundingSphere sphere = {light.pos, light.radius};
         if(sphere.isOnFrustum(frustum))
             lightsGroup.push_back(light);
@@ -168,7 +173,12 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
     outputFBO.bind();
     outputFBO.blitToFrontBuffer();
-    drawImgui(scene);
+
+
+    if(App::getKeyOnce(GLFW_KEY_GRAVE_ACCENT))
+        showUI = !showUI;
+    if(showUI)
+        drawImgui(scene);
 }
 
 void RenderPipeline::serialize()
