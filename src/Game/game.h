@@ -36,6 +36,14 @@ struct MobComponent
     float enabledRadius = 20.f;
     float attackCD = 1.0f;
 
+    bool hurt = false;
+    float hurtTime = 0.5f;
+    float hurtTimer = 0.f;
+
+    float hurtCD = 1.f;
+    float hurtCDCurrent = 0.f;
+    bool dead = false;
+
     float attackCDCurrent = 0.f;
 };
 
@@ -44,7 +52,7 @@ struct Projectile
     Projectile(){};
     Projectile(vec3 dir) : direction(dir){};
     float speed = 6.f;
-    float collisionRadius = 2.f;
+    float collisionRadius = 4.f;
     vec3 direction = {0,0,0};
 };
 

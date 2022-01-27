@@ -11,7 +11,7 @@ config.csmResolution: 4096
 config.enableSSAO: true
 config.ssaoHalfRes: true
 config.ssaoKernelSize: 100
-config.ssaoBlurSize: 6
+config.ssaoBlurSize: 4
 config.ssaoRadius: 1.07000005
 config.ssaoBias: 0.230000004
 config.enableVolumetric: true
@@ -19,8 +19,8 @@ config.volumetricHalfRes: true
 config.volumetricSamples: 80
 config.volumetricBlurSize: 4
 config.g_factor: 0.493000001
-config.fog_strength: 1.91999996
-config.fog_y: 12.4899998
+config.fog_strength: 1.25999999
+config.fog_y: 8
 config.lightShaftIntensity: 0.810000002
 FogOctaves:
   - octave.frequency: [42.5999985, 68.6999969, 68.6999969, 0]
@@ -30,10 +30,10 @@ FogOctaves:
     octave.offset: [115.099998, 57.4000015, 55.7000008, 0]
     octave.amplitude: 11
 TerrainOctaves:
-  - octave.frequency: [10.8000002, 3.4000001, 6.5999999, 0]
-    octave.offset: [2.20000005, 8.10000038, 0, 0]
+  - octave.frequency: [8.80000019, 3.29999995, 6.5999999, 0]
+    octave.offset: [3.20000005, 10.5, 0, 0]
     octave.amplitude: 47.0999985
-  - octave.frequency: [56.5999985, 53.5999985, 0, 0]
+  - octave.frequency: [60, 53.5999985, 0, 0]
     octave.offset: [0, 0, 0, 0]
     octave.amplitude: 6
 config.renderStatsCorner: 1

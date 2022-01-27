@@ -98,6 +98,7 @@ void Game::updatePlayer(float dt, Entity terrain)
     }
     if(playerC.hurt)
     {
+        playerC.health -= 5.f;
         playerC.hurt = false;
         playerC.hurtTimer = playerC.hurtTime;
     }
@@ -128,7 +129,7 @@ void Game::updateHostiles(float dt, Entity terrain)
 {
     auto terrainTransform = terrain.getComponent<TransformComponent>();
     auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
-    auto view = entities().view<TransformComponent, MobComponent>();
+    auto view = entities().view<TransformComponent, MobComponent, NormalDrawComponent>();
 
     auto player = getEntity("player");
     auto& playerTransform = player.getComponent<TransformComponent>();
@@ -137,13 +138,65 @@ void Game::updateHostiles(float dt, Entity terrain)
     {
 
         auto& transform = view.get<TransformComponent>(ent);
+        auto& renderC = view.get<NormalDrawComponent>(ent);
         auto& mobC = view.get<MobComponent>(ent);
         mobC.attackCDCurrent -= dt;
+        mobC.hurtCDCurrent -= dt;
+
+        if(mobC.health<0)
+        {
+            if(!mobC.dead)
+            {
+                mobC.dead = true;
+                transform.rotation = quat({-radians(90.f),0,radians(90.f)});
+
+            }
+            if(terrainMap.heightMap)
+            {
+                // push up to ground level
+                auto pos = transform.pos - terrainTransform.pos;
+                float x1 = glm::round(pos.x);
+
+                // calculate z coords
+                float y1 = glm::round(pos.z);
+
+                int index = (int)(y1*terrainMap.width+(x1));
+                if(index<512*512 && index>0)
+                {
+                    float h1 = terrainMap.heightMap[index]*30-15;
+                    transform.pos.y = h1;
+                    transform.offsetPos = {0,0,0};
+                }
+            }
+            continue;
+        }
 
         auto dist = distance(playerTransform.pos, transform.pos);
 
         if(dist>mobC.enabledRadius)
             continue;
+
+        if(mobC.hurt && mobC.hurtCDCurrent<=0)
+        {
+            mobC.health -= 20.f;
+            mobC.hurtTimer = mobC.hurtTime;
+            mobC.hurtCDCurrent = mobC.hurtCD;
+        }
+        mobC.hurt = false;
+        if(mobC.hurtTimer>0)
+        {
+            if(mobC.hurtTimer<0.25f)
+                renderC.color = lerp(vec4(0,0,0,1), {1, 0, 0, 1}, mobC.hurtTimer/0.25f);
+            else
+                renderC.color = lerp({1, 0, 0, 1}, vec4(0,0,0,1), mobC.hurtTimer-0.25f/0.25f);
+
+            mobC.hurtTimer-=dt;
+        }
+        else
+        {
+            renderC.color = vec4(0,0,0,0);
+        }
+
 
         auto dir = normalize(playerTransform.pos - transform.pos);
         if(dist<4.f)
@@ -196,13 +249,31 @@ void Game::updateHostiles(float dt, Entity terrain)
 
 void Game::updateProjectiles(float dt)
 {
+    auto player = getEntity("player");
+    auto& playerTransform = player.getComponent<TransformComponent>();
+
     auto view = entities().view<Projectile, TransformComponent>();
     for(auto ent : view)
     {
         auto& transform = view.get<TransformComponent>(ent);
         auto& proj = view.get<Projectile>(ent);
 
+        if(distance(playerTransform.pos, transform.pos) > 40.f)
+        {
+            entities().destroy(ent);
+            continue;
+        }
         transform.pos += proj.direction*proj.speed*dt;
+        transform.offsetPos = vec3(0);
+
+        auto view2 = entities().view<MobComponent, TransformComponent>();
+        for(auto mob : view2)
+        {
+            auto& mobTransform = view2.get<TransformComponent>(mob);
+            auto& mobC = view2.get<MobComponent>(mob);
+            if(distance(mobTransform.pos, transform.pos) < proj.collisionRadius)
+                mobC.hurt = true;
+        }
     }
 }
 
@@ -364,8 +435,10 @@ void Game::fireProjectile(vec3 atPos)
 {
     auto player = getEntity("player");
     auto& playerTransform = player.getComponent<TransformComponent>();
-    auto ent = createEntity("../assets/meshes/cube.obj", false, vec3(playerTransform.pos.x, playerTransform.pos.y+1.f, playerTransform.pos.z), vec3(0.2f));
+    auto ent = createEntity("../assets/meshes/cube.obj", false, vec3(playerTransform.pos.x, playerTransform.pos.y+2.f, playerTransform.pos.z), vec3(0.2f));
 
+    auto fix = atPos;
+    fix.y -= 2;
     ent.getComponent<NormalDrawComponent>().color = {2,2,8,1};
     ent.addComponent<PointLightComponent>(vec3(0,0,0), vec3(0.2f,0.2f,1.f), 10.f, 20.f, false);
     ent.addComponent<Projectile>(normalize(atPos - playerTransform.pos));
