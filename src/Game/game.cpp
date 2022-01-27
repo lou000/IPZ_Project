@@ -18,6 +18,7 @@ Game::Game() : Scene("TheGame", true)
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree4.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/tree5.fbx"));
     AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/torch2.fbx"));
+    AssetManager::addAsset(std::make_shared<Model>("../assets/meshes/cube.obj"));
 
     Serializer::deserializeScene(this, "../Config/"+m_name+".pc");
     if(!deserialized())
@@ -29,50 +30,22 @@ Game::Game() : Scene("TheGame", true)
         terrainGen.height = 200;
     }
 
+    auto winSize = App::getWindowSize();
+    gameCamera = std::make_shared<GameCamera>(50, (float)winSize.x/(float)winSize.y, 0.1f, 1000.f);
+    gameCamera->setPosition(cameraOffset);
+    gameCamera->pointAt({0,0,0});
+    setGameCamera(gameCamera);
+
+    auto player = createNamedEntity("player", "../assets/meshes/cube.obj");
+    player.getComponent<NormalDrawComponent>().color = {2,2,2,1};
+    player.getComponent<TransformComponent>().scale = {1, 2, 1};
+
     m_clearings = generateClearings({200, 200});
     m_paths = generatePaths(m_clearings);
     generateTrees();
+    generateLanterns();
 
-//    for(auto c : m_clearings)
-//    {
-//        for(uint i=0; i<50; i++)
-//        {
-//            auto randAngle = linearRand(0.f, PI*2.f);
-//            auto pos = vec2(glm::cos(randAngle)*c.radius, glm::sin(randAngle)*c.radius);
-//            createInstanced(1, "../assets/meshes/tree5.fbx", vec3(c.pos.x+pos.x, 0,c.pos.y+pos.y), vec3(0.3), quat({-radians(90.f),0,0}));
-//        }
-//    }
 
-    for(auto path : m_paths)
-    {
-        auto dir = glm::normalize(path.pointEnd-path.pointBegin);
-        auto distance = glm::distance(path.pointBegin, path.pointEnd);
-        auto step = 20.f;
-        uint count = distance/step;
-//        if(count>5)
-//            count-=5;
-        for(uint i=1; i<count; i++)
-        {
-            auto pos = path.pointBegin+(dir*step*(float)i);
-            bool weGood = true;
-            // check if inside one of circles
-            for(auto c : m_clearings)
-            {
-                if(glm::distance(c.pos, pos)<c.radius)
-                {
-                    weGood = false;
-                    break;
-                }
-            }
-            glm::vec2 perp = glm::perp(glm::vec2(0, 1), dir);
-            pos+=normalize(perp)*1.2f;
-            if(weGood)
-            {
-                createInstanced(10, "../assets/meshes/torch2.fbx", vec3(pos.x, 0, pos.y), vec3(0.05), quat({-radians(90.f),0,0}));
-                createPointLight({pos.x, 5, pos.y}, false, {1.f,0.6f,0.f}, 15.f, 20.f);
-            }
-        }
-    }
 }
 
 void Game::onStart()
@@ -89,11 +62,58 @@ void Game::onUpdate(float dt)
     auto terrain = getEntity("terrain");
     auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
 
+
     if(terrainMap.terrainChanged)
         updateEntityHeightToTerrain(terrain);
 
     if(App::getKeyOnce(GLFW_KEY_C))
         swapCamera();
+
+    updatePlayer(dt, terrain);
+}
+
+void Game::updatePlayer(float dt, Entity terrain)
+{
+    auto player = getEntity("player");
+    auto& transform = player.getComponent<TransformComponent>();
+
+    if(App::getMouseButton(GLFW_MOUSE_BUTTON_LEFT))
+    {
+        playerC.moveTarget = mouseWorldPosition-transform.offsetPos;
+        gameCamera->animateMove(cameraOffset+playerC.moveTarget);
+        playerC.moving = true;
+    }
+    if(playerC.moving)
+    {
+        auto dir = playerC.moveTarget - transform.pos;
+        auto step = normalize(dir)*playerC.speed*dt;
+
+        if(length(step)>distance(transform.pos, playerC.moveTarget))
+        {
+            transform.pos = playerC.moveTarget;
+            playerC.moving = false;
+        }
+        else
+            transform.pos += step;
+
+
+    }
+
+//        auto terrainTransform = terrain.getComponent<TransformComponent>();
+//        auto& terrainMap = terrain.getComponent<TerrainGenComponent>();
+//        auto pos = transform.pos - terrainTransform.pos;
+//        // calculate x coords
+//        float x1 = glm::round(pos.x);
+
+//        // calculate z coords
+//        float y1 = glm::round(pos.z);
+
+//        int index = (int)(y1*terrainMap.width+(x1));
+//        if(index<512*512 && index>0)
+//        {
+//            float h1 = terrainMap.heightMap[index]*30-15;
+//            playerC.heightTarget = h1;
+//        }
 }
 
 void Game::onDebugDraw()
@@ -152,6 +172,39 @@ void Game::generateTrees()
         else
             createInstanced(meshIndex, randomTree, vec3(pos.x, 0, pos.y), vec3(randomScale, randomHeight, randomScale),
                             quat({-radians(90.f),randomRotation,0}));
+    }
+}
+
+void Game::generateLanterns()
+{
+    for(auto path : m_paths)
+    {
+        auto dir = glm::normalize(path.pointEnd-path.pointBegin);
+        auto distance = glm::distance(path.pointBegin, path.pointEnd);
+        auto step = 20.f;
+        uint count = distance/step;
+
+        for(uint i=2; i<count; i++)
+        {
+            auto pos = path.pointBegin+(dir*step*(float)i);
+            bool weGood = true;
+            // check if inside one of circles
+            for(auto c : m_clearings)
+            {
+                if(glm::distance(c.pos, pos)<c.radius)
+                {
+                    weGood = false;
+                    break;
+                }
+            }
+            glm::vec2 perp = glm::perp(glm::vec2(0, 1), dir);
+            pos+=normalize(perp)*1.2f;
+            if(weGood)
+            {
+                createInstanced(10, "../assets/meshes/torch2.fbx", vec3(pos.x, 0, pos.y), vec3(0.05), quat({-radians(90.f),0,0}));
+                createPointLight({pos.x, 5, pos.y}, false, {1.f,0.6f,0.f}, 15.f, 20.f);
+            }
+        }
     }
 }
 

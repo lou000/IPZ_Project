@@ -33,6 +33,7 @@ public:
     vec3 mouseWorldPosition = {0,0,0};
 
 protected:
+    void setGameCamera(std::shared_ptr<Camera> camera);
     Entity createEntity(bool serialize = false);
     Entity createEntity(const std::string &meshName, bool serialize = false, vec3 pos = {0,0,0},
                         vec3 scale = {1,1,1}, quat rotation = {1, 0, 0, 0},

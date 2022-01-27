@@ -8,24 +8,24 @@ directionalLight:
 m_activeCamera: 1
 m_gameCamera:
   camera->type: 0
-  camera->m_pos: [42.755352, 25.1698723, 1.12482095]
+  camera->m_pos: [2.72080421, 20.4804211, 7.73339748]
   camera->m_fov: 50
   camera->m_aspectRatio: 1.66666663
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
-  camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [-0.149806097, 0.682318628, 0.145916805, 0.700505376]
+  camera->m_focusPoint: [0, 0, 0]
+  camera->m_rotation: [-0.44721359, -0, -0, 0.89442718]
 m_editorCamera:
   camera->type: 0
-  camera->m_pos: [38.2600212, 27.1300087, 16.9251614]
+  camera->m_pos: [0.404111445, 14.132534, -12.4420681]
   camera->m_fov: 50
-  camera->m_aspectRatio: 1.66666663
+  camera->m_aspectRatio: 1.8879056
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [-0.194185212, 0.5307886, 0.126435056, 0.815211475]
+  camera->m_rotation: [-0.00463170279, 0.958305717, 0.285283446, 0.0155585147]
 Entities:
   - Entity: 5251064753760945064
     TagComponent:
@@ -42,3 +42,16 @@ Entities:
       meshName: terrain
     TerrainGenComponent:
       {}
+  - Entity: 3698057823435128197
+    TagComponent:
+      component.tag: player
+    TransformComponent:
+      component.pos: [2.72080421, 0.480420828, -7.26660252]
+      component.offsetPos: [0, 1.90270424, 0]
+      component.scale: [1, 2, 1]
+      component.rotation: [0, 0, 0, 1]
+    RenderSpecComponent:
+      component.color: [2, 2, 2, 1]
+    MeshComponent:
+      hasFile: true
+      meshName: ../assets/meshes/cube.obj

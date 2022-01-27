@@ -31,7 +31,7 @@ Scene::Scene(std::string name, bool deserialize)
     m_gameCamera->setPosition({0, 7, 20});
     m_gameCamera->setFocusPoint({0,6,0});
 
-    m_activeCamera = m_editorCamera;
+    m_activeCamera = m_gameCamera;
 
     directionalLight.direction = normalize(vec3(-6, -5, -1.33f));
     directionalLight.color = {1,1,1};
@@ -79,9 +79,20 @@ void Scene::update(float dt)
 
 Entity Scene::createEntity(bool serialize)
 {
-    Entity entity = { m_entities.create(), this };
-    auto& id = entity.addComponent<IDComponent>(genID());
-    id.serialize = serialize;
+    Entity entity = {m_entities.create(), this };
+    if(!entity.hasComponent<IDComponent>())
+    {
+        auto& id = entity.addComponent<IDComponent>(genID());
+        id.serialize = serialize;
+    }
+    else
+    {
+        WARN("What the fuck?");
+        m_entities.destroy(entity);
+        entity = { m_entities.create(), this };
+        auto& id = entity.addComponent<IDComponent>(genID());
+        id.serialize = serialize;
+    }
     return entity;
 }
 
@@ -96,6 +107,20 @@ Entity Scene::createEntity(const std::string &meshName, bool serialize, vec3 pos
 
 Entity Scene::createNamedEntity(const std::string &entityName, const std::string &meshName, vec3 pos, vec3 scale, quat rotation, vec4 color)
 {
+    if(namedEntities.find(entityName) != namedEntities.end())
+    {
+        WARN("Entity %s already exists, overwriting!", entityName.c_str());
+        auto ent = namedEntities.at(entityName);
+        auto& transform = ent.getComponent<TransformComponent>();
+        transform.pos = pos;
+        transform.scale = scale;
+        transform.rotation = rotation;
+        auto& meshC = ent.getComponent<MeshComponent>();
+        meshC.model = std::make_shared<Model>(meshName);
+        auto& draw = ent.getComponent<NormalDrawComponent>();
+        draw.color = color;
+        return ent;
+    }
     Entity entity = createEntity(true);
     namedEntities.emplace(entityName, entity);
     entity.addComponent<TagComponent>(entityName);
@@ -138,16 +163,20 @@ void Scene::swapCamera()
     if(m_activeCamera == m_gameCamera)
         m_activeCamera = m_editorCamera;
     else
-    {
         m_activeCamera = m_gameCamera;
-        m_gameCamera->setPosition(m_editorCamera->getPos());
-    }
 }
 
 Entity Scene::fromEntID(entt::entity id)
 {
     ASSERT(m_entities.valid(id));
     return Entity(id, this);
+}
+
+void Scene::setGameCamera(std::shared_ptr<Camera> camera)
+{
+    if(m_activeCamera == m_gameCamera)
+        m_activeCamera = camera;
+    m_gameCamera = camera;
 }
 
 uint64 Scene::genID()

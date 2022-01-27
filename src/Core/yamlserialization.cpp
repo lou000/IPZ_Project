@@ -618,6 +618,9 @@ bool Serializer::deserializeScene(Scene *scene, const std::filesystem::path &fil
     scene->m_editorCamera = deserializeCamera(node["m_editorCamera"]);
     if(node["m_activeCamera"].as<uint>() == 0)
         scene->m_activeCamera = scene->m_editorCamera;
+    else
+        scene->m_activeCamera = scene->m_gameCamera;
+
     auto entities = node["Entities"];
     if (entities)
     {

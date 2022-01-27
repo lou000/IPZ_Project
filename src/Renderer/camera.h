@@ -73,8 +73,8 @@ public:
     vec3 right();
     vec3 forward();
 
-    void onUpdate(float dt); // should be in entity
-    void onCreate(); // should be in entity
+    virtual void onUpdate(float dt);
+    virtual void onCreate();
 
 protected:
     enum Type{
@@ -106,3 +106,5 @@ private:
 
     bool firstMouseClick = true; //temporary
 };
+
+

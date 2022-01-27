@@ -1,13 +1,13 @@
-config.enableBloom: false
+config.enableBloom: true
 config.bloomRadius: 8
-config.bloomIntensity: 1.71000004
+config.bloomIntensity: 0.540000021
 config.bloomTreshold: 1
 config.exposure: 1
 config.enableCSM: true
 config.shadowCascadeCount: 4
 config.cascadeZextra: 24.6499996
 config.firstCascadeOffset: 100
-config.csmResolution: 4096
+config.csmResolution: 1024
 config.enableSSAO: true
 config.ssaoHalfRes: true
 config.ssaoKernelSize: 50
@@ -16,7 +16,7 @@ config.ssaoRadius: 1.07000005
 config.ssaoBias: 0.230000004
 config.enableVolumetric: true
 config.volumetricHalfRes: true
-config.volumetricSamples: 40
+config.volumetricSamples: 30
 config.volumetricBlurSize: 4
 config.g_factor: 0.493000001
 config.fog_strength: 1.51999998

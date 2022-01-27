@@ -73,7 +73,7 @@ void RenderPipeline::drawScene(std::shared_ptr<Scene> scene)
 
 
     // frustum cull
-    auto frustum = scene->editorCamera()->getCameraFrustum();
+    auto frustum = scene->sceneCamera()->getCameraFrustum();
     auto view = scene->entities().view<TransformComponent, MeshComponent, NormalDrawComponent>();
     for(auto& ent : view)
     {

@@ -18,7 +18,7 @@ public:
     T& addComponent(Args&&... args) const
     {
         ASSERT_ERROR(!hasComponent<T>(), "Component already exists in entity!");
-        T& component = m_scene->m_entities.emplace<T>(m_enttID, std::forward<Args>(args)...);
+        T& component = m_scene->m_entities.emplace_or_replace<T>(m_enttID, std::forward<Args>(args)...); //TODO: a hack
         return component;
     }
 
