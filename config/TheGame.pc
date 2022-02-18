@@ -1,14 +1,14 @@
 Scene: TheGame
 directionalLight:
-  dirLight.direction: [-0.757319212, -1.21099997, -1.72800004]
+  dirLight.direction: [-0.757319212, -0.940999985, -1.35800004]
   dirLight.color: [0.971590936, 0.910427392, 0.756295264]
   dirLight.enabled: false
-  dirLight.intensity: 1
+  dirLight.intensity: 1.25999999
   dirLight.ambientIntensity: 0.0729999989
 m_activeCamera: 0
 m_gameCamera:
   camera->type: 0
-  camera->m_pos: [-8.56775665, 16.1192608, -20.6574135]
+  camera->m_pos: [0, 20, 15]
   camera->m_fov: 50
   camera->m_aspectRatio: 1.66666663
   camera->m_nearClip: 0.100000001
@@ -18,31 +18,31 @@ m_gameCamera:
   camera->m_rotation: [-0.44721359, -0, -0, 0.89442718]
 m_editorCamera:
   camera->type: 0
-  camera->m_pos: [-12.7001019, 21.7499504, -48.8713226]
+  camera->m_pos: [38.3763847, 23.48736, 23.3871555]
   camera->m_fov: 50
-  camera->m_aspectRatio: 1.85911405
+  camera->m_aspectRatio: 1.66666663
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [0.0208070409, 0.978480816, 0.162794784, -0.125061065]
+  camera->m_rotation: [-0.160848498, 0.481291026, 0.0903400928, 0.856927872]
 Entities:
   - Entity: 3698057823435128197
     TagComponent:
       component.tag: player
     TransformComponent:
-      component.pos: [-8.56775665, -3.88073874, -35.6574135]
-      component.offsetPos: [0, 2.30583382, 0]
+      component.pos: [0, 0, 0]
+      component.offsetPos: [0, -2.82860947, 0]
       component.scale: [1, 2, 1]
       component.rotation: [0, 0, 0, 1]
     RenderSpecComponent:
-      component.color: [3.0486145, 2.98379517, 2.98379517, 1]
+      component.color: [4.38647461, 2.5378418, 2.5378418, 1]
     MeshComponent:
       hasFile: true
       meshName: ../assets/meshes/cube.obj
     PointLightComponent:
       component.shadowCasting: false
-      component.light.pos: [0, 0.373935699, 0, 1]
+      component.light.pos: [0, -0.828609467, 0, 1]
       component.light.color: [1, 1, 1, 1]
       component.light.intensity: 10
       component.light.radius: 20

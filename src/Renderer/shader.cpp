@@ -33,7 +33,6 @@ void Shader::dispatch(uint x, uint y, uint z)
     ASSERT_ERROR(isCompute, "Shader: Cant dispatch a non-compute shader dude!");
     glUseProgram(m_id);
     glDispatchCompute(x, y, z);
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
 void Shader::bindImage(std::shared_ptr<Texture> texture, uint unit, GLenum access, bool layered, uint layer)
