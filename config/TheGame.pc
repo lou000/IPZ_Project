@@ -36,7 +36,7 @@ Entities:
       component.scale: [1, 2, 1]
       component.rotation: [0, 0, 0, 1]
     RenderSpecComponent:
-      component.color: [4.38647461, 2.5378418, 2.5378418, 1]
+      component.color: [3, 3, 3, 1]
     MeshComponent:
       hasFile: true
       meshName: ../assets/meshes/cube.obj

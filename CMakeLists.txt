@@ -78,24 +78,24 @@ else()
    target_link_libraries(Primor assimp)
 endif()
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.lib")
+#if(EXISTS "${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.dll")
 
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_link_libraries(Primor
-            ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Debug/OpenAL32.lib
-            winmm
-            )
-    else()
-        target_link_libraries(Primor
-            ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.lib
-            winmm
-            )
-    endif()
+#    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+#        target_link_libraries(Primor
+#            ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Debug/OpenAL32.dll
+#            winmm
+#            )
+#    else()
+#        target_link_libraries(Primor
+#            ${CMAKE_SOURCE_DIR}/external/openal-soft/bin/Release/OpenAL32.dll
+#            winmm
+#            )
+#    endif()
 
-else()
-   add_subdirectory(external/openal-soft)
-   target_link_libraries(Primor OpenAL32 winmm)
-endif()
+#else()
+    add_subdirectory(external/openal-soft)
+    target_link_libraries(Primor OpenAL winmm)
+#endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib")
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -111,7 +111,6 @@ else()
    add_subdirectory(external/yaml-cpp)
    target_link_libraries(Primor yaml-cpp)
 endif()
-
 
 target_link_libraries(Primor glfw glad opengl32)
 
