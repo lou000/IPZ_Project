@@ -18,14 +18,14 @@ m_gameCamera:
   camera->m_rotation: [-0.44721359, -0, -0, 0.89442718]
 m_editorCamera:
   camera->type: 0
-  camera->m_pos: [36.5218735, 16.2186966, 29.7866802]
+  camera->m_pos: [33.9377251, 22.2620468, 30.1544704]
   camera->m_fov: 50
   camera->m_aspectRatio: 1.66666663
   camera->m_nearClip: 0.100000001
   camera->m_farClip: 1000
   camera->isActive: false
   camera->m_focusPoint: [0, 6, 0]
-  camera->m_rotation: [-0.0962575674, 0.426491737, 0.0457062945, 0.898192704]
+  camera->m_rotation: [-0.156109571, 0.403704315, 0.0701226518, 0.898741007]
 Entities:
   - Entity: 5251064753760945064
     TagComponent:
@@ -46,12 +46,12 @@ Entities:
     TagComponent:
       component.tag: player
     TransformComponent:
-      component.pos: [3.60387254, 0.881628036, -6.1912837]
-      component.offsetPos: [0, -1.72856522, 0]
+      component.pos: [9.13455105, 3.73663497, 3.78655052]
+      component.offsetPos: [0, -0.700276375, 0]
       component.scale: [1, 2, 1]
       component.rotation: [0, 0, 0, 1]
     RenderSpecComponent:
-      component.color: [6.49798393, 1.83400536, 1.83400536, 1]
+      component.color: [3.35914993, 2.88028336, 2.88028336, 1]
     MeshComponent:
       hasFile: true
       meshName: ../assets/meshes/cube.obj

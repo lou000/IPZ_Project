@@ -16,5 +16,6 @@ CMakeSettings.json
 !/build_release/*.dll
 /build_debug/*
 !/build_debug/*.exe
+!/build_debug/*.dll
 !/assets/meshes/*.obj
 *.lib
