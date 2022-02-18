@@ -1113,16 +1113,15 @@ void RenderPipeline::drawScreenSpace(std::shared_ptr<Scene> scene)
         debugView--;
     if(App::getKeyOnce(GLFW_KEY_KP_0))
         debugView = 0;
-    glm::clamp(debugView, 0, 5);
+    debugView = glm::clamp(debugView, 0, 4);
     BatchRenderer::begin(sceneCamera);
     switch(debugView)
     {
     case 0: break;
     case 1: BatchRenderer::drawQuad({0,0}, winSize, blurVlFBO.getTexture(0)); break;
-    case 2: BatchRenderer::drawQuad({0,0}, winSize, hdrFBO.getDepthTex()); break;
-    case 3: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
-    case 4: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
-    case 5: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
+    case 2: BatchRenderer::drawQuad({0,0}, winSize, blurSsaoFBO.getTexture(0)); break;
+    case 3: BatchRenderer::drawQuad({0,0}, winSize, bloomUpSampleTextures[0]); break;
+    case 4: BatchRenderer::drawQuad({0,0}, winSize, csmFBO.getDepthTex()); break;
     default:
         break;
     }
