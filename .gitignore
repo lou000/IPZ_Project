@@ -13,6 +13,7 @@ CMakeSettings.json
 # Client
 /build_release/*
 !/build_release/*.exe
+!/build_release/*.dll
 /build_debug/*
 !/build_debug/*.exe
 !/assets/meshes/*.obj
