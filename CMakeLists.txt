@@ -4,6 +4,8 @@ project(Primor LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
@@ -25,7 +27,6 @@ set(client_INCLUDE_DIRS
     external/yaml-cpp/include
     external/imgui
     external/entt
-    external/openal-soft/include
     external/dr_libs
     )
 include_directories(${client_INCLUDE_DIRS})
@@ -94,8 +95,8 @@ endif()
 #    endif()
 
 #else()
-    add_subdirectory(external/openal-soft)
-    target_link_libraries(Primor OpenAL winmm)
+    # add_subdirectory(external/openal-soft)
+    # target_link_libraries(Primor OpenAL winmm)
 #endif()
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/external/yaml-cpp/bin/Release/yaml-cpp.lib")

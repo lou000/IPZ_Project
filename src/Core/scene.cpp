@@ -64,17 +64,17 @@ void Scene::update(float dt)
     auto camPos = m_activeCamera->getPos();
 //    LOG("Source pos: %f, %f, %f\n", camPos.x, camPos.y, camPos.z);
 //    LOG("AL error: %d\n", alGetError());
-    m_audioListener.setPosition(camPos);
-    m_audioListener.setOrientation(m_activeCamera->forward(), m_activeCamera->up());
+//     m_audioListener.setPosition(camPos);
+//     m_audioListener.setOrientation(m_activeCamera->forward(), m_activeCamera->up());
 
-    // Update all sound sources that have transform components
-    auto view = m_entities.view<TransformComponent, AudioSourceComponent>();
-    for(auto& ent : view)
-    {
-        auto& pos = view.get<TransformComponent>(ent).pos;
-//        LOG("Source pos: %f, %f, %f\n", pos.x, pos.y, pos.z);
-        view.get<AudioSourceComponent>(ent).source->setPosition(pos);
-    }
+//     // Update all sound sources that have transform components
+//     auto view = m_entities.view<TransformComponent, AudioSourceComponent>();
+//     for(auto& ent : view)
+//     {
+//         auto& pos = view.get<TransformComponent>(ent).pos;
+// //        LOG("Source pos: %f, %f, %f\n", pos.x, pos.y, pos.z);
+//         view.get<AudioSourceComponent>(ent).source->setPosition(pos);
+//     }
 }
 
 Entity Scene::createEntity(bool serialize)

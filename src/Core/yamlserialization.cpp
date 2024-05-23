@@ -436,16 +436,6 @@ bool Serializer::serializeEntity(Emitter &e, Entity entity)
         // we dont want to serialize anything for now
         e << YAML::EndMap;
     }
-    if (entity.hasComponent<AudioSourceComponent>())
-    {
-        // TODO: maybe save state of the audio source, currently playing etc.
-        auto& component = entity.getComponent<AudioSourceComponent>();
-        e << Key << "AudioSourceComponent";
-        e << YAML::BeginMap;
-        e << Key << "hasFile" << Value << component.source->buffer()->hasFile();
-        e << Key << "soundName" << Value << component.source->buffer()->getName();
-        e << YAML::EndMap;
-    }
     e << EndMap;
     return true;
 }
@@ -526,29 +516,6 @@ bool Serializer::deserializeEntity(const Node &node, const Entity* entity)
     {
         entity->addComponent<TerrainGenComponent>();
     }
-    auto audio = node["AudioSourceComponent"];
-    if(audio)
-    {
-        auto name = audio["soundName"].as<std::string>();
-        auto hasFile = audio["hasFile"].as<bool>();
-
-        auto sound = AssetManager::getAsset<AudioBuffer>(name);
-        if(!sound)
-        {
-            if(hasFile)
-            {
-                sound = std::make_shared<AudioBuffer>(name);
-                AssetManager::addAsset(sound);
-            }
-            else
-            {
-                WARN("Serializer: Cant find %s sound!", name.c_str());
-            }
-        }
-
-        entity->addComponent<AudioSourceComponent>(sound);
-    }
-
     return true;
 }
 

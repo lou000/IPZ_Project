@@ -545,8 +545,8 @@ std::vector<Path> Game::generatePaths(std::vector<Clearing> clearings)
     clearings.erase(clearings.begin());
     for(uint i=0; i<clearings.size();)
     {
-        auto randomIndex = linearRand(0ull, clearings.size()-1);
-        auto second = clearings[randomIndex];
+        auto randomIndex = linearRand((float)0, (float)clearings.size()-1);
+        auto second = clearings[(int)randomIndex];
         Path p;
         p.pointBegin = first.pos;
         p.pointEnd = second.pos;

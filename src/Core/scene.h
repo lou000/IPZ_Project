@@ -5,9 +5,11 @@
 #include "../Renderer/camera.h"
 #include "../Renderer/light.h"
 #include "entt.hpp"
-#include "../Audio/AudioListener.h"
 
 // For now this is base class that represents the "game"
+
+class Entity;
+
 class Scene
 {
     friend class Entity;
@@ -67,7 +69,6 @@ private:
     bool m_deserialized = false;
     bool showSceneSettings = true;
     entt::registry m_entities;
-    AudioListener m_audioListener;
     std::unordered_map<std::string, Entity> namedEntities;
 };
 
